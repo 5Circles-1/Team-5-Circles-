@@ -1,0 +1,2173 @@
+<title>5C Pulse</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   5C PULSE — standalone build
+   Design tokens are the project's own (src/styles/tokens.css). To rebrand,
+   change the values in :root here and nowhere else.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root {
+  --navy-900:#1F3864; --navy-800:#274877; --steel-600:#2E5C8A; --steel-300:#A9C0DA;
+  --cream-100:#FFF2CC; --cream-ink:#5B4A12;
+  --paper:#FAFAFB; --surface:#FFFFFF; --ink:#171A20; --ink-muted:#5D6675;
+  --hairline:rgba(31,56,100,.13); --sunken:#F1F3F7;
+  --on-target:#1B7A52; --behind:#B7791F; --attention:#A93226; --blocked:#6B4E9E;
+  --input:#1155CC;
+  --rail:#1F3864; --rail-ink:#FFFFFF; --btn:#1F3864; --btn-ink:#FFFFFF;
+  --tint:rgba(46,92,138,.09);
+  --font-display:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --font-body:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --font-data:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --navy-900:#4A72B8; --navy-800:#3E63A8; --steel-600:#6C9AD0; --steel-300:#3B4F6B;
+    --cream-100:#3A3320; --cream-ink:#F2DFA6;
+    --paper:#0E1421; --surface:#161F2F; --ink:#E9EDF4; --ink-muted:#94A1B6;
+    --hairline:rgba(150,178,212,.18); --sunken:#111A28;
+    --on-target:#4FBF8B; --behind:#DCA845; --attention:#E97165; --blocked:#AC93D9;
+    --input:#84B4FF;
+    --rail:#131D30; --rail-ink:#EAF0FA; --btn:#3E63A8; --btn-ink:#FFFFFF;
+    --tint:rgba(108,154,208,.14);
+  }
+}
+:root[data-theme="dark"] {
+  --navy-900:#4A72B8; --navy-800:#3E63A8; --steel-600:#6C9AD0; --steel-300:#3B4F6B;
+  --cream-100:#3A3320; --cream-ink:#F2DFA6;
+  --paper:#0E1421; --surface:#161F2F; --ink:#E9EDF4; --ink-muted:#94A1B6;
+  --hairline:rgba(150,178,212,.18); --sunken:#111A28;
+  --on-target:#4FBF8B; --behind:#DCA845; --attention:#E97165; --blocked:#AC93D9;
+  --input:#84B4FF;
+  --rail:#131D30; --rail-ink:#EAF0FA; --btn:#3E63A8; --btn-ink:#FFFFFF;
+  --tint:rgba(108,154,208,.14);
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:15px; line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{font-family:var(--font-display); margin:0; text-wrap:balance; letter-spacing:-.02em}
+h1{font-size:30px; font-weight:700; line-height:1.15}
+h2{font-size:22px; font-weight:600}
+h3{font-size:17px; font-weight:600; letter-spacing:-.01em}
+p{margin:0}
+button,input,select,textarea{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--navy-900); outline-offset:2px; border-radius:6px}
+.tab{font-family:var(--font-data); font-variant-numeric:tabular-nums}
+.muted{color:var(--ink-muted)}
+.s5{font-size:13px} .s6{font-size:11px} .s4{font-size:15px} .s3{font-size:17px}
+.up{text-transform:uppercase; letter-spacing:.06em}
+
+/* ── rail ─────────────────────────────────────────────────────────────── */
+.rail{
+  position:sticky; top:0; z-index:40; height:56px; background:var(--rail); color:var(--rail-ink);
+  display:flex; align-items:center; gap:14px; padding:0 16px;
+}
+.rail .wrap{max-width:1280px; margin:0 auto; width:100%; display:flex; align-items:center; gap:14px}
+.mark{display:flex; align-items:center; gap:9px; flex-shrink:0; text-decoration:none; color:inherit}
+.mark b{font-family:var(--font-display); font-weight:600; font-size:15px; letter-spacing:-.02em}
+nav.tabs{display:flex; gap:2px; overflow-x:auto; scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{
+  background:none; border:0; color:color-mix(in srgb, var(--rail-ink) 72%, transparent);
+  padding:6px 10px; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer;
+  white-space:nowrap; transition:background .13s, color .13s;
+}
+nav.tabs button:hover{background:color-mix(in srgb, var(--rail-ink) 12%, transparent); color:var(--rail-ink)}
+nav.tabs button[aria-current="page"]{background:color-mix(in srgb, var(--rail-ink) 18%, transparent); color:var(--rail-ink)}
+.railright{margin-left:auto; display:flex; align-items:center; gap:10px; flex-shrink:0}
+.calib{border:1px solid color-mix(in srgb, var(--rail-ink) 34%, transparent); border-radius:6px;
+  padding:2px 7px; font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+  color:color-mix(in srgb, var(--rail-ink) 82%, transparent)}
+.who{display:flex; align-items:center; gap:7px; background:color-mix(in srgb, var(--rail-ink) 13%, transparent);
+  border:0; border-radius:6px; padding:5px 9px; cursor:pointer; color:inherit; font-size:13px}
+.avatar{width:24px; height:24px; border-radius:50%; display:grid; place-items:center;
+  background:color-mix(in srgb, var(--rail-ink) 22%, transparent); font-size:10px; font-weight:700}
+
+main{max-width:1280px; margin:0 auto; padding:22px 16px 80px}
+.stack{display:flex; flex-direction:column; gap:18px}
+.row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.between{display:flex; align-items:flex-end; justify-content:space-between; gap:14px; flex-wrap:wrap}
+
+/* ── surfaces ─────────────────────────────────────────────────────────── */
+.card{background:var(--surface); border:1px solid var(--hairline); border-radius:10px}
+.card>header{padding:12px 16px; border-bottom:1px solid var(--hairline);
+  display:flex; align-items:center; justify-content:space-between; gap:10px}
+.card>.body{padding:16px}
+.card>.body.flush{padding:0}
+.list{list-style:none; margin:0; padding:0}
+.list>li{padding:11px 16px; border-top:1px solid var(--hairline); display:flex; align-items:center; gap:12px}
+.list>li:first-child{border-top:0}
+.empty{padding:38px 16px; text-align:center}
+.empty p:first-child{font-size:15px}
+
+/* ── controls ─────────────────────────────────────────────────────────── */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:7px; cursor:pointer;
+  border-radius:6px; border:1px solid transparent; background:var(--btn); color:var(--btn-ink);
+  font-size:15px; font-weight:500; padding:0 16px; height:40px; transition:filter .13s, background .13s;
+}
+.btn:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.42; cursor:not-allowed; filter:none}
+.btn.sm{height:32px; padding:0 11px; font-size:13px}
+.btn.lg{height:48px; font-size:15px; width:100%}
+.btn.sec{background:var(--surface); color:var(--ink); border-color:var(--hairline)}
+.btn.sec:hover{background:var(--sunken); filter:none}
+.btn.ghost{background:none; color:var(--ink-muted); border-color:transparent}
+.btn.ghost:hover{background:var(--sunken); color:var(--ink); filter:none}
+.btn.danger{background:var(--surface); color:var(--attention); border-color:color-mix(in srgb,var(--attention) 40%,transparent)}
+.btn.danger:hover{background:color-mix(in srgb,var(--attention) 9%,transparent); filter:none}
+input[type=text],input[type=number],input[type=date],input[type=time],input[type=month],select,textarea{
+  width:100%; background:var(--surface); border:1px solid var(--hairline); border-radius:6px;
+  padding:0 11px; height:40px; font-size:15px;
+}
+textarea{padding:9px 11px; height:auto; min-height:74px; resize:vertical; line-height:1.45}
+label.fld{display:block}
+label.fld>span{display:block; font-size:13px; font-weight:500; color:var(--input); margin-bottom:5px}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+@media (max-width:560px){.grid2{grid-template-columns:1fr}}
+
+/* the ONE cream control cell per screen */
+.control{display:inline-flex; align-items:center; gap:10px; background:var(--cream-100);
+  color:var(--cream-ink); border:1px solid var(--hairline); border-radius:6px; padding:8px 12px; flex-wrap:wrap}
+.control input,.control select{height:32px; font-size:13px; width:auto; background:var(--surface); color:var(--ink)}
+.control label{font-size:13px; font-weight:600}
+
+/* guard note — amber, inline, never a blocking dialog */
+.guard{display:flex; gap:9px; align-items:flex-start; border:1px solid color-mix(in srgb,var(--behind) 42%,transparent);
+  background:color-mix(in srgb,var(--behind) 8%,transparent); color:var(--behind);
+  border-radius:6px; padding:10px 12px; font-size:13px}
+.guard b{color:var(--behind)}
+.guard ul{margin:5px 0 0; padding-left:17px}
+.guard button.fix{background:none;border:0;padding:0;margin-top:5px;color:inherit;
+  font-weight:600;text-decoration:underline;cursor:pointer;font-size:13px}
+.note{border-radius:6px; padding:9px 12px; font-size:13px; background:var(--tint); color:var(--steel-600)}
+
+/* ── status marks: shape + label, never colour alone ──────────────────── */
+.pill{display:inline-flex; align-items:center; gap:5px; border:1px solid; border-radius:6px;
+  background:var(--surface); padding:2px 7px; font-size:11px; font-weight:600; white-space:nowrap}
+.flag{display:inline-flex; border:1px solid; border-radius:6px; background:var(--surface);
+  padding:2px 7px; font-size:11px; font-weight:700; white-space:nowrap}
+.c-ontrack,.c-completed{color:var(--on-target); border-color:color-mix(in srgb,var(--on-target) 42%,transparent)}
+.c-atrisk,.c-duesoon{color:var(--behind); border-color:color-mix(in srgb,var(--behind) 45%,transparent)}
+.c-blocked{color:var(--blocked); border-color:color-mix(in srgb,var(--blocked) 45%,transparent)}
+.c-overdue{color:var(--attention); border-color:color-mix(in srgb,var(--attention) 45%,transparent)}
+.c-idle{color:var(--ink-muted); border-color:var(--steel-300)}
+.c-await{color:var(--steel-600); border-color:var(--steel-300)}
+.prio{font-family:var(--font-data); font-size:11px; font-weight:700; text-decoration:none}
+.p1{color:var(--attention)} .p2{color:var(--steel-600)} .p3{color:var(--ink-muted)}
+.dot{width:8px; height:8px; border-radius:50%; flex-shrink:0}
+
+/* ── tables ───────────────────────────────────────────────────────────── */
+.scroll{overflow-x:auto}
+table{border-collapse:collapse; width:100%; font-size:13px}
+thead th{background:var(--steel-600); color:#fff; text-align:left; font-weight:600; padding:8px 11px; white-space:nowrap}
+tbody td{padding:0 11px; height:36px; border-top:1px solid var(--hairline); white-space:nowrap}
+tbody tr:hover{background:var(--sunken)}
+td.num,th.num{text-align:right; font-family:var(--font-data); font-variant-numeric:tabular-nums}
+tr.total{background:var(--sunken); font-weight:700}
+tr.total td{border-top:2px solid var(--hairline)}
+
+/* ── five rings ───────────────────────────────────────────────────────── */
+.rings{position:relative; display:inline-grid; place-items:center}
+.rings .mid{position:absolute; text-align:center; pointer-events:none}
+.rings .mid b{font-family:var(--font-display); font-weight:700; font-size:22px; letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums}
+.rings .mid span{display:block; font-size:11px; color:var(--ink-muted)}
+@keyframes draw{from{stroke-dashoffset:var(--circ)}}
+.arc{animation:draw 600ms cubic-bezier(.32,.72,.35,1) both; animation-delay:var(--delay)}
+.legend{display:flex; gap:11px; font-size:11px; color:var(--ink-muted); flex-wrap:wrap; justify-content:center}
+.legend i{font-style:normal; display:inline-flex; align-items:center; gap:4px}
+.legend i::before{content:""; width:7px; height:7px; border-radius:2px; background:currentColor}
+
+/* ── day close ────────────────────────────────────────────────────────── */
+.tick{display:flex; gap:11px; align-items:flex-start; width:100%; background:none; border:0;
+  padding:9px 6px; border-radius:6px; cursor:pointer; text-align:left}
+.tick:hover{background:var(--sunken)}
+.box{width:24px; height:24px; border-radius:50%; border:1.5px solid var(--steel-300);
+  display:grid; place-items:center; flex-shrink:0; margin-top:1px; font-size:13px; transition:.13s}
+.tick[aria-checked="true"] .box{background:var(--on-target); border-color:var(--on-target); color:#fff}
+.tick[aria-checked="true"] .tt{color:var(--ink-muted); text-decoration:line-through}
+.seg{display:inline-flex; gap:4px; flex-wrap:wrap}
+.seg button{background:var(--surface); border:1px solid var(--hairline); color:var(--ink-muted);
+  border-radius:6px; padding:4px 9px; font-size:11px; font-weight:600; cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--btn); border-color:var(--btn); color:var(--btn-ink)}
+.seg button.ok[aria-pressed="true"]{background:var(--on-target); border-color:var(--on-target)}
+.seg button.warn[aria-pressed="true"]{background:var(--behind); border-color:var(--behind)}
+.step{display:flex; align-items:center; gap:12px}
+.step b{font-family:var(--font-display); font-size:22px; width:56px; text-align:center;
+  font-variant-numeric:tabular-nums}
+.stepno{color:var(--ink-muted); margin-right:7px; font-weight:400}
+.bignum{height:56px; width:140px; font-size:30px; font-weight:700; font-family:var(--font-display);
+  font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+
+/* ── people picker (assign) ───────────────────────────────────────────── */
+.picker{max-height:230px; overflow-y:auto; border:1px solid var(--hairline); border-radius:6px; padding:4px}
+.cand{display:flex; align-items:center; gap:11px; width:100%; background:none; border:0;
+  padding:8px 10px; border-radius:6px; cursor:pointer; text-align:left; color:inherit}
+.cand:hover{background:var(--sunken)}
+.cand[aria-pressed="true"]{background:var(--btn); color:var(--btn-ink)}
+.cand[aria-pressed="true"] .muted{color:color-mix(in srgb,var(--btn-ink) 74%, transparent)}
+.load{width:62px; height:6px; border-radius:3px; background:color-mix(in srgb,var(--ink) 12%,transparent);
+  overflow:hidden; flex-shrink:0}
+.load i{display:block; height:100%; background:var(--steel-600); border-radius:3px}
+.cand[aria-pressed="true"] .load i{background:color-mix(in srgb,var(--btn-ink) 80%,transparent)}
+
+/* ── misc ─────────────────────────────────────────────────────────────── */
+.sheet{position:fixed; inset:0; background:color-mix(in srgb, #0A0E16 62%, transparent);
+  display:grid; place-items:center; padding:16px; z-index:60}
+.sheet .card{max-width:520px; width:100%; max-height:86vh; overflow-y:auto; box-shadow:0 18px 50px rgba(6,12,24,.34)}
+.chips{display:flex; gap:7px; flex-wrap:wrap}
+.chip{border:1px solid var(--hairline); background:var(--surface); color:var(--ink-muted);
+  border-radius:6px; padding:4px 9px; font-size:11px; cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--steel-600); background:var(--tint); color:var(--steel-600)}
+.cap{background:var(--tint); color:var(--steel-600); border-radius:5px; padding:1px 6px; font-size:11px; margin-right:4px}
+.bar{width:4px; align-self:stretch; border-radius:3px; flex-shrink:0}
+.kudos{background:color-mix(in srgb,var(--behind) 12%,transparent); border-radius:6px; padding:9px 12px; font-size:13px}
+.toast{position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:80;
+  background:var(--ink); color:var(--paper); border-radius:8px; padding:10px 16px; font-size:13px;
+  box-shadow:0 8px 26px rgba(6,12,24,.3)}
+details.audit summary{cursor:pointer; padding:11px 16px; font-size:13px; color:var(--ink-muted)}
+.ol{margin:0; padding-left:19px; font-size:13px}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important; transition-duration:.01ms !important}
+  .arc{animation:none}
+}
+</style>
+
+<div class="rail">
+  <div class="wrap">
+    <a class="mark" href="#" onclick="go('my-day');return false" aria-label="5C Pulse">
+      <svg width="22" height="22" viewBox="0 0 28 28" aria-hidden="true">
+        <circle cx="14" cy="14" r="12" fill="none" stroke="currentColor" stroke-width="1.5" opacity="1"/>
+        <circle cx="14" cy="14" r="9.5" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".82"/>
+        <circle cx="14" cy="14" r="7" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".64"/>
+        <circle cx="14" cy="14" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".46"/>
+        <circle cx="14" cy="14" r="2" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
+      </svg>
+      <b>5C Pulse</b>
+    </a>
+    <nav class="tabs" id="tabs" aria-label="Primary"></nav>
+    <div class="railright">
+      <span class="calib" id="calib" hidden>Calibrating</span>
+      <button class="who" id="who" aria-haspopup="dialog"></button>
+    </div>
+  </div>
+</div>
+<main id="app"></main>
+<div id="modal"></div>
+<div id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   5C PULSE — single-file build.
+   Same data, same formulas, same rules as the Next.js + Supabase app in this
+   repository. Storage is this browser's localStorage: one device, no server,
+   no real auth — you pick who you are, and every permission rule is then
+   applied to that person exactly as the database would.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── time: server time is the only truth. Here that means one clock, IST. ── */
+const IST = 330;
+const nowLocal = () => new Date(Date.now() + IST * 60000);
+const todayISO = () => nowLocal().toISOString().slice(0, 10);
+const minutesNow = () => { const d = nowLocal(); return d.getUTCHours() * 60 + d.getUTCMinutes(); };
+const isoDow = iso => ((new Date(iso + 'T00:00:00Z').getUTCDay() + 6) % 7) + 1;
+const addDays = (iso, n) => new Date(new Date(iso + 'T00:00:00Z').getTime() + n * 86400000).toISOString().slice(0, 10);
+const weekStart = iso => addDays(iso, -(isoDow(iso) - 1));
+const monthOf = iso => iso.slice(0, 7);
+const daysLeft = dueISO => Math.round(
+  (new Date(dueISO.slice(0, 10) + 'T00:00:00Z') - new Date(todayISO() + 'T00:00:00Z')) / 86400000);
+const fmtDay = iso => new Date(iso + 'T00:00:00Z')
+  .toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+const fmtShort = iso => new Date(iso.slice(0, 10) + 'T00:00:00Z')
+  .toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+const dowName = iso => new Date(iso + 'T00:00:00Z')
+  .toLocaleDateString('en-IN', { weekday: 'long', timeZone: 'UTC' });
+
+/* ── the workbook's formulas, live ─────────────────────────────────────── */
+function achievementPct(actual, target, direction) {
+  if (actual == null || target == null) return null;
+  if (direction === 'Lower is better') {          // the workbook's defect, fixed
+    if (actual === 0) return 1;                   // never ∞, never divide by zero
+    return target / actual;                       // 3 against a target of 0 → 0, i.e. below 100%
+  }
+  if (target === 0) return null;
+  return actual / target;
+}
+const fixedPct = (done, due) => (!due ? null : done / due);
+function taskFlag(dueISO, status) {              // Assigned Tasks · column K, exactly
+  if (status === 'Completed' || status === 'Dropped') return 'Closed';
+  const left = daysLeft(dueISO);
+  if (left < 0) return 'OVERDUE';
+  if (status === 'Blocked') return 'BLOCKED - needs you';
+  if (left <= 2) return 'Due soon';
+  return '';
+}
+const isOverdue = (dueISO, status) =>
+  !['Completed', 'Dropped', 'Declined', 'Missed'].includes(status) && daysLeft(dueISO) < 0;
+const weeklyTarget = (d, type, wd) => (type === 'Volume' ? d * wd : d);
+const monthlyTarget = (d, type, wd) => (type === 'Volume' ? d * wd : d);
+function weeklyStatus(days, ach) {               // Weekly Rollup · column L
+  if (days === 0) return 'No submissions';
+  if (ach == null) return 'Awaiting data';
+  if (ach >= 1) return 'On target';
+  if (ach >= 0.8) return 'Slightly behind';
+  return 'Needs attention';
+}
+function ratingInput(days, ach, fx) {            // Monthly Rollup · column N
+  if (days === 0) return 'No data';
+  if (ach != null && ach >= 1 && fx != null && fx >= 0.9) return 'Exceeding';
+  if (ach != null && ach >= 0.8) return 'Meeting';
+  return 'Below - review';
+}
+function computeRings(i) {
+  return {
+    closed: i.submitted ? 1 : 0,
+    fixed: i.fixedDue > 0 ? Math.min(1, i.fixedDone / i.fixedDue) : 1,
+    target: i.achievement == null ? 0 : Math.max(0, Math.min(1, i.achievement)),
+    assigned: i.assignedOpen > 0 ? Math.max(0, (i.assignedOpen - i.assignedOverdue) / i.assignedOpen) : 1,
+    clear: i.blockersPastSla > 0 ? 0 : 1,
+  };
+}
+function titleSimilarity(a, b) {                 // charter-clash guard, ≥80%
+  const grams = s => { const t = s.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+    const m = new Map(); for (let i = 0; i < t.length - 1; i++) m.set(t.slice(i, i + 2), (m.get(t.slice(i, i + 2)) || 0) + 1); return m; };
+  const ga = grams(a), gb = grams(b);
+  if (!ga.size || !gb.size) return 0;
+  let ov = 0, na = 0, nb = 0;
+  ga.forEach(n => na += n); gb.forEach(n => nb += n);
+  ga.forEach((n, g) => ov += Math.min(n, gb.get(g) || 0));
+  return (2 * ov) / (na + nb);
+}
+
+/* ── seed: the workbook, imported exactly ──────────────────────────────── */
+function seed() {
+  const P = (id, code, name, dept, desig, boss, role, caps) =>
+    ({ id, code, name, dept, desig, boss, email: name.split(' ')[0].toLowerCase() + '@company.com',
+       role, caps: caps || [], status: 'Active', capacity: 8, wip: 3 });
+  const people = [
+    P('p1','EMP-01','Arjun Desai','Management','Founder / CEO',null,'Owner'),
+    P('p2','EMP-02','Priya Nair','Sales','Sales Manager','p1','Department Head'),
+    P('p3','EMP-03','Rohan Mehta','Sales','Sales Executive','p2','Member'),
+    P('p4','EMP-04','Ananya Sharma','Marketing','Performance Marketing Lead','p1','Department Head'),
+    P('p5','EMP-05','Kabir Singh','Marketing','Content & Social Executive','p4','Member'),
+    P('p6','EMP-06','Vikram Rao','Operations','Operations Executive','p1','Member'),
+    P('p7','EMP-07','Sneha Iyer','Finance','Accounts & Finance Executive','p1','Member',['finance_admin']),
+    P('p8','EMP-08','Meera Kapoor','HR','HR Generalist','p1','Member',['hr_admin','people_admin']),
+  ];
+  const D = (title, cadence, dod, mask, monthDay) => ({ id: 'd' + (D.n = (D.n || 0) + 1), title, cadence, dod, mask: mask || null, monthDay: monthDay || null, active: true });
+  const charters = {
+    p2: { owns:'Monthly revenue target for the sales function; pipeline health; rep productivity',
+      alone:['Discounts up to 10%','Lead reassignment between reps'],
+      approval:['Discounts above 10%','New pricing','Hiring'], approver:'p1', duties:[
+      D('Morning pipeline review with reps','Daily','All P1 deals reviewed; next action set on each'),
+      D('Deal-stage hygiene audit in CRM','Daily','Zero deals sitting >7 days without activity'),
+      D('Forecast update for the month','Weekly','Committed / Best-case / Pipeline split submitted to CEO',[5]),
+      D('1-on-1 with each rep','Weekly','Notes logged; one coaching action agreed per rep',[1]),
+      D('Win/loss review of closed deals','Monthly','Reasons tagged; 3 learnings circulated',null,28)]},
+    p3: { owns:'Qualified pipeline created and revenue closed from own territory',
+      alone:['Meeting scheduling','Standard proposal issue'],
+      approval:['Any discount','Custom payment terms','Scope changes'], approver:'p2', duties:[
+      D('Follow up on all new inbound leads','Daily','Every lead contacted within 4 working hours; outcome logged in CRM'),
+      D('Outbound prospecting calls / mails','Daily','Minimum call and mail quota completed and logged'),
+      D('Update CRM for every conversation','Daily','No conversation older than 24h missing a note'),
+      D('Send proposals / quotations pending','Daily','Zero proposals pending beyond 48h of request'),
+      D('Clean up stale deals in own pipeline','Weekly','Every deal has a dated next step',[5])]},
+    p4: { owns:'Cost per qualified lead and volume of qualified leads from paid channels',
+      alone:['Shifting budget between existing campaigns within monthly cap'],
+      approval:['Increasing total monthly budget','New channel','Brand messaging changes'], approver:'p1', duties:[
+      D('Check campaign spend, CPL and pacing','Daily','All live campaigns reviewed; overspends paused'),
+      D('Review lead quality feedback from Sales','Daily','Junk leads tagged; targeting adjusted or flagged'),
+      D('Creative / copy testing rotation','Weekly','At least one new variant live per active campaign',[3]),
+      D('Channel performance report','Weekly','Spend, leads, CPL, conversion by channel shared with CEO',[5]),
+      D('Budget reallocation across channels','Monthly','Next month’s split proposed with rationale',null,26)]},
+    p5: { owns:'Organic reach, engagement and content output consistency',
+      alone:['Post timing','Caption and hashtag choices'],
+      approval:['Brand voice changes','Paid boosting','Influencer tie-ups'], approver:'p4', duties:[
+      D('Publish scheduled posts across channels','Daily','All planned posts live as per calendar'),
+      D('Community / comment / DM response','Daily','Zero unanswered comments or DMs older than 24h'),
+      D('Content calendar for next week','Weekly','Calendar filled and approved before Friday EOD',[5]),
+      D('Organic performance snapshot','Weekly','Reach, engagement, follower delta reported',[1]),
+      D('Long-form content piece','Monthly','One blog / video / case study published',null,15)]},
+    p6: { owns:'On-time, error-free delivery / fulfilment and turnaround time',
+      alone:['Day-to-day scheduling','Standard replacements or redo'],
+      approval:['Vendor changes','Refunds above threshold','SOP changes'], approver:'p1', duties:[
+      D('Process the day’s orders / service requests','Daily','All requests received before cut-off processed same day'),
+      D('Escalation and complaint resolution','Daily','Every open escalation has an owner and an ETA'),
+      D('Vendor / partner coordination check','Daily','Pending vendor items chased; status updated'),
+      D('Inventory / capacity check','Weekly','Shortfalls flagged at least 7 days in advance',[1]),
+      D('Process SOP review and update','Monthly','One process documented or improved',null,20)]},
+    p7: { owns:'Accurate books, on-time collections and compliance calendar',
+      alone:['Routine payments already budgeted','Standard invoice issue'],
+      approval:['Any unbudgeted payment','Write-offs','Credit terms'], approver:'p1', duties:[
+      D('Record the day’s receipts and payments','Daily','Books tallied to bank balance at day end'),
+      D('Follow up on overdue invoices','Daily','Every invoice overdue >7 days chased and logged'),
+      D('Invoice issue against closed deals','Daily','Zero closed deals uninvoiced beyond 24h'),
+      D('Cash position and collections report','Weekly','Opening cash, inflow, outflow, closing, ageing shared',[5]),
+      D('Statutory filings and reconciliations','Monthly','All dues filed before due date; zero penalties',null,7)]},
+    p8: { owns:'Time-to-hire, attendance discipline and employee query turnaround',
+      alone:['Interview scheduling','Leave approvals within policy'],
+      approval:['Offers and salary','Policy exceptions','Terminations'], approver:'p1', duties:[
+      D('Attendance and leave register update','Daily','Register updated and exceptions flagged same day'),
+      D('Candidate pipeline movement','Daily','Every active candidate moved a stage or contacted'),
+      D('Employee query / grievance response','Daily','No query pending beyond 24h without a response'),
+      D('Recruitment status report','Weekly','Open roles, stage-wise pipeline, expected joining dates',[5]),
+      D('Payroll input preparation','Monthly','Attendance, leaves, deductions handed to Finance before cut-off',null,25)]},
+    p1: { owns:'Overall business targets, capital allocation and team performance',
+      alone:['Everything within approved budget and policy'], approval:[], approver:null, duties:[
+      D('Read and respond to EOD submissions','Daily','Every blocker raised has a response within 24h'),
+      D('Review key business numbers','Daily','Revenue, cash, leads, delivery status checked'),
+      D('Departmental review meeting','Weekly','Weekly Rollup reviewed with each department head',[1]),
+      D('Targets and priority reset','Monthly','Next month’s KPI targets published to all',null,1),
+      D('Strategy / planning block','Monthly','Quarter plan reviewed and adjusted',null,15)]},
+  };
+  const K = (person, metric, unit, type, dir, daily, cadence, primary) =>
+    ({ id: 'k' + (K.n = (K.n || 0) + 1), person, metric, unit, type, dir, daily, cadence,
+       primary: !!primary, from: '2026-08-01', to: null, active: true });
+  const kpis = [
+    K('p2','Team revenue closed','INR','Volume','Higher is better',40000,'Monthly',true),
+    K('p2','Qualified pipeline added','INR','Volume','Higher is better',120000,'Weekly'),
+    K('p2','Deals with no activity >7 days','Count','Rate','Lower is better',0,'Weekly'),
+    K('p3','New leads contacted','Count','Volume','Higher is better',25,'Daily',true),
+    K('p3','Meetings / demos booked','Count','Volume','Higher is better',3,'Weekly'),
+    K('p3','Proposals sent','Count','Volume','Higher is better',2,'Weekly'),
+    K('p3','Revenue closed','INR','Volume','Higher is better',15000,'Monthly'),
+    K('p4','Qualified leads generated','Count','Volume','Higher is better',20,'Weekly',true),
+    K('p4','Cost per qualified lead','INR','Rate','Lower is better',350,'Weekly'),
+    K('p4','Ad spend utilisation vs plan','%','Rate','Higher is better',0.95,'Weekly'),
+    K('p5','Posts published','Count','Volume','Higher is better',3,'Weekly',true),
+    K('p5','Engagement rate','%','Rate','Higher is better',0.04,'Weekly'),
+    K('p5','Comments / DMs answered within 24h','%','Rate','Higher is better',1,'Weekly'),
+    K('p6','Orders / requests processed','Count','Volume','Higher is better',40,'Daily',true),
+    K('p6','On-time delivery rate','%','Rate','Higher is better',0.98,'Weekly'),
+    K('p6','Open escalations at day end','Count','Rate','Lower is better',0,'Daily'),
+    K('p6','Average turnaround time','Hours','Rate','Lower is better',24,'Weekly'),
+    K('p7','Collections received','INR','Volume','Higher is better',20000,'Monthly',true),
+    K('p7','Invoices overdue >30 days','Count','Rate','Lower is better',0,'Weekly'),
+    K('p7','Books closed same day','%','Rate','Higher is better',1,'Weekly'),
+    K('p7','Filings missed','Count','Rate','Lower is better',0,'Monthly'),
+    K('p8','Candidates moved a stage','Count','Volume','Higher is better',5,'Weekly',true),
+    K('p8','Time to hire','Days','Rate','Lower is better',30,'Monthly'),
+    K('p8','Queries answered within 24h','%','Rate','Higher is better',1,'Weekly'),
+    K('p8','Unplanned attrition','Count','Rate','Lower is better',0,'Monthly'),
+    K('p1','EOD reports responded to','%','Rate','Higher is better',1,'Daily',true),
+    K('p1','Blockers cleared within 24h','%','Rate','Higher is better',1,'Weekly'),
+    K('p1','Company revenue','INR','Volume','Higher is better',100000,'Monthly'),
+  ];
+  const tasks = [
+    { id:'t1', code:'TSK-001', title:'Rebuild the sales proposal template with new pricing',
+      owner:'p3', accountable:'p1', by:'p1', dept:'Sales', priority:'P2 - Important', status:'On Track',
+      assigned:'2026-08-09', due:'2026-08-17T19:30', est:6, type:'Assigned', visibility:'Team',
+      chain:[], supports:[], verb:'Direct', pendingWith:null, respondBy:null },
+    { id:'t2', code:'TSK-002', title:'Set up automated lead-source tagging in CRM',
+      owner:'p4', accountable:'p1', by:'p1', dept:'Marketing', priority:'P1 - Critical', status:'At Risk',
+      assigned:'2026-08-04', due:'2026-08-13T19:30', est:8, type:'Assigned', visibility:'Team',
+      chain:[], supports:[], verb:'Direct', pendingWith:null, respondBy:null },
+    { id:'t3', code:'TSK-003', title:'Document the order fulfilment SOP end to end',
+      owner:'p6', accountable:'p1', by:'p1', dept:'Operations', priority:'P3 - Nice to have', status:'Not Started',
+      assigned:'2026-08-12', due:'2026-08-26T19:30', est:10, type:'Assigned', visibility:'Team',
+      chain:[], supports:[], verb:'Direct', pendingWith:null, respondBy:null },
+  ];
+  const closes = [
+    { id:'c1', person:'p3', date:'2026-08-13', dept:'Sales', fixedDue:5, fixedDone:5,
+      metric:'New leads contacted', target:25, dir:'Higher is better', actual:28,
+      onTrack:2, atRisk:0, doneToday:1, reactive:0.5, tags:[], blocker:false,
+      top3:['Close 2 pending proposals','Follow up ABC Ltd','20 outbound calls'],
+      onTime:true, reviewed:true, reviewedBy:'p2' },
+    { id:'c2', person:'p4', date:'2026-08-13', dept:'Marketing', fixedDue:5, fixedDone:4,
+      metric:'Qualified leads generated', target:20, dir:'Higher is better', actual:14,
+      onTrack:1, atRisk:1, doneToday:0, reactive:2, tags:['Systems down'], blocker:true,
+      top3:['Fix form','Relaunch paused campaign','Creative test on Set B'],
+      onTime:true, reviewed:true, reviewedBy:'p1' },
+    { id:'c3', person:'p6', date:'2026-08-13', dept:'Operations', fixedDue:5, fixedDone:5,
+      metric:'Orders / requests processed', target:40, dir:'Higher is better', actual:37,
+      onTrack:2, atRisk:0, doneToday:1, reactive:1.5, tags:['Client escalation'], blocker:false,
+      top3:['Clear backlog of 3 orders','Vendor call at 11','SOP draft'],
+      onTime:false, reviewed:true, reviewedBy:'p1' },
+  ];
+  const blockers = [
+    { id:'b1', raisedBy:'p4', unblocker:'p6', closeId:'c2', taskId:null,
+      description:'Landing page form broken since morning, leads not capturing',
+      severity:'High', raisedAt:'2026-08-13T19:20:00+05:30', slaDue:'2026-08-14T19:20:00+05:30',
+      firstResponse:null, resolvedAt:null, escalatedAt:null },
+  ];
+  return {
+    v: 1, people, charters, kpis, tasks, closes, blockers,
+    ticks: {},          // { 'YYYY-MM-DD|dutyId': true }
+    asks: [], kudos: [], approvals: [], comments: [], audit: [], handovers: [],
+    settings: { wdWeek: 6, wdMonth: 26, open: '18:00', close: '19:30', grace: '09:00',
+                sla: 24, peerHours: 12, weeklyOff: [7], diagnosticUntil: addDays(todayISO(), 28) },
+    me: 'p1', seq: { task: 3 },
+  };
+}
+
+/* ── store ─────────────────────────────────────────────────────────────── */
+const KEY = '5c-pulse-v1';
+let S;
+function load() {
+  try { const raw = localStorage.getItem(KEY); S = raw ? JSON.parse(raw) : seed(); }
+  catch (e) { S = seed(); }
+  if (!S || S.v !== 1) S = seed();
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function audit(action, entity, detail) {
+  S.audit.unshift({ at: new Date().toISOString(), actor: S.me, action, entity, detail });
+  S.audit = S.audit.slice(0, 400);
+}
+const me = () => S.people.find(p => p.id === S.me);
+const person = id => S.people.find(p => p.id === id);
+const nameOf = id => (person(id) || {}).name || '—';
+const first = id => nameOf(id).split(' ')[0];
+function chainOf(id) { const out = []; let c = person(id); let g = 0;
+  while (c && c.boss && g++ < 12) { out.push(c.boss); c = person(c.boss); } return out; }
+const manages = (mgr, target) => chainOf(target).includes(mgr);
+const isOwner = a => a.role === 'Owner';
+const hasCap = (a, c) => (a.caps || []).includes(c);
+const deptHeads = dept => S.people.filter(p => p.dept === dept && p.role === 'Department Head' && p.status !== 'Deactivated');
+
+/* ── lib/permissions.ts, ported verbatim in behaviour ──────────────────── */
+function canAssignTo(actor, target) {
+  if (target.status === 'Deactivated') return null;
+  if (actor.id === target.id) return 'Direct';
+  if (isOwner(actor)) return 'Direct';
+  if (actor.role === 'Observer') return null;
+  if (manages(target.id, actor.id)) return 'Ask';
+  if (actor.role === 'Restricted') return null;
+  if (actor.dept === target.dept) {
+    if (actor.role === 'Department Head') return 'Direct';
+    if (manages(actor.id, target.id)) return 'Direct';
+    return 'Peer Request';
+  }
+  return 'Cross-department Request';
+}
+function canViewTask(actor, t) {
+  if (isOwner(actor)) return true;
+  if ([t.owner, t.accountable, t.by].includes(actor.id)) return true;
+  if (t.pendingWith === actor.id) return true;
+  if ((t.supports || []).some(s => s.person === actor.id)) return true;
+  if (actor.role === 'Observer') return false;
+  if (t.visibility === 'Private') return false;
+  if (actor.role === 'Restricted') return false;
+  if (manages(actor.id, t.owner)) return true;
+  if (t.visibility === 'Team') return actor.dept === t.dept;
+  return actor.dept === t.dept && ['Department Head', 'Team Lead'].includes(actor.role);
+}
+const canViewDayClose = (actor, pid) =>
+  actor.id === pid || isOwner(actor) || manages(actor.id, pid) ||
+  (actor.role === 'Department Head' && actor.dept === person(pid).dept);
+const canReviewDayClose = canViewDayClose;
+const canViewBlocker = (actor, b) =>
+  isOwner(actor) || [b.raisedBy, b.unblocker].includes(actor.id) ||
+  manages(actor.id, b.raisedBy) || manages(actor.id, b.unblocker);
+const canEditCharter = (actor, pid) =>
+  isOwner(actor) || (actor.role === 'Department Head' && actor.dept === person(pid).dept);
+const canViewCharter = (actor, pid) =>
+  actor.id === pid || isOwner(actor) || manages(actor.id, pid) ||
+  (actor.dept === person(pid).dept && ['Department Head', 'Team Lead'].includes(actor.role));
+const canViewKpi = (actor, pid) =>
+  actor.id === pid || isOwner(actor) || manages(actor.id, pid) ||
+  (actor.dept === person(pid).dept && ['Department Head', 'Team Lead'].includes(actor.role)) ||
+  hasCap(actor, 'finance_admin');
+const canSetKpi = (actor, pid) =>
+  isOwner(actor) || (actor.role === 'Department Head' && actor.dept === person(pid).dept);
+const canManagePeople = actor => isOwner(actor) || hasCap(actor, 'people_admin');
+function rollupScope(actor) {
+  if (actor.role === 'Owner') return { kind: 'all' };
+  if (['Department Head', 'Team Lead'].includes(actor.role)) return { kind: 'department', dept: actor.dept };
+  if (actor.role === 'Observer') return { kind: 'aggregate' };
+  return { kind: 'self' };
+}
+function accessPreview(name, role, caps) {
+  const f = name.split(' ')[0], bits = [];
+  if (role === 'Owner') bits.push(`${f} will see everything and can do everything, including access changes.`);
+  if (role === 'Department Head') bits.push(`${f} will see their whole department, other departments at rollup level only, assign to anyone in their department, review Day Closes, and edit their department's charters and targets.`);
+  if (role === 'Team Lead') bits.push(`${f} will see their pod fully, assign to pod members, review their Day Closes, and propose (not set) targets.`);
+  if (role === 'Member') bits.push(`${f} will see their own work and teammates' task and Day Close status, submit a daily close, and send peer requests. They cannot assign to anyone but themselves.`);
+  if (role === 'Restricted') bits.push(`${f} will see only tasks they own or support and their own Day Close. No directory, no rollups, no other people's data.`);
+  if (role === 'Observer') bits.push(`${f} will see rollups and trends only, in aggregate — no individual names, no free text. Read only.`);
+  if (caps.includes('people_admin')) bits.push('They can add, edit and deactivate people, and run Handovers.');
+  if (caps.includes('hr_admin')) bits.push('They can see attendance, leave and joining dates across all departments — but no commercial data.');
+  if (caps.includes('finance_admin')) bits.push('They can see revenue and collections KPI values across all departments — but no charters or Day Close text.');
+  return bits.join(' ');
+}
+
+/* ── fixed work: charter duties live today ─────────────────────────────── */
+const isWorkingDay = iso => !S.settings.weeklyOff.includes(isoDow(iso));
+function dutiesDue(pid, iso) {
+  const ch = S.charters[pid];
+  if (!ch || !isWorkingDay(iso)) return [];
+  const dow = isoDow(iso), day = Number(iso.slice(8, 10));
+  const lastOfMonth = new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7), 0)).getUTCDate();
+  return ch.duties.filter(d => {
+    if (!d.active) return false;
+    if (d.cadence === 'Daily') return true;
+    if (d.cadence === 'Weekly' || d.cadence === 'Fortnightly') return (d.mask || [1]).includes(dow);
+    if (d.cadence === 'Monthly' || d.cadence === 'Quarterly') {
+      let target = Math.min(d.monthDay || 1, lastOfMonth);
+      let probe = iso.slice(0, 8) + String(target).padStart(2, '0');
+      while (!isWorkingDay(probe) && target > 1) { target -= 1; probe = iso.slice(0, 8) + String(target).padStart(2, '0'); }
+      return probe === iso;
+    }
+    return false;
+  });
+}
+const isTicked = (pid, iso, did) => !!S.ticks[iso + '|' + did];
+const dutiesDone = (pid, iso) => dutiesDue(pid, iso).filter(d => isTicked(pid, iso, d.id)).length;
+const primaryKpi = pid => S.kpis.find(k => k.person === pid && k.primary && k.active && !k.to);
+const openTasksOf = pid => S.tasks.filter(t =>
+  t.owner === pid && t.type !== 'Fixed' &&
+  !['Completed','Dropped','Declined','Missed','Awaiting Acceptance'].includes(t.status));
+const closeFor = (pid, iso) => S.closes.find(c => c.person === pid && c.date === iso);
+const openBlockersFor = pid => S.blockers.filter(b => b.unblocker === pid && !b.resolvedAt);
+
+/* ── rollup (COUNTIFS / SUMIFS parity) ─────────────────────────────────── */
+function buildRollup(people, closes, expectedDays) {
+  const rows = people.map(p => {
+    const mine = closes.filter(c => c.person === p.id);
+    const days = mine.length;
+    const onTime = mine.filter(c => c.onTime).length;
+    const fD = mine.reduce((s, c) => s + c.fixedDue, 0);
+    const fN = mine.reduce((s, c) => s + c.fixedDone, 0);
+    const tgt = mine.reduce((s, c) => s + (c.target || 0), 0);
+    const act = mine.reduce((s, c) => s + (c.actual || 0), 0);
+    const dir = (mine.find(c => c.dir) || {}).dir || 'Higher is better';
+    const ach = days === 0 ? null : achievementPct(act, tgt, dir);
+    const fx = fixedPct(fN, fD);
+    return { id: p.id, name: p.name, dept: p.dept, days,
+      rate: expectedDays ? days / expectedDays : null,
+      onTimeRate: days === 0 ? null : onTime / days,
+      fD, fN, fx, tgt, act, ach, status: weeklyStatus(days, ach),
+      reactive: mine.reduce((s, c) => s + c.reactive, 0),
+      blockers: mine.filter(c => c.blocker).length,
+      rating: ratingInput(days, ach, fx) };
+  });
+  const total = {
+    days: rows.reduce((s, r) => s + r.days, 0),
+    fD: rows.reduce((s, r) => s + r.fD, 0), fN: rows.reduce((s, r) => s + r.fN, 0),
+    tgt: rows.reduce((s, r) => s + r.tgt, 0), act: rows.reduce((s, r) => s + r.act, 0),
+    reactive: rows.reduce((s, r) => s + r.reactive, 0),
+    blockers: rows.reduce((s, r) => s + r.blockers, 0),
+  };
+  total.fx = fixedPct(total.fN, total.fD);
+  // team total keeps the workbook's flat division (mixed directions)
+  total.ach = total.tgt === 0 ? null : total.act / total.tgt;
+  const flags = {
+    blockers: closes.filter(c => c.blocker).length,
+    notReviewed: closes.filter(c => !c.reviewed).length,
+    late: closes.filter(c => !c.onTime).length,
+    reactive: closes.reduce((s, c) => s + c.reactive, 0),
+    atRisk: closes.reduce((s, c) => s + c.atRisk, 0),
+  };
+  return { rows, total, flags };
+}
+
+/* ── §6.4 guards, fired at the moment of assigning ─────────────────────── */
+function runGuards(target, input, verb) {
+  const w = [];
+  const dueDate = input.due.slice(0, 10);
+  const p1s = S.tasks.filter(t => t.owner === target.id && t.priority === 'P1 - Critical' &&
+    !['Completed','Dropped','Declined','Missed'].includes(t.status));
+  if (input.priority === 'P1 - Critical' && p1s.length >= target.wip)
+    w.push({ code:'overload', msg:`${first(target.id)} already holds ${p1s.length} critical tasks due this week. Assign anyway?`, detail:p1s });
+  if (input.est) {
+    const sameDay = S.tasks.filter(t => t.owner === target.id && t.due.slice(0,10) === dueDate &&
+      !['Completed','Dropped','Declined','Missed'].includes(t.status))
+      .reduce((s, t) => s + (t.est || 0), 0);
+    const tot = sameDay + Number(input.est);
+    if (tot > target.capacity)
+      w.push({ code:'capacity', msg:`This puts ${first(target.id)} at ${tot % 1 ? tot.toFixed(1) : tot} hours on ${dowName(dueDate)}.` });
+  }
+  const ch = S.charters[target.id];
+  if (ch) { const hit = ch.duties.find(d => d.active && titleSimilarity(d.title, input.title) >= 0.8);
+    if (hit) w.push({ code:'charter_clash', msg:`This is already fixed work in ${first(target.id)}'s charter ("${hit.title}"). Assign as a one-off anyway?` }); }
+  if (!isWorkingDay(dueDate)) {
+    let nx = dueDate; for (let i = 0; i < 7 && !isWorkingDay(nx); i++) nx = addDays(nx, 1);
+    w.push({ code:'non_working_day', msg:`${dowName(dueDate)} is not a working day. Due ${dowName(nx)} instead?`, fix:{ due: nx } });
+  }
+  if (verb === 'Peer Request' && (new Date(input.due + ':00+05:30') - Date.now()) < 24 * 3600000)
+    w.push({ code:'same_day_peer', msg:`Due in under 24 hours — this request is marked Urgent and needs ${first(target.id)}'s acceptance.` });
+  return w;
+}
+
+/* ── SLA / clocks ──────────────────────────────────────────────────────── */
+function slaText(dueISO, resolved) {
+  if (resolved) return { text: 'Resolved', cls: 'c-ontrack' };
+  const ms = new Date(dueISO) - Date.now(), abs = Math.abs(ms);
+  const h = Math.floor(abs / 3600000), m = Math.floor((abs % 3600000) / 60000);
+  const t = `${h}h ${String(m).padStart(2, '0')}m`;
+  return ms >= 0 ? { text: t + ' left', cls: '' } : { text: t + ' over', cls: 'c-overdue' };
+}
+function sweepSla() {                       // what the hourly cron does, on open
+  let changed = false;
+  S.blockers.forEach(b => {
+    if (b.resolvedAt || b.escalatedAt) return;
+    if (new Date(b.slaDue) <= Date.now()) {
+      b.escalatedAt = new Date().toISOString();
+      b.escalatedTo = person(b.unblocker).boss || S.people.find(p => p.role === 'Owner').id;
+      audit('ESCALATE', 'blocker', b.description);
+      changed = true;
+    }
+  });
+  if (changed) save();
+}
+
+/* ── tiny view helpers ─────────────────────────────────────────────────── */
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+  ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const pctText = v => v == null ? '<span class="muted">—</span>' :
+  `<span class="tab" style="color:${v < 0.8 ? 'var(--attention)' : v < 1 ? 'var(--behind)' : 'var(--on-target)'}">${Math.round(v * 100)}%</span>`;
+const pctPlain = v => v == null ? '' : (Math.round(v * 1000) / 10) + '%';
+const numFmt = v => (v || 0).toLocaleString('en-IN');
+function unitFmt(v, unit) {
+  if (v == null) return '—';
+  if (unit === '%') return (Math.round(v * 1000) / 10) + '%';
+  if (unit === 'INR') return '₹' + v.toLocaleString('en-IN');
+  return v.toLocaleString('en-IN');
+}
+const STATUS_CLS = { 'On Track':'c-ontrack','Completed':'c-ontrack','At Risk':'c-atrisk',
+  'Blocked':'c-blocked','Awaiting Acceptance':'c-await','Pending Review':'c-await',
+  'Not Started':'c-idle','Declined':'c-idle','Dropped':'c-idle','Missed':'c-idle' };
+const STATUS_MARK = { 'On Track':'●','Completed':'✓','At Risk':'◆','Blocked':'■',
+  'Awaiting Acceptance':'◔','Pending Review':'◐','Not Started':'○','Declined':'⨯','Dropped':'—','Missed':'·' };
+const statusPill = s => `<span class="pill ${STATUS_CLS[s] || 'c-idle'}"><span aria-hidden="true">${STATUS_MARK[s] || '○'}</span>${esc(s)}</span>`;
+function flagChip(f) {
+  if (!f) return '';
+  const cls = f === 'OVERDUE' ? 'c-overdue' : f === 'BLOCKED - needs you' ? 'c-blocked'
+    : f === 'Due soon' ? 'c-duesoon' : 'c-idle';
+  return `<span class="flag ${cls}">${esc(f)}</span>`;
+}
+const prioMark = p => `<abbr class="prio ${p.startsWith('P1') ? 'p1' : p.startsWith('P2') ? 'p2' : 'p3'}" title="${esc(p)}" style="text-decoration:none">${p.slice(0, 2)}</abbr>`;
+const diagnostic = () => !!S.settings.diagnosticUntil && S.settings.diagnosticUntil >= todayISO();
+
+function ringsSvg(r, centre, size, diag) {
+  const stroke = size >= 100 ? 8 : 3.5, gap = size >= 100 ? 5 : 2, c = size / 2;
+  const defs = [['closed','var(--navy-900)'],['fixed','var(--steel-600)'],['target','var(--on-target)'],
+                ['assigned','var(--navy-800)'],['clear','var(--blocked)']];
+  let out = `<div class="rings" style="width:${size}px;height:${size}px">
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="${diag ? 'Calibrating' : 'Five rings'}">`;
+  defs.forEach((d, i) => {
+    const rad = c - stroke / 2 - i * (stroke + gap);
+    out += `<circle cx="${c}" cy="${c}" r="${rad}" fill="none" stroke="var(--hairline)" stroke-width="${diag ? 1 : stroke}"/>`;
+  });
+  if (!diag) defs.forEach((d, i) => {
+    const rad = c - stroke / 2 - i * (stroke + gap), circ = 2 * Math.PI * rad;
+    const val = Math.max(0.001, Math.min(1, r[d[0]]));
+    const broken = d[0] === 'clear' && r.clear === 0;
+    out += `<circle class="arc" cx="${c}" cy="${c}" r="${rad}" fill="none"
+      stroke="${broken ? 'var(--blocked)' : d[1]}" stroke-width="${stroke}" stroke-linecap="round"
+      stroke-dasharray="${circ * val} ${circ}" transform="rotate(-90 ${c} ${c})"
+      style="--circ:${circ};--delay:${i * 80}ms"/>`;
+  });
+  out += `</svg>`;
+  if (size >= 100) out += `<div class="mid">${diag
+    ? '<span class="up">calibrating</span>'
+    : `<b>${esc(centre)}</b>`}</div>`;
+  return out + `</div>`;
+}
+
+/* ── router ────────────────────────────────────────────────────────────── */
+let route = 'my-day', routeArg = null;
+function go(r, arg) { route = r; routeArg = arg || null; window.scrollTo(0, 0); render(); }
+function tabsFor(a) {
+  const sc = rollupScope(a);
+  const t = [['my-day','My Day'],['board','Board'],['day-close','Day Close']];
+  if (sc.kind === 'all' || sc.kind === 'department') t.push(['review','Review']);
+  t.push(['blockers','Blockers'],['rollups','Rollups'],['charters','Charters'],['targets','Targets']);
+  if (canManagePeople(a) || ['Owner','Department Head'].includes(a.role)) t.push(['people','People']);
+  if (isOwner(a)) t.push(['settings','Settings']);
+  return t;
+}
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.innerHTML = `<div class="toast">${esc(msg)}</div>`;
+  clearTimeout(toast.t); toast.t = setTimeout(() => { el.innerHTML = ''; }, 2600);
+}
+function modal(html) { document.getElementById('modal').innerHTML = html ? `<div class="sheet" onclick="if(event.target===this)modal('')">${html}</div>` : ''; }
+
+/* ══ SCREENS ════════════════════════════════════════════════════════════ */
+
+function myDay() {
+  const a = me(), t = todayISO();
+  const duties = dutiesDue(a.id, t), done = dutiesDone(a.id, t);
+  const open = openTasksOf(a.id);
+  const overdue = open.filter(x => isOverdue(x.due, x.status));
+  const dueToday = open.filter(x => daysLeft(x.due) === 0 && !overdue.includes(x));
+  const close = closeFor(a.id, t);
+  const blockersOnMe = openBlockersFor(a.id).filter(b => canViewBlocker(a, b));
+  const requests = S.tasks.filter(x => x.pendingWith === a.id && x.status === 'Awaiting Acceptance');
+  const asks = S.asks.filter(x => x.to === a.id && x.status === 'Open');
+  const approvals = S.approvals.filter(x => x.approver === a.id && x.decision === 'Pending');
+  const pastSla = blockersOnMe.filter(b => new Date(b.slaDue) < Date.now()).length;
+  const kpi = primaryKpi(a.id);
+  const ach = close ? achievementPct(close.actual, close.target, close.dir) : null;
+  const rings = computeRings({ submitted: !!close, fixedDone: done, fixedDue: duties.length,
+    achievement: close ? ach : null, assignedOpen: open.length, assignedOverdue: overdue.length,
+    blockersPastSla: pastSla });
+  const lastClose = S.closes.filter(c => c.person === a.id && c.date < t).sort((x, y) => y.date.localeCompare(x.date))[0];
+  const inbox = blockersOnMe.length + requests.length + asks.length + approvals.length;
+  const afterOpen = minutesNow() >= 18 * 60;
+
+  const hour = nowLocal().getUTCHours();
+  const greet = hour < 12 ? 'Good morning,' : hour < 17 ? 'Good afternoon,' : 'Good evening,';
+
+  let h = `<div class="stack">
+    <div class="between">
+      <div>
+        <h1>${greet} ${esc(first(a.id))}</h1>
+        <p class="muted">${esc(fmtDay(t))}</p>
+      </div>
+      <div class="row">
+        ${afterOpen && !close ? `<span class="tab s4" style="color:${countdownAmber() ? 'var(--behind)' : 'var(--ink-muted)'}">${countdownText()}</span>` : ''}
+        <button class="btn sec sm" onclick="go('assign')">New task</button>
+        <button class="btn sec sm" onclick="go('assign','ask')">Ask someone</button>
+        <button class="btn sm" onclick="go('day-close')">${close ? 'Edit my close' : 'Close my day'}</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:18px" class="mdgrid">
+      <div class="card" style="padding:20px;display:flex;flex-direction:column;align-items:center;gap:10px">
+        ${ringsSvg(rings, ach == null ? (close ? '—' : 'open') : Math.round(ach * 100) + '%', 160, diagnostic())}
+        <div class="legend">
+          <i style="color:var(--navy-900)">Closed</i><i style="color:var(--steel-600)">Fixed</i>
+          <i style="color:var(--on-target)">Target</i><i style="color:var(--navy-800)">Assigned</i>
+          <i style="color:var(--blocked)">Clear</i>
+        </div>
+      </div>
+
+      <div class="card">
+        <header><h3>Today&rsquo;s fixed work</h3><span class="tab s5 muted">${done}/${duties.length}</span></header>
+        <div class="body flush">`;
+  if (!duties.length) h += `<div class="empty"><p>No fixed duties spawn today.</p><p class="muted s5">Charter items appear here each working morning.</p></div>`;
+  else { h += `<ul class="list">`;
+    duties.forEach(d => { const on = isTicked(a.id, t, d.id);
+      h += `<li style="padding:2px 10px"><button class="tick" role="checkbox" aria-checked="${on}" onclick="toggleDuty('${d.id}')">
+        <span class="box" aria-hidden="true">${on ? '✓' : ''}</span>
+        <span><span class="tt">${esc(d.title)}</span><br><span class="s6 muted">Done means: ${esc(d.dod)}</span></span>
+      </button></li>`; });
+    h += `</ul>`; }
+  h += `</div></div></div>`;
+
+  if (inbox) {
+    h += `<div class="card"><header><h3>Inbox</h3><span class="tab s5 muted">${inbox} waiting on you</span></header>
+      <div class="body flush"><ul class="list">`;
+    blockersOnMe.forEach(b => { const s = slaText(b.slaDue, false);
+      h += `<li><span class="dot" style="background:var(--blocked)"></span>
+        <div style="flex:1;min-width:0"><p class="s4"><b>${esc(nameOf(b.raisedBy))}</b> is blocked: ${esc(b.description)}</p>
+        <span class="tab s5 ${s.cls}">${s.text}</span>${b.escalatedAt ? ' <span class="pill c-blocked">Escalated</span>' : ''}</div>
+        ${b.firstResponse ? '<span class="s5" style="color:var(--on-target)">On it</span>'
+          : `<button class="btn sm" onclick="gotThis('${b.id}')">I&rsquo;ve got this</button>`}</li>`; });
+    requests.forEach(r => { const s = r.respondBy ? slaText(r.respondBy, false) : null;
+      h += `<li><span class="dot" style="background:var(--steel-600)"></span>
+        <div style="flex:1;min-width:0"><p class="s4"><b>${esc(nameOf(r.by))}</b> ${r.verb === 'Cross-department Request' ? 'requests your team:' : 'asks you:'} ${esc(r.title)}${r.urgent ? ' <b style="color:var(--behind)">· Urgent</b>' : ''}</p>
+        ${s ? `<span class="tab s5 ${s.cls}">${s.text}</span>` : ''}</div>
+        <button class="btn sm" onclick="respond('${r.id}','accept')">Accept</button>
+        <button class="btn sec sm" onclick="declinePrompt('${r.id}')">Decline…</button></li>`; });
+    approvals.forEach(x => {
+      h += `<li><span class="dot" style="background:var(--behind)"></span>
+        <div style="flex:1;min-width:0"><p class="s4"><b>${esc(nameOf(x.by))}</b> needs approval: ${esc(x.context)}</p></div>
+        <button class="btn sm" onclick="decideApproval('${x.id}','Approved')">Approve</button>
+        <button class="btn sec sm" onclick="decideApproval('${x.id}','Declined')">Decline…</button></li>`; });
+    asks.forEach(x => {
+      h += `<li><span class="dot" style="background:var(--steel-300)"></span>
+        <div style="flex:1;min-width:0"><p class="s4"><b>${esc(nameOf(x.from))}</b> asks: ${esc(x.body)}</p></div>
+        <button class="btn sec sm" onclick="answerAsk('${x.id}')">Answer</button>
+        <button class="btn ghost sm" onclick="triage('${x.id}','Declined')">Decline</button></li>`; });
+    h += `</ul></div></div>`;
+  }
+
+  h += `<div class="card"><header><h3>Due today &amp; overdue</h3>
+    <button class="btn ghost sm" onclick="go('board')">Board →</button></header><div class="body flush">`;
+  if (!overdue.length && !dueToday.length)
+    h += `<div class="empty"><p>Nothing assigned to you.</p><p class="muted s5">Add your own, or ask your manager for the next thing.</p></div>`;
+  else { h += `<ul class="list">`;
+    [...overdue, ...dueToday].forEach(x => {
+      h += `<li style="cursor:pointer" onclick="go('task','${x.id}')">${prioMark(x.priority)}
+        <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.title)}</span>
+        ${flagChip(taskFlag(x.due, x.status))}${statusPill(x.status)}</li>`; });
+    h += `</ul>`; }
+  h += `</div></div>`;
+
+  if (lastClose && lastClose.top3 && lastClose.top3.length)
+    h += `<div class="card"><header><h3>Your top 3, from last night</h3></header>
+      <div class="body"><ol class="ol">${lastClose.top3.map(x => `<li>${esc(x)}</li>`).join('')}</ol></div></div>`;
+
+  const myKudos = S.kudos.filter(k => k.to === a.id).slice(0, 3);
+  if (myKudos.length) h += `<div class="card"><header><h3>Kudos</h3></header><div class="body stack">
+    ${myKudos.map(k => `<div class="kudos">💛 <b>${esc(nameOf(k.from))}</b>: ${esc(k.note)}</div>`).join('')}</div></div>`;
+
+  return h + `</div><style>@media(max-width:820px){.mdgrid{grid-template-columns:1fr !important}}</style>`;
+}
+function countdownText() {
+  const mins = (19 * 60 + 30) - minutesNow();
+  if (mins <= 0) return 'Window closed — grace until 09:00';
+  return `${Math.floor(mins / 60) ? Math.floor(mins / 60) + 'h ' : ''}${mins % 60}m to close`;
+}
+const countdownAmber = () => { const m = (19 * 60 + 30) - minutesNow(); return m > 0 && m <= 15; };
+
+/* ── Day Close ─────────────────────────────────────────────────────────── */
+let dc = null;
+function dayClose() {
+  const a = me(), t = todayISO();
+  if (!isWorkingDay(t)) return card(`<div class="empty"><p>No Day Close today.</p>
+    <p class="muted s5">On weekends and holidays the form does not open, and nothing counts as missed.</p></div>`);
+  const existing = closeFor(a.id, t);
+  if (existing && !dc) {
+    const streak = streakOf(a.id);
+    return card(`<div class="empty" style="padding:44px 16px">
+      <p style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--on-target)">Today is closed.</p>
+      <p class="muted s4" style="margin-top:6px">${streak} day${streak === 1 ? '' : 's'} in a row. Edits stay open until 09:00 tomorrow.</p>
+      <div class="row" style="justify-content:center;margin-top:14px">
+        <button class="btn sec" onclick="editClose()">Edit it</button>
+        <button class="btn" onclick="go('my-day')">Back to My Day</button></div></div>`);
+  }
+  const duties = dutiesDue(a.id, t);
+  const kpi = primaryKpi(a.id);
+  const open = openTasksOf(a.id);
+  if (!dc) dc = {
+    ticked: duties.filter(d => isTicked(a.id, t, d.id)).map(d => d.id),
+    actual: existing ? String(existing.actual ?? '') : '',
+    pills: {}, reactive: existing ? existing.reactive : 0, tags: existing ? [...existing.tags] : [],
+    blocked: false, desc: '', unblocker: '', severity: 'Medium',
+    top3: existing ? [...existing.top3, '', '', ''].slice(0, 3)
+      : open.slice(0, 3).map(x => x.title).concat(['', '', '']).slice(0, 3),
+    openedAt: Date.now(),
+  };
+  const ringPct = (() => { const v = parseFloat(dc.actual);
+    if (!kpi || isNaN(v)) return 0;
+    if (kpi.dir === 'Lower is better') return v === 0 ? 1 : Math.min(1, kpi.daily / v);
+    return kpi.daily ? Math.min(1, v / kpi.daily) : 0; })();
+
+  let h = `<div style="max-width:640px;margin:0 auto" class="stack">
+    <div class="between">
+      <div><h1>${esc(fmtDay(t))}</h1><p class="muted">Close your day</p></div>
+      <span class="tab s4" style="color:${countdownAmber() ? 'var(--behind)' : 'var(--ink-muted)'}">${countdownText()}</span>
+    </div>`;
+
+  h += `<div class="card"><div class="body">
+    ${sect(1, 'Fixed work', `${dc.ticked.length}/${duties.length}`)}`;
+  if (!duties.length) h += `<p class="s5 muted">No fixed duties today.</p>`;
+  else duties.forEach(d => { const on = dc.ticked.includes(d.id);
+    h += `<button class="tick" role="checkbox" aria-checked="${on}" onclick="dcTick('${d.id}')">
+      <span class="box" aria-hidden="true">${on ? '✓' : ''}</span>
+      <span><span class="tt">${esc(d.title)}</span><br><span class="s6 muted">${esc(d.dod)}</span></span></button>`; });
+  h += `</div></div>`;
+
+  h += `<div class="card"><div class="body">
+    ${sect(2, 'Your number', kpi ? `${esc(kpi.metric)} · target ${unitFmt(kpi.daily, kpi.unit)}` : 'No primary KPI set')}`;
+  if (kpi) h += `<div class="row" style="gap:16px">
+      <input class="bignum" type="number" step="any" min="0" inputmode="decimal" value="${esc(dc.actual)}"
+        aria-label="${esc(kpi.metric)} actual" oninput="dc.actual=this.value;renderSoft()" placeholder="0"/>
+      <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true">
+        <circle cx="28" cy="28" r="24" fill="none" stroke="var(--hairline)" stroke-width="6"/>
+        <circle cx="28" cy="28" r="24" fill="none" stroke="var(--on-target)" stroke-width="6" stroke-linecap="round"
+          stroke-dasharray="${2 * Math.PI * 24 * ringPct} ${2 * Math.PI * 24}" transform="rotate(-90 28 28)"
+          style="transition:stroke-dasharray .15s ease-out"/></svg>
+      <span class="tab s4 muted">${Math.round(ringPct * 100)}%</span></div>`;
+  else h += `<p class="s5 muted">Ask your manager to mark one KPI as primary.</p>`;
+  h += `</div></div>`;
+
+  h += `<div class="card"><div class="body">${sect(3, 'Assigned work', `${open.length} open`)}`;
+  if (!open.length) h += `<p class="s5 muted">Nothing assigned and open.</p>`;
+  else { h += `<div class="stack" style="gap:9px">`;
+    open.forEach(x => { const cur = dc.pills[x.id] || (['On Track','At Risk','Completed'].includes(x.status) ? x.status : 'On Track');
+      h += `<div class="row" style="gap:9px"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.title)}</span>
+        <span class="seg" role="radiogroup" aria-label="${esc(x.title)} status">
+        ${['On Track','At Risk','Completed'].map(s =>
+          `<button class="${s === 'At Risk' ? 'warn' : 'ok'}" role="radio" aria-checked="${cur === s}"
+            aria-pressed="${cur === s}" onclick="dc.pills['${x.id}']='${s}';renderSoft()">${s}</button>`).join('')}
+        </span></div>`; });
+    h += `</div>`; }
+  h += `</div></div>`;
+
+  h += `<div class="card"><div class="body">${sect(4, 'Reactive hours', 'what pulled you off plan')}
+    <div class="step"><button class="btn sec sm" aria-label="less" onclick="dc.reactive=Math.max(0,dc.reactive-0.5);renderSoft()">−</button>
+      <b class="tab">${dc.reactive}</b>
+      <button class="btn sec sm" aria-label="more" onclick="dc.reactive=Math.min(24,dc.reactive+0.5);renderSoft()">+</button>
+      <span class="s5 muted">hours</span></div>`;
+  if (dc.reactive > 0) h += `<div class="chips" style="margin-top:11px">
+    ${['Client escalation','Internal request','Systems down','Meeting overrun'].map(c =>
+      `<button class="chip" aria-pressed="${dc.tags.includes(c)}" onclick="dcTag('${c}')">${c}</button>`).join('')}</div>`;
+  h += `</div></div>`;
+
+  h += `<div class="card"><div class="body">${sect(5, 'Blocked by anything?')}
+    <div class="seg">
+      <button aria-pressed="${!dc.blocked}" onclick="dc.blocked=false;renderSoft()" style="padding:6px 16px;font-size:15px">No</button>
+      <button aria-pressed="${dc.blocked}" onclick="dc.blocked=true;renderSoft()" style="padding:6px 16px;font-size:15px">Yes</button>
+    </div>`;
+  if (dc.blocked) h += `<div class="stack" style="gap:11px;margin-top:12px">
+    <textarea placeholder="What is stopping you?" oninput="dc.desc=this.value">${esc(dc.desc)}</textarea>
+    <div class="grid2">
+      <select aria-label="Who can unblock" onchange="dc.unblocker=this.value">
+        <option value="">Who can unblock?</option>
+        ${S.people.filter(p => p.id !== a.id && p.status !== 'Deactivated').map(p =>
+          `<option value="${p.id}" ${dc.unblocker === p.id ? 'selected' : ''}>${esc(p.name)} · ${esc(p.dept)}</option>`).join('')}
+      </select>
+      <select aria-label="Severity" onchange="dc.severity=this.value">
+        ${['Low','Medium','High'].map(s => `<option ${dc.severity === s ? 'selected' : ''}>${s}</option>`).join('')}
+      </select>
+    </div>
+    <div class="guard"><span aria-hidden="true">▲</span><div>Submitting starts a 24-hour clock, tells them now, and copies both managers.
+      Raising a blocker counts for you, never against you.</div></div></div>`;
+  h += `</div></div>`;
+
+  h += `<div class="card"><div class="body">${sect(6, 'Top 3 for tomorrow', "becomes tomorrow's My Day")}
+    <div class="stack" style="gap:8px">
+      ${[0,1,2].map(i => `<input type="text" placeholder="${i + 1}." value="${esc(dc.top3[i] || '')}"
+        oninput="dc.top3[${i}]=this.value" aria-label="Top 3 item ${i + 1}"/>`).join('')}
+    </div></div></div>`;
+
+  const blockOk = !dc.blocked || (dc.desc.trim() && dc.unblocker);
+  h += `<button class="btn lg" ${blockOk ? '' : 'disabled'} onclick="submitClose()">Submit ${esc(first(a.id))}&rsquo;s day</button>
+    <p class="s6 muted" style="text-align:center">Everything you type is saved as you go.</p></div>`;
+  return h;
+}
+const sect = (n, title, meta) => `<div class="row" style="justify-content:space-between;align-items:baseline;margin-bottom:11px">
+  <h3><span class="stepno">${n}</span>${esc(title)}</h3>${meta ? `<span class="s6 muted">${esc(meta)}</span>` : ''}</div>`;
+const card = inner => `<div class="card">${inner}</div>`;
+function dcTick(id) { const i = dc.ticked.indexOf(id); i < 0 ? dc.ticked.push(id) : dc.ticked.splice(i, 1); renderSoft(); }
+function dcTag(c) { const i = dc.tags.indexOf(c); i < 0 ? dc.tags.push(c) : dc.tags.splice(i, 1); renderSoft(); }
+function editClose() { const a = me(), t = todayISO(); S.closes = S.closes.filter(c => !(c.person === a.id && c.date === t)); dc = null; save(); render(); }
+function streakOf(pid) {
+  let n = 0, cur = todayISO();
+  for (let i = 0; i < 60; i++) {
+    if (S.closes.some(c => c.person === pid && c.date === cur)) n++;
+    else if (isWorkingDay(cur)) break;
+    cur = addDays(cur, -1);
+  }
+  return n;
+}
+function submitClose() {
+  const a = me(), t = todayISO(), duties = dutiesDue(a.id, t), kpi = primaryKpi(a.id);
+  dc.ticked.forEach(id => { S.ticks[t + '|' + id] = true; });
+  duties.forEach(d => { if (!dc.ticked.includes(d.id)) delete S.ticks[t + '|' + d.id]; });
+  Object.entries(dc.pills).forEach(([tid, st]) => { const task = S.tasks.find(x => x.id === tid); if (task) task.status = st; });
+  const open = S.tasks.filter(x => x.owner === a.id && x.type !== 'Fixed');
+  const close = {
+    id: 'c' + Date.now(), person: a.id, date: t, dept: a.dept,
+    fixedDue: duties.length, fixedDone: dc.ticked.length,
+    metric: kpi ? kpi.metric : null, target: kpi ? kpi.daily : null, dir: kpi ? kpi.dir : null,
+    actual: dc.actual === '' ? null : Number(dc.actual),
+    onTrack: open.filter(x => ['On Track','Not Started'].includes(x.status)).length,
+    atRisk: open.filter(x => ['At Risk','Blocked'].includes(x.status)).length,
+    doneToday: Object.values(dc.pills).filter(v => v === 'Completed').length,
+    reactive: dc.reactive, tags: [...dc.tags], blocker: dc.blocked,
+    top3: dc.top3.filter(x => x.trim()),
+    onTime: minutesNow() <= 19 * 60 + 30, reviewed: false, reviewedBy: null,
+    seconds: Math.round((Date.now() - dc.openedAt) / 1000),
+  };
+  S.closes.push(close);
+  if (dc.blocked) {
+    S.blockers.push({ id: 'b' + Date.now(), raisedBy: a.id, unblocker: dc.unblocker, closeId: close.id,
+      taskId: null, description: dc.desc.trim(), severity: dc.severity,
+      raisedAt: new Date().toISOString(),
+      slaDue: new Date(Date.now() + S.settings.sla * 3600000).toISOString(),
+      firstResponse: null, resolvedAt: null, escalatedAt: null });
+  }
+  audit('SUBMIT', 'day_close', t);
+  save();
+  const secs = close.seconds;
+  dc = null;
+  toast(`Day closed in ${Math.floor(secs / 60)}m ${secs % 60}s · ${streakOf(a.id)} day streak`);
+  go('my-day');
+}
+
+/* ── Board ─────────────────────────────────────────────────────────────── */
+let boardView = 'kanban', boardMine = false, boardOverdue = false;
+function board() {
+  const a = me();
+  let list = S.tasks.filter(t => t.type !== 'Fixed' && canViewTask(a, t) &&
+    !['Declined','Missed','Dropped'].includes(t.status));
+  if (boardMine) list = list.filter(t => t.owner === a.id);
+  if (boardOverdue) list = list.filter(t => isOverdue(t.due, t.status));
+  list.sort((x, y) => x.due.localeCompare(y.due));
+  const lanes = ['Awaiting Acceptance','Not Started','On Track','At Risk','Blocked','Completed'];
+
+  let h = `<div class="stack"><div class="between"><h1>Board</h1><div class="row s5">
+    <button class="chip" aria-pressed="${boardView === 'kanban'}" onclick="boardView='kanban';render()">Kanban</button>
+    <button class="chip" aria-pressed="${boardView === 'list'}" onclick="boardView='list';render()">List</button>
+    <span class="muted">·</span>
+    <button class="chip" aria-pressed="${boardMine}" onclick="boardMine=!boardMine;render()">My work</button>
+    <button class="chip" aria-pressed="${boardOverdue}" onclick="boardOverdue=!boardOverdue;render()">Overdue only</button>
+    <button class="btn sm" onclick="go('assign')">New task</button></div></div>`;
+
+  if (!list.length) h += card(`<div class="empty"><p>Nothing on the board with these filters.</p>
+    <p class="muted s5">Clear a filter, or hand something to someone with New task.</p></div>`);
+  else if (boardView === 'kanban') {
+    h += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:12px">`;
+    lanes.forEach(l => { const items = list.filter(t => t.status === l);
+      h += `<section aria-label="${l}"><h3 class="s5 muted" style="display:flex;justify-content:space-between;margin-bottom:8px;font-family:var(--font-body);font-weight:600">
+        ${l}<span class="tab">${items.length}</span></h3><div class="stack" style="gap:8px">`;
+      items.forEach(t => h += `<button class="card" style="padding:11px;text-align:left;cursor:pointer;width:100%;background:var(--surface)"
+        onclick="go('task','${t.id}')">
+        <div class="row" style="justify-content:space-between"><span class="tab s6 muted">${t.code}</span>${prioMark(t.priority)}</div>
+        <p class="s5" style="margin-top:5px;line-height:1.35">${esc(t.title)}</p>
+        <div class="row" style="justify-content:space-between;margin-top:8px">
+          <span class="s6 muted">${esc(first(t.owner))}</span>${flagChip(taskFlag(t.due, t.status))}</div></button>`);
+      h += `</div></section>`; });
+    h += `</div>`;
+  } else {
+    h += `<div class="card scroll"><table><thead><tr>
+      <th>Task ID</th><th>Task Description</th><th>Owner</th><th>Assigned By</th><th>Due Date</th>
+      <th>Priority</th><th>Status</th><th class="num">Days Left</th><th>Flag</th></tr></thead><tbody>`;
+    list.forEach(t => h += `<tr style="cursor:pointer" onclick="go('task','${t.id}')">
+      <td class="tab muted">${t.code}</td><td>${esc(t.title)}</td><td>${esc(nameOf(t.owner))}</td>
+      <td class="muted">${esc(nameOf(t.by))}</td><td class="tab">${fmtShort(t.due)}</td>
+      <td>${prioMark(t.priority)}</td><td>${statusPill(t.status)}</td>
+      <td class="num">${t.status === 'Completed' ? 'Done' : daysLeft(t.due)}</td>
+      <td>${flagChip(taskFlag(t.due, t.status))}</td></tr>`);
+    h += `</tbody></table></div>`;
+  }
+  return h + `</div>`;
+}
+
+/* ── Task detail ───────────────────────────────────────────────────────── */
+function taskDetail(id) {
+  const a = me(), t = S.tasks.find(x => x.id === id);
+  if (!t || !canViewTask(a, t)) return card(`<div class="empty"><p>Not found, or not yours to see.</p></div>`);
+  const isOwn = t.owner === a.id, isAssigner = [t.by, t.accountable].includes(a.id);
+  const canDrop = isAssigner || isOwner(a);
+  const reviewers = (t.supports || []).filter(s => s.role === 'Reviewer');
+  const unsigned = reviewers.filter(s => !s.signedOff);
+  const openAppr = S.approvals.filter(x => x.taskId === t.id && x.decision === 'Pending');
+  const myReview = reviewers.find(s => s.person === a.id && !s.signedOff);
+  const bl = S.blockers.filter(b => b.taskId === t.id);
+  const open = !['Completed','Dropped','Declined','Missed'].includes(t.status);
+  const chain = t.chain && t.chain.length ? [...t.chain, t.owner].map(nameOf).join(' → ') : null;
+
+  const gate = (ok, why, html) => ok ? html
+    : `<span title="${esc(why)}" style="display:inline-flex;opacity:.45;cursor:not-allowed">${html}</span>`;
+
+  let h = `<div style="max-width:820px;margin:0 auto" class="stack">
+    <div class="between"><div>
+      <p class="tab s5 muted">${t.code}</p><h1 style="font-size:22px">${esc(t.title)}</h1>
+      ${chain ? `<p class="s5 muted" style="margin-top:4px">Delegation: ${esc(chain)}</p>` : ''}
+    </div><div class="row">${flagChip(taskFlag(t.due, t.status))}${statusPill(t.status)}</div></div>
+
+    <div class="card"><div class="body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px">
+      ${meta('Owner', nameOf(t.owner))}${meta('Accountable', nameOf(t.accountable))}
+      ${meta('Assigned by', nameOf(t.by))}${meta('Priority', t.priority)}
+      ${meta('Due', fmtShort(t.due) + ' · ' + (t.status === 'Completed' ? 'Done' : daysLeft(t.due) + 'd left'))}
+      ${meta('Estimate', t.est ? t.est + 'h' : '—')}${meta('Visibility', t.visibility)}${meta('Type', t.type)}
+    </div></div>`;
+
+  if (t.description) h += card(`<div class="body"><p style="white-space:pre-wrap">${esc(t.description)}</p></div>`);
+
+  h += `<div class="card"><div class="body stack" style="gap:11px"><div class="row">`;
+  if (open) {
+    h += gate(isOwn || isOwner(a), 'Only the owner moves a task forward.',
+      `<button class="btn sec sm" ${t.status === 'On Track' ? 'disabled' : ''} onclick="moveTask('${t.id}','On Track')">On Track</button>`);
+    h += `<button class="btn sec sm" ${t.status === 'At Risk' ? 'disabled' : ''} onclick="moveTask('${t.id}','At Risk')">At Risk</button>`;
+    h += `<button class="btn sec sm" onclick="blockPrompt('${t.id}')">Blocked…</button>`;
+    h += gate(isOwn || isOwner(a), 'Only the owner marks their work done.',
+      `<button class="btn sm" onclick="moveTask('${t.id}','Completed')">Mark done</button>`);
+    h += gate(isOwn || isOwner(a), 'Only the current owner may delegate.',
+      `<button class="btn sec sm" onclick="delegatePrompt('${t.id}')">Delegate…</button>`);
+    h += gate(canDrop, 'Only the assigner (or the Owner) can drop a task.',
+      `<button class="btn danger sm" onclick="dropPrompt('${t.id}')">Drop…</button>`);
+  } else if (t.status === 'Completed' && canDrop) {
+    h += `<button class="btn sec sm" onclick="moveTask('${t.id}','On Track')">Reopen (7-day window)</button>`;
+  }
+  if (myReview && t.status === 'Pending Review')
+    h += `<button class="btn sm" onclick="signOff('${t.id}')">Sign off review</button>`;
+  h += `<button class="btn ghost sm" onclick="kudosPrompt('${t.owner}','${t.id}')">💛 Kudos</button>`;
+  h += `</div>`;
+  if (unsigned.length || openAppr.length) h += `<div class="guard"><span aria-hidden="true">▲</span><div>
+    Completion is gated: ${unsigned.length ? `${unsigned.length} reviewer${unsigned.length === 1 ? '' : 's'} yet to sign off` : ''}
+    ${unsigned.length && openAppr.length ? ' and ' : ''}${openAppr.length ? 'an approval is still open' : ''}.</div></div>`;
+  h += `</div></div>`;
+
+  if (bl.length) h += `<div class="card"><header><h3>Blockers</h3></header><div class="body stack" style="gap:9px">
+    ${bl.map(b => { const s = slaText(b.slaDue, !!b.resolvedAt);
+      return `<div class="row" style="justify-content:space-between"><span style="flex:1">“${esc(b.description)}” → ${esc(nameOf(b.unblocker))}</span>
+      <span class="tab s5 ${s.cls}">${s.text}</span></div>`; }).join('')}</div></div>`;
+
+  h += `<div class="card"><header><h3>Supports</h3>
+    <button class="btn sec sm" onclick="supportPrompt('${t.id}')">Add support</button></header><div class="body flush">`;
+  if (!(t.supports || []).length) h += `<div class="empty" style="padding:20px"><p class="muted s5">Nobody supporting yet.</p></div>`;
+  else h += `<ul class="list">${t.supports.map(s => `<li><span style="flex:1">${esc(nameOf(s.person))}</span>
+    <span class="s6 muted">${s.role}${s.role === 'Reviewer' && s.signedOff ? ' · signed off' : ''}</span></li>`).join('')}</ul>`;
+  h += `</div></div>`;
+
+  const cm = S.comments.filter(c => c.subject === t.id);
+  h += `<div class="card"><header><h3>Thread</h3></header><div class="body stack" style="gap:9px">
+    ${cm.map(c => `<div class="${c.system ? 's6 muted' : 's4'}"><b>${esc(nameOf(c.author))}</b> ${esc(c.body)}</div>`).join('') ||
+      '<p class="s5 muted">Nothing said yet.</p>'}
+    <form class="row" style="gap:8px" onsubmit="addComment(event,'${t.id}')">
+      <input type="text" name="body" required placeholder="Write to the thread…" style="flex:1"/>
+      <button class="btn">Send</button></form></div></div>`;
+
+  const trail = S.audit.filter(x => x.entity === 'task' && x.detail && x.detail.startsWith(t.code));
+  h += `<details class="card audit"><summary>Audit trail</summary>
+    <ul class="list">${trail.map(x => `<li class="s6 muted tab">${new Date(x.at).toLocaleString('en-IN')} · ${esc(x.action)} · ${esc(x.detail)}</li>`).join('')
+      || '<li class="s6 muted">Nothing recorded yet in this browser.</li>'}</ul></details>`;
+
+  return h + `</div>`;
+}
+const meta = (l, v) => `<div><p class="s6 up muted">${esc(l)}</p><p style="margin-top:2px">${esc(v)}</p></div>`;
+
+/* ── Assign ────────────────────────────────────────────────────────────── */
+let asg = null;
+function assign() {
+  const a = me();
+  if (!asg) asg = { title:'', desc:'', owner:a.id, priority:'P2 - Important',
+    due: addDays(todayISO(), 3), time:'19:30', est:'', visibility:'Team',
+    warnings:[], override:'', ackd:[], ask: routeArg === 'ask', askBody:'' };
+  const cands = S.people.filter(p => p.status !== 'Deactivated')
+    .map(p => ({ p, verb: canAssignTo(a, p), open: openTasksOf(p.id).length }))
+    .filter(c => c.verb);
+  const chosen = cands.find(c => c.p.id === asg.owner);
+  const verb = chosen ? chosen.verb : null;
+  const isAsk = verb === 'Ask';
+  const maxOpen = Math.max(1, ...cands.map(c => c.open));
+  const explain = {
+    'Direct':'Lands on their board immediately as Not Started.',
+    'Peer Request':'They get 12 hours to accept, decline with a reason, or counter-propose. Nothing lands until they say yes.',
+    'Cross-department Request':'Goes to their department head first — their people’s time is not free.',
+    'Ask':'A senior’s board is theirs: this sends an Ask they can convert, answer, or decline.' };
+
+  let h = `<div style="max-width:640px;margin:0 auto" class="stack">
+    <h1>${isAsk ? 'Ask someone' : 'Hand work to someone'}</h1>
+    <div class="card"><div class="body stack" style="gap:14px">
+      <label class="fld"><span>Who</span><div class="picker">`;
+  cands.forEach(c => {
+    h += `<button class="cand" aria-pressed="${asg.owner === c.p.id}" onclick="asg.owner='${c.p.id}';asg.warnings=[];asg.ackd=[];render()">
+      <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.p.name)}${c.p.id === a.id ? ' (me)' : ''}
+        <span class="muted s5">· ${esc(c.p.dept)}</span></span>
+      <span class="load" aria-label="${c.open} open tasks"><i style="width:${Math.min(100, (c.open / maxOpen) * 100)}%"></i></span>
+      <span class="tab s6 muted">${c.open}</span></button>`;
+  });
+  h += `</div></label>`;
+  if (verb && verb !== 'Direct')
+    h += `<div class="note"><b>${isAsk ? 'This becomes an Ask.' : 'This becomes a ' + verb + '.'}</b> ${explain[verb]}</div>`;
+
+  h += `<label class="fld"><span>${isAsk ? 'What do you need?' : 'Task'}</span>
+    <input type="text" value="${esc(asg.title)}" oninput="asg.title=this.value"
+      placeholder="${isAsk ? 'One line — they triage it' : 'What has to get done?'}"/></label>`;
+
+  if (isAsk) h += `<label class="fld"><span>Context (optional)</span>
+    <textarea oninput="asg.askBody=this.value" placeholder="Anything that helps them decide.">${esc(asg.askBody)}</textarea></label>`;
+  else h += `<label class="fld"><span>Detail (optional)</span>
+      <textarea oninput="asg.desc=this.value" placeholder="Definition of done, links, context.">${esc(asg.desc)}</textarea></label>
+    <div class="grid2">
+      <label class="fld"><span>Due date</span><input type="date" value="${asg.due}" oninput="asg.due=this.value;asg.warnings=[]"/></label>
+      <label class="fld"><span>Due time</span><input type="time" value="${asg.time}" oninput="asg.time=this.value"/></label>
+      <label class="fld"><span>Priority</span><select onchange="asg.priority=this.value;asg.warnings=[]">
+        ${['P1 - Critical','P2 - Important','P3 - Nice to have'].map(p => `<option ${asg.priority === p ? 'selected' : ''}>${p}</option>`).join('')}
+      </select></label>
+      <label class="fld"><span>Estimated hours</span><input type="number" min="0.5" step="0.5" value="${esc(asg.est)}"
+        oninput="asg.est=this.value;asg.warnings=[]" placeholder="drives the load meter"/></label>
+      <label class="fld"><span>Visibility</span><select onchange="asg.visibility=this.value">
+        ${['Team','Department','Private'].map(v => `<option ${asg.visibility === v ? 'selected' : ''}>${v}</option>`).join('')}
+      </select></label>
+    </div>`;
+  h += `</div></div>`;
+
+  if (asg.warnings.length) {
+    h += `<div class="stack" style="gap:9px">`;
+    asg.warnings.forEach(w => {
+      h += `<div class="guard"><span aria-hidden="true">▲</span><div>${esc(w.msg)}
+        ${w.detail ? `<ul>${w.detail.map(d => `<li>${esc(d.title)}</li>`).join('')}</ul>` : ''}
+        ${w.fix ? `<button class="fix" onclick="asg.due='${w.fix.due}';asg.warnings=asg.warnings.filter(x=>x.code!=='${w.code}');render()">Move it there</button>` : ''}
+      </div></div>`;
+    });
+    h += `<input type="text" placeholder="Reason for going ahead anyway (recorded on the task)"
+      value="${esc(asg.override)}" oninput="asg.override=this.value"/>
+      <button class="btn" ${asg.override.trim() ? '' : 'disabled'} onclick="doAssign(true)">Assign anyway</button></div>`;
+  } else {
+    const ready = asg.title.trim() && asg.owner && (isAsk || asg.due);
+    h += `<button class="btn lg" ${ready ? '' : 'disabled'} onclick="doAssign(false)">
+      ${isAsk ? 'Send the Ask' : verb === 'Direct' ? 'Assign' : 'Send ' + (verb || 'request')}</button>`;
+  }
+  return h + `</div>`;
+}
+function doAssign(overriding) {
+  const a = me(), target = person(asg.owner), verb = canAssignTo(a, target);
+  if (!verb) return toast('You cannot assign to this person.');
+  if (verb === 'Ask') {
+    S.asks.push({ id:'a' + Date.now(), from:a.id, to:target.id, status:'Open',
+      body: asg.title + (asg.askBody ? ' — ' + asg.askBody : ''), at:new Date().toISOString() });
+    audit('ASK', 'ask', asg.title); save(); asg = null;
+    toast('Ask sent. Nothing lands on their board until they convert it.');
+    return go('my-day');
+  }
+  const input = { title:asg.title, priority:asg.priority, due: asg.due + 'T' + asg.time, est: asg.est };
+  if (!overriding) {
+    const w = runGuards(target, input, verb).filter(x => !asg.ackd.includes(x.code));
+    if (w.length) { asg.warnings = w; return render(); }
+  }
+  const code = 'TSK-' + String(++S.seq.task).padStart(3, '0');
+  const urgent = verb === 'Peer Request' && (new Date(input.due + ':00+05:30') - Date.now()) < 24 * 3600000;
+  S.tasks.push({ id:'t' + Date.now(), code, title:asg.title, description:asg.desc || null,
+    owner:target.id, accountable:a.id, by:a.id, dept:target.dept, priority:asg.priority,
+    status: verb === 'Direct' ? 'Not Started' : 'Awaiting Acceptance',
+    assigned: todayISO(), due: input.due, est: asg.est ? Number(asg.est) : null,
+    type:'Assigned', visibility:asg.visibility, chain:[], supports:[], verb,
+    pendingWith: verb === 'Direct' ? null : (verb === 'Peer Request' ? target.id
+      : (deptHeads(target.dept)[0] || S.people.find(p => p.role === 'Owner')).id),
+    respondBy: verb === 'Direct' ? null
+      : new Date(Date.now() + (verb === 'Peer Request' ? S.settings.peerHours : 24) * 3600000).toISOString(),
+    urgent, override: overriding ? asg.override : null });
+  audit('CREATE', 'task', code + ' ' + asg.title + (overriding ? ' · override: ' + asg.override : ''));
+  save();
+  const msg = verb === 'Direct' ? `${code} is on ${first(target.id)}'s board.`
+    : `${code} sent as a ${verb}. The clock is running on their side.`;
+  asg = null; toast(msg); go('board');
+}
+
+/* ── Review queue ──────────────────────────────────────────────────────── */
+function review() {
+  const a = me(), sc = rollupScope(a);
+  if (sc.kind === 'self' || sc.kind === 'aggregate')
+    return card(`<div class="empty"><p>The review queue belongs to managers.</p></div>`);
+  const date = routeArg || todayISO();
+  const closes = S.closes.filter(c => c.date === date && canReviewDayClose(a, c.person));
+  let h = `<div class="stack"><div class="between">
+    <h1>Review · ${esc(fmtDay(date))}</h1>
+    <div class="row"><span class="s5 muted">${closes.filter(c => !c.reviewed).length} to review</span>
+      <form class="control" onsubmit="event.preventDefault();go('review',this.d.value)">
+        <label for="rd">Day to view:</label><input id="rd" name="d" type="date" value="${date}"/>
+        <button class="btn sm">View</button></form></div></div>`;
+  if (!closes.length) h += card(`<div class="empty"><p>No closes yet for this day.</p>
+    <p class="muted s5">They start arriving at 18:00.</p></div>`);
+  else {
+    h += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px">`;
+    closes.forEach(c => {
+      const ach = achievementPct(c.actual, c.target, c.dir);
+      const r = computeRings({ submitted:true, fixedDone:c.fixedDone, fixedDue:c.fixedDue,
+        achievement:ach, assignedOpen:c.onTrack + c.atRisk, assignedOverdue:c.atRisk, blockersPastSla:0 });
+      const bl = S.blockers.find(b => b.closeId === c.id);
+      h += `<div class="card"><div class="body">
+        <div class="row" style="align-items:flex-start;flex-wrap:nowrap">
+          ${ringsSvg(r, '', 44, diagnostic())}
+          <div style="flex:1;min-width:0">
+            <p class="s4"><b>${esc(nameOf(c.person))}</b></p>
+            <p class="s6 muted">${esc(c.dept)} · ${c.onTime ? 'on time' : 'late'}</p></div>
+          <div style="text-align:right">
+            <p class="tab s3" style="font-family:var(--font-display);font-weight:700">${diagnostic() || ach == null ? '—' : Math.round(ach * 100) + '%'}</p>
+            <p class="s6 muted">fixed ${c.fixedDone}/${c.fixedDue}</p></div></div>
+        <div class="row" style="justify-content:space-around;text-align:center;margin-top:12px">
+          <div><p class="s6 muted">Reactive</p><p class="tab s5">${c.reactive}h</p></div>
+          <div><p class="s6 muted">At risk</p><p class="tab s5">${c.atRisk}</p></div>
+          <div><p class="s6 muted">Done today</p><p class="tab s5">${c.doneToday}</p></div></div>
+        ${bl ? `<p class="s5" style="margin-top:11px;background:color-mix(in srgb,var(--blocked) 11%,transparent);
+          color:var(--blocked);border-radius:6px;padding:8px 11px">Blocked: ${esc(bl.description)}</p>` : ''}
+        ${c.top3.length ? `<ol class="ol muted" style="margin-top:11px">${c.top3.map(x => `<li>${esc(x)}</li>`).join('')}</ol>` : ''}
+        <div class="row" style="margin-top:12px">
+          ${c.reviewed ? `<span class="s5" style="color:var(--on-target)">Reviewed ✓</span>`
+            : ['👍','💪','👀'].map(e => `<button class="btn sec sm" onclick="reviewClose('${c.id}','${e}')">${e}</button>`).join('')}
+        </div></div></div>`;
+    });
+    h += `</div>`;
+  }
+  return h + `</div>`;
+}
+
+/* ── Blockers ──────────────────────────────────────────────────────────── */
+function blockers() {
+  const a = me();
+  const open = S.blockers.filter(b => !b.resolvedAt && canViewBlocker(a, b))
+    .sort((x, y) => x.slaDue.localeCompare(y.slaDue));
+  const done = S.blockers.filter(b => b.resolvedAt && canViewBlocker(a, b)).slice(0, 8);
+  let h = `<div class="stack"><h1>Blockers</h1>`;
+  if (!open.length) h += card(`<div class="empty"><p>Nothing is blocked. Rare and good.</p></div>`);
+  else open.forEach(b => { const s = slaText(b.slaDue, false), mine = b.unblocker === a.id;
+    h += `<div class="card"><div class="body"><div class="between" style="align-items:flex-start">
+      <div style="flex:1;min-width:0">
+        <p class="s4"><b>${esc(nameOf(b.raisedBy))}</b> is blocked · clears with <b>${esc(nameOf(b.unblocker))}</b>
+        ${b.escalatedAt ? `<span class="pill c-blocked" style="margin-left:6px">Escalated — the system carried it</span>` : ''}</p>
+        <p class="s4" style="margin-top:5px">${esc(b.description)}</p>
+        <p class="s6 muted" style="margin-top:4px">${b.severity} · raised ${new Date(b.raisedAt).toLocaleString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}
+          · ${b.firstResponse ? 'responded' : 'no response yet'}</p></div>
+      <div style="text-align:right"><p class="tab s5 ${s.cls}">${s.text}</p>
+        ${mine ? `<div class="row" style="justify-content:flex-end;margin-top:8px">
+          ${b.firstResponse ? '' : `<button class="btn sm" onclick="gotThis('${b.id}')">I&rsquo;ve got this</button>`}
+          <button class="btn sec sm" onclick="resolvePrompt('${b.id}')">Resolved…</button></div>` : ''}
+      </div></div></div></div>`; });
+  if (done.length) h += `<h3 class="muted">Recently cleared</h3><div class="card"><ul class="list">
+    ${done.map(b => `<li><span style="flex:1" class="muted s5">${esc(nameOf(b.raisedBy))}: ${esc(b.description)}</span>
+      <span class="s5" style="color:var(--on-target)">cleared by ${esc(first(b.unblocker))}</span></li>`).join('')}</ul></div>`;
+  return h + `</div>`;
+}
+
+/* ── Rollups ───────────────────────────────────────────────────────────── */
+let rollPeriod = 'week', rollWeek = null, rollMonth = null;
+function rollups() {
+  const a = me(), sc = rollupScope(a);
+  const week = rollWeek || weekStart(todayISO()), month = rollMonth || monthOf(todayISO());
+  let people = S.people.filter(p => p.status !== 'Deactivated' && p.role !== 'Observer');
+  if (sc.kind === 'department') people = people.filter(p => p.dept === sc.dept);
+  if (sc.kind === 'self') people = people.filter(p => p.id === a.id);
+  const ids = new Set(people.map(p => p.id));
+  const closes = S.closes.filter(c => ids.has(c.person) &&
+    (rollPeriod === 'week' ? weekStart(c.date) === week : monthOf(c.date) === month));
+  const expected = rollPeriod === 'week' ? S.settings.wdWeek : S.settings.wdMonth;
+  const { rows, total, flags } = buildRollup(people, closes, expected);
+  const monthly = rollPeriod === 'month';
+  const diag = diagnostic();
+
+  let h = `<div class="stack"><div class="between">
+    <h1>${monthly ? 'Monthly' : 'Weekly'} Rollup</h1>
+    <div class="row s5">
+      <button class="chip" aria-pressed="${!monthly}" onclick="rollPeriod='week';render()">Weekly</button>
+      <button class="chip" aria-pressed="${monthly}" onclick="rollPeriod='month';render()">Monthly</button>
+      <button class="btn sec sm" onclick="exportWorkbook()">Export workbook</button>
+    </div></div>
+
+    <form class="control" onsubmit="event.preventDefault();${monthly ? 'rollMonth=this.m.value' : 'rollWeek=this.w.value'};render()">
+      <label for="pk">${monthly ? 'Month to view:' : 'Week to view (Monday):'}</label>
+      ${monthly ? `<input id="pk" name="m" type="month" value="${month}"/>`
+        : `<input id="pk" name="w" type="date" value="${week}"/>`}
+      <button class="btn sm">View</button></form>`;
+
+  if (diag) h += `<p class="s5 muted">Calibrating. Use this to find broken processes, not slow people — status labels return after diagnostic mode ends.</p>`;
+
+  h += `<div class="card scroll"><table><thead><tr>
+    <th>Team Member</th><th>Department</th><th class="num">Days Submitted</th><th class="num">Submission Rate</th>
+    <th class="num">On-Time Rate</th><th class="num">Fixed Due</th><th class="num">Fixed Done</th><th class="num">Fixed %</th>
+    <th class="num">Total Target</th><th class="num">Total Actual</th><th class="num">Achievement %</th>
+    ${monthly ? '<th class="num">Reactive Hrs</th><th class="num">Blockers</th>' : ''}
+    <th>${monthly ? 'Rating Input' : 'Status'}</th></tr></thead><tbody>`;
+  rows.forEach(r => {
+    const showRating = sc.kind === 'all' || sc.kind === 'department' || r.id === a.id;
+    h += `<tr><td><b>${esc(r.name)}</b></td><td class="muted">${esc(r.dept)}</td>
+      <td class="num">${r.days}</td><td class="num">${pctPlain(r.rate)}</td><td class="num">${pctPlain(r.onTimeRate)}</td>
+      <td class="num">${r.fD}</td><td class="num">${r.fN}</td><td class="num">${pctPlain(r.fx)}</td>
+      <td class="num">${numFmt(r.tgt)}</td><td class="num">${numFmt(r.act)}</td>
+      <td class="num">${diag ? `<span class="muted">${pctPlain(r.ach)}</span>` : pctText(r.ach)}</td>
+      ${monthly ? `<td class="num">${r.reactive}</td><td class="num">${r.blockers}</td>` : ''}
+      <td>${diag ? '<span class="muted">—</span>' : esc(monthly ? (showRating ? r.rating : '—') : r.status)}</td></tr>`;
+  });
+  h += `<tr class="total"><td>TEAM TOTAL</td><td></td><td class="num">${total.days}</td><td></td><td></td>
+    <td class="num">${total.fD}</td><td class="num">${total.fN}</td><td class="num">${pctPlain(total.fx)}</td>
+    <td class="num">${numFmt(total.tgt)}</td><td class="num">${numFmt(total.act)}</td>
+    <td class="num">${pctPlain(total.ach)}</td>
+    ${monthly ? `<td class="num">${total.reactive}</td><td class="num">${total.blockers}</td>` : ''}<td></td></tr>
+    </tbody></table></div>`;
+
+  if (sc.kind !== 'self') h += `<div class="card"><header><h3>Attention flags</h3></header><div class="body flush"><ul class="list">
+    ${flagRow(flags.blockers, 'Blockers raised', 'Every one of these needs a response within 24 hours.', "go('blockers')")}
+    ${flagRow(flags.notReviewed, 'Reports not yet reviewed by you', 'If this stays above zero, submissions will quietly stop.', "go('review')")}
+    ${flagRow(flags.late, 'Late submissions', 'Chase the pattern, not the one-off.', "go('review')")}
+    ${flagRow(flags.reactive, 'Total reactive hours (unplanned work)', 'What is generating this? Fix the source, not the person.', "")}
+    ${flagRow(flags.atRisk, 'Assigned tasks flagged At Risk', 'Cross-check against the Board.', "go('board')")}
+  </ul></div></div>`;
+
+  if (sc.kind === 'all') {
+    const depts = ['Sales','Marketing','Operations','Finance','HR','Management'];
+    h += `<div class="card"><header><h3>Department view</h3></header><div class="scroll"><table><thead><tr>
+      <th>Department</th><th class="num">Days Submitted</th><th class="num">Fixed %</th><th class="num">Total Target</th>
+      <th class="num">Total Actual</th><th class="num">Achievement %</th><th class="num">Reactive Hrs</th></tr></thead><tbody>`;
+    depts.forEach(d => {
+      const active = S.people.filter(p => p.dept === d && p.status !== 'Deactivated').length;
+      const cs = closes.filter(c => c.dept === d);
+      if (!active) { h += `<tr><td><b>${d}</b></td><td colspan="6" class="muted">No active members</td></tr>`; return; }
+      const fD = cs.reduce((s, c) => s + c.fixedDue, 0), fN = cs.reduce((s, c) => s + c.fixedDone, 0);
+      const tg = cs.reduce((s, c) => s + (c.target || 0), 0), ac = cs.reduce((s, c) => s + (c.actual || 0), 0);
+      h += `<tr><td><b>${d}</b></td><td class="num">${cs.length}</td><td class="num">${pctPlain(fixedPct(fN, fD))}</td>
+        <td class="num">${numFmt(tg)}</td><td class="num">${numFmt(ac)}</td>
+        <td class="num">${tg ? pctPlain(ac / tg) : ''}</td><td class="num">${cs.reduce((s, c) => s + c.reactive, 0)}</td></tr>`;
+    });
+    h += `</tbody></table></div></div>`;
+  }
+  return h + `</div>`;
+}
+const flagRow = (n, label, note, act) => `<li style="cursor:${act ? 'pointer' : 'default'}" ${act ? `onclick="${act}"` : ''}>
+  <span class="tab" style="width:44px;text-align:right;font-family:var(--font-display);font-size:17px;font-weight:700">${n}</span>
+  <span><span class="s4">${esc(label)}</span><br><span class="s6 muted">${esc(note)}</span></span></li>`;
+
+/* ── Charters ──────────────────────────────────────────────────────────── */
+function charters() {
+  const a = me();
+  const visible = S.people.filter(p => p.status !== 'Deactivated' && S.charters[p.id] && canViewCharter(a, p.id));
+  if (!visible.length) return card(`<div class="empty"><p>No charters you can see.</p></div>`);
+  let h = `<div class="stack"><h1>Charters</h1>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px">`;
+  visible.forEach(p => {
+    const ch = S.charters[p.id], active = ch.duties.filter(d => d.active);
+    const editable = canEditCharter(a, p.id);
+    const suspended = ch.duties.filter(d => !d.active && d.suspended);
+    h += `<div class="card"><header><div><h3>${esc(p.name)}</h3>
+      <p class="s6 muted">${esc(p.desig)} · ${esc(p.dept)}</p></div>
+      <span class="tab s6 muted">${active.length}/5 duties</span></header>
+      <div class="body stack" style="gap:11px">
+      <p class="s4"><span class="muted">Owns:</span> ${esc(ch.owns)}</p>
+      <ul class="stack" style="gap:7px;list-style:none;padding:0;margin:0">
+        ${active.map(d => `<li class="row" style="align-items:flex-start;gap:8px;flex-wrap:nowrap">
+          <span class="dot" style="background:var(--steel-600);margin-top:7px"></span>
+          <span style="flex:1"><span class="s4">${esc(d.title)}</span> <span class="s6 muted">· ${d.cadence}</span>
+            <br><span class="s6 muted">Done: ${esc(d.dod)}</span></span>
+          ${editable ? `<button class="btn ghost sm" onclick="retireDuty('${p.id}','${d.id}')">retire</button>` : ''}</li>`).join('')}
+        ${suspended.map(d => `<li class="row" style="gap:8px;color:var(--attention)">
+          <span class="dot" style="background:var(--attention)"></span>
+          <span class="s4">${esc(d.title)} — <b>Suspended, no owner</b></span></li>`).join('')}
+      </ul>
+      ${ch.alone.length ? `<p class="s5 muted">Decides alone: ${esc(ch.alone.join('; '))}</p>` : ''}
+      ${ch.approval.length ? `<p class="s5 muted">Needs ${esc(nameOf(ch.approver))} for: ${esc(ch.approval.join('; '))}</p>` : ''}
+      ${editable ? (active.length >= 5
+        ? `<div class="guard"><span aria-hidden="true">▲</span><div>Five is the ceiling. A person with fourteen daily duties has none. Retire one first.</div></div>`
+        : `<button class="btn sec sm" onclick="addDutyPrompt('${p.id}')">Add a fixed duty</button>`) : ''}
+      </div></div>`;
+  });
+  return h + `</div></div>`;
+}
+
+/* ── Targets ───────────────────────────────────────────────────────────── */
+function targets() {
+  const a = me();
+  const visible = S.people.filter(p => p.status !== 'Deactivated' && p.role !== 'Observer' && canViewKpi(a, p.id));
+  let h = `<div class="stack"><div>
+    <h1>Targets</h1>
+    <p class="s5 muted">Daily is the number you set; weekly ×${S.settings.wdWeek} and monthly ×${S.settings.wdMonth}
+      compute themselves for Volume metrics and stay flat for Rates. Changing a target closes the old row —
+      history never rewrites itself.</p></div>`;
+  if (!visible.length) return h + card(`<div class="empty"><p>No targets you can see.</p></div>`) + `</div>`;
+  visible.forEach(p => {
+    const cur = S.kpis.filter(k => k.person === p.id && k.active && !k.to);
+    const hist = S.kpis.filter(k => k.person === p.id && k.to);
+    const editable = canSetKpi(a, p.id);
+    h += `<div class="card"><header><h3>${esc(p.name)}</h3>
+      <span class="tab s6 muted">${cur.length}/4 KPIs</span></header><div class="body stack" style="gap:11px">`;
+    if (!cur.length) h += `<p class="s5 muted">No numbers owned yet.</p>`;
+    else { h += `<div class="scroll"><table><thead><tr><th>Metric</th><th>Unit</th><th>Direction</th>
+      <th class="num">Daily</th><th class="num">Weekly</th><th class="num">Monthly</th><th>Review</th></tr></thead><tbody>`;
+      cur.forEach(k => h += `<tr><td>${esc(k.metric)}${k.primary ? ' <span class="cap" style="background:var(--btn);color:var(--btn-ink)">primary</span>' : ''}</td>
+        <td class="muted">${k.unit}</td><td class="muted">${k.dir === 'Lower is better' ? '↓ lower' : '↑ higher'}</td>
+        <td class="num">${unitFmt(k.daily, k.unit)}</td>
+        <td class="num">${unitFmt(weeklyTarget(k.daily, k.type, S.settings.wdWeek), k.unit)}</td>
+        <td class="num">${unitFmt(monthlyTarget(k.daily, k.type, S.settings.wdMonth), k.unit)}</td>
+        <td class="muted">${k.cadence}</td></tr>`);
+      h += `</tbody></table></div>`; }
+    if (hist.length) h += `<p class="s6 muted">History: ${hist.slice(0, 4).map(k =>
+      `${esc(k.metric)} ${unitFmt(k.daily, k.unit)} (until ${k.to})`).join(' · ')}</p>`;
+    if (editable) h += cur.length >= 4
+      ? `<div class="guard"><span aria-hidden="true">▲</span><div>Four KPIs is the ceiling. Replace one — the old row closes, history stays.</div></div>`
+      : `<button class="btn sec sm" onclick="addKpiPrompt('${p.id}')">Set a target</button>`;
+    h += `</div></div>`;
+  });
+  return h + `</div>`;
+}
+
+/* ── People + Handover ─────────────────────────────────────────────────── */
+function people() {
+  const a = me(), manage = canManagePeople(a);
+  let h = `<div class="stack"><div class="between"><h1>People &amp; Access</h1>
+    ${manage ? `<button class="btn sm" onclick="addPersonPrompt()">Add a person</button>` : ''}</div>
+    <div class="card scroll"><table><thead><tr>
+      <th>Employee ID</th><th>Team Member</th><th>Department</th><th>Role / Designation</th>
+      <th>Access</th><th>Capabilities</th><th>Status</th>${manage ? '<th></th>' : ''}</tr></thead><tbody>`;
+  S.people.forEach(p => {
+    const gone = p.status === 'Deactivated';
+    h += `<tr class="${gone ? 'muted' : ''}"><td class="tab">${p.code}</td>
+      <td><b>${esc(p.name)}</b>${gone ? ' <span class="s6">(former team member)</span>' : ''}</td>
+      <td>${esc(p.dept)}</td><td>${esc(p.desig)}</td>
+      <td><span class="pill c-idle">${esc(p.role)}</span></td>
+      <td>${(p.caps || []).map(c => `<span class="cap">${c}</span>`).join('') || '<span class="muted">—</span>'}</td>
+      <td>${p.status}</td>
+      ${manage ? `<td>${gone ? '' : `<button class="btn ghost sm" onclick="handover('${p.id}')">Deactivate…</button>`}</td>` : ''}
+      </tr>`;
+  });
+  return h + `</tbody></table></div></div>`;
+}
+function footprintOf(pid) {
+  return {
+    tasks: S.tasks.filter(t => t.owner === pid && !['Completed','Dropped','Declined','Missed'].includes(t.status)),
+    blockers: S.blockers.filter(b => b.unblocker === pid && !b.resolvedAt),
+    duties: (S.charters[pid] ? S.charters[pid].duties.filter(d => d.active) : []),
+    kpis: S.kpis.filter(k => k.person === pid && k.active && !k.to),
+    reports: S.people.filter(p => p.boss === pid && p.status !== 'Deactivated'),
+  };
+}
+let hoState = null;
+function handover(pid) {
+  const fp = footprintOf(pid);
+  const total = fp.tasks.length + fp.blockers.length + fp.duties.length + fp.kpis.length + fp.reports.length;
+  if (!total) {
+    person(pid).status = 'Deactivated'; audit('DEACTIVATE', 'person', nameOf(pid)); save();
+    toast(`${first(pid)} deactivated. History intact.`); return render();
+  }
+  hoState = { pid, tasks:{}, blockers:{}, duties:{}, kpis:{}, reports:{} };
+  drawHandover();
+}
+function drawHandover() {
+  const pid = hoState.pid, fp = footprintOf(pid);
+  const cands = S.people.filter(p => p.id !== pid && p.status !== 'Deactivated');
+  const opts = sel => `<option value="">to…</option>` + cands.map(c =>
+    `<option value="${c.id}" ${sel === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
+  const placed = fp.tasks.filter(t => hoState.tasks[t.id]).length + fp.blockers.filter(b => hoState.blockers[b.id]).length
+    + fp.duties.filter(d => hoState.duties[d.id]).length + fp.kpis.filter(k => hoState.kpis[k.id]).length
+    + fp.reports.filter(r => hoState.reports[r.id]).length;
+  const total = fp.tasks.length + fp.blockers.length + fp.duties.length + fp.kpis.length + fp.reports.length;
+
+  let h = `<div class="card"><header><h3>Handover — ${esc(nameOf(pid))}</h3>
+    <button class="btn ghost sm" onclick="modal('')">Close</button></header><div class="body stack" style="gap:16px">
+    <p class="s5 muted tab">${placed}/${total} placed</p>`;
+
+  if (fp.tasks.length) h += `<section><h3 class="s4">Open tasks they own (${fp.tasks.length})</h3>
+    <div class="stack" style="gap:7px;margin-top:6px">${fp.tasks.map(t => `
+      <div class="row" style="background:var(--sunken);border-radius:6px;padding:8px 11px">
+        <span style="flex:1" class="s5">${esc(t.code)} · ${esc(t.title)}</span>
+        <select style="width:auto;height:32px;font-size:11px" onchange="hoState.tasks['${t.id}']=this.value?{to:this.value}:null;drawHandover()">
+          ${opts(hoState.tasks[t.id] && hoState.tasks[t.id].to)}</select></div>`).join('')}</div></section>`;
+
+  if (fp.blockers.length) h += `<section><h3 class="s4">Blockers where they are the unblocker (${fp.blockers.length})</h3>
+    <p class="s6 muted">A blocker pointing at a deactivated person is invisible failure — every one must be re-aimed.</p>
+    <div class="stack" style="gap:7px;margin-top:6px">${fp.blockers.map(b => `
+      <div class="row" style="background:var(--sunken);border-radius:6px;padding:8px 11px">
+        <span style="flex:1" class="s5">${esc(b.description)}</span>
+        <select style="width:auto;height:32px;font-size:11px" onchange="hoState.blockers['${b.id}']=this.value?{to:this.value}:null;drawHandover()">
+          ${opts(hoState.blockers[b.id] && hoState.blockers[b.id].to)}</select></div>`).join('')}</div></section>`;
+
+  if (fp.duties.length) h += `<section><h3 class="s4">Charter fixed duties (${fp.duties.length})</h3>
+    <p class="s6 muted">Suspended duties appear as a red gap on the department view, deliberately.</p>
+    <div class="stack" style="gap:7px;margin-top:6px">${fp.duties.map(d => `
+      <div class="row" style="background:var(--sunken);border-radius:6px;padding:8px 11px">
+        <span style="flex:1" class="s5">${esc(d.title)} · ${d.cadence}</span>
+        <select style="width:auto;height:32px;font-size:11px" onchange="hoState.duties['${d.id}']=this.value?(this.value==='suspend'?{suspend:1}:{to:this.value}):null;drawHandover()">
+          <option value="">to…</option><option value="suspend" ${hoState.duties[d.id] && hoState.duties[d.id].suspend ? 'selected' : ''}>Suspend (no owner)</option>
+          ${cands.map(c => `<option value="${c.id}" ${hoState.duties[d.id] && hoState.duties[d.id].to === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
+        </select></div>`).join('')}</div></section>`;
+
+  if (fp.kpis.length) h += `<section><h3 class="s4">KPIs (${fp.kpis.length})</h3>
+    <div class="stack" style="gap:7px;margin-top:6px">${fp.kpis.map(k => `
+      <div class="row" style="background:var(--sunken);border-radius:6px;padding:8px 11px">
+        <span style="flex:1" class="s5">${esc(k.metric)}</span>
+        <select style="width:auto;height:32px;font-size:11px" onchange="hoState.kpis['${k.id}']=this.value?(this.value==='close'?{close:1}:{to:this.value}):null;drawHandover()">
+          <option value="">to…</option><option value="close" ${hoState.kpis[k.id] && hoState.kpis[k.id].close ? 'selected' : ''}>Close it</option>
+          ${cands.map(c => `<option value="${c.id}" ${hoState.kpis[k.id] && hoState.kpis[k.id].to === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
+        </select></div>`).join('')}</div></section>`;
+
+  if (fp.reports.length) h += `<section><h3 class="s4">Direct reports to re-parent (${fp.reports.length})</h3>
+    <div class="stack" style="gap:7px;margin-top:6px">${fp.reports.map(r => `
+      <div class="row" style="background:var(--sunken);border-radius:6px;padding:8px 11px">
+        <span style="flex:1" class="s5">${esc(r.name)}</span>
+        <select style="width:auto;height:32px;font-size:11px" onchange="hoState.reports['${r.id}']=this.value?{to:this.value}:null;drawHandover()">
+          ${opts(hoState.reports[r.id] && hoState.reports[r.id].to)}</select></div>`).join('')}</div></section>`;
+
+  h += `<div class="guard"><span aria-hidden="true">▲</span><div>Finishing writes one handover record, posts a summary,
+    flips ${esc(first(pid))} to Deactivated, and keeps all history intact. No delete button exists anywhere in the product.</div></div>
+    <div class="row"><button class="btn sec" onclick="modal('')">Cancel</button>
+    <button class="btn danger" ${placed === total ? '' : 'disabled'}
+      title="${placed === total ? '' : 'Every open item must be placed first'}"
+      onclick="commitHandover()">Execute handover &amp; deactivate</button></div>
+    </div></div>`;
+  modal(h);
+}
+function commitHandover() {
+  const pid = hoState.pid, fp = footprintOf(pid);
+  fp.tasks.forEach(t => { const m = hoState.tasks[t.id]; if (m && m.to) { t.owner = m.to; t.dept = person(m.to).dept; t.chain = []; } });
+  fp.blockers.forEach(b => { const m = hoState.blockers[b.id]; if (m && m.to) b.unblocker = m.to; });
+  fp.duties.forEach(d => { const m = hoState.duties[d.id]; if (!m) return;
+    if (m.suspend) { d.active = false; d.suspended = true; }
+    else if (m.to) { d.active = false; const ch = S.charters[m.to];
+      if (ch) ch.duties.push({ ...d, id: 'd' + Date.now() + Math.random().toString(36).slice(2, 5), active: true, suspended: false }); } });
+  fp.kpis.forEach(k => { const m = hoState.kpis[k.id]; if (!m) return;
+    k.to = todayISO(); k.active = false; k.primary = false;
+    if (m.to) S.kpis.push({ ...k, id: 'k' + Date.now() + Math.random().toString(36).slice(2, 5),
+      person: m.to, from: todayISO(), to: null, active: true, primary: false }); });
+  fp.reports.forEach(r => { const m = hoState.reports[r.id]; if (m && m.to) r.boss = m.to; });
+  const moved = Object.values(hoState.tasks).filter(x => x && x.to).length;
+  const dutiesMoved = Object.values(hoState.duties).filter(x => x && x.to).length;
+  const susp = Object.values(hoState.duties).filter(x => x && x.suspend).length;
+  person(pid).status = 'Deactivated';
+  const summary = `${nameOf(pid)}'s ${moved} open task${moved === 1 ? '' : 's'} and ${dutiesMoved} fixed dut${dutiesMoved === 1 ? 'y' : 'ies'} moved on ${fmtShort(todayISO())}.` +
+    (susp ? ` ${susp} dut${susp === 1 ? 'y is' : 'ies are'} unassigned.` : '');
+  S.handovers.push({ at: new Date().toISOString(), from: pid, summary });
+  audit('HANDOVER', 'person', summary);
+  save(); modal(''); hoState = null; toast(summary); render();
+}
+
+/* ── Settings ──────────────────────────────────────────────────────────── */
+function settings() {
+  const secs = S.closes.filter(c => c.seconds).map(c => c.seconds).sort((a, b) => a - b);
+  const median = secs.length ? secs[Math.floor(secs.length / 2)] : null;
+  const s = S.settings;
+  let h = `<div style="max-width:640px;margin:0 auto" class="stack"><h1>Settings</h1>`;
+  if (median != null) h += median > 300
+    ? `<div class="card" style="border-color:color-mix(in srgb,var(--attention) 40%,transparent)"><div class="body">
+       <p class="s4" style="color:var(--attention);font-weight:600">Day Close is taking ${Math.floor(median / 60)}m ${median % 60}s at the median.
+       Something has been added that should not have been.</p></div></div>`
+    : `<p class="s5 muted">Median Day Close time: ${Math.floor(median / 60)}m ${median % 60}s — the five-minute promise holds.</p>`;
+  h += `<div class="card"><header><h3>Operating rules</h3></header><div class="body">
+    <form class="grid2" onsubmit="saveSettings(event)">
+      <label class="fld"><span>Working days / week</span><input type="number" name="wdWeek" min="1" max="7" value="${s.wdWeek}"/></label>
+      <label class="fld"><span>Working days / month</span><input type="number" name="wdMonth" min="1" max="31" value="${s.wdMonth}"/></label>
+      <label class="fld"><span>Window opens</span><input type="time" name="open" value="${s.open}"/></label>
+      <label class="fld"><span>Window closes (on-time until)</span><input type="time" name="close" value="${s.close}"/></label>
+      <label class="fld"><span>Grace until (next morning)</span><input type="time" name="grace" value="${s.grace}"/></label>
+      <label class="fld"><span>Blocker SLA (hours)</span><input type="number" name="sla" min="1" max="168" value="${s.sla}"/></label>
+      <label class="fld" style="grid-column:1/-1"><span>Diagnostic mode ends</span>
+        <input type="date" name="diag" value="${s.diagnosticUntil || ''}"/></label>
+      <div style="grid-column:1/-1" class="row"><button class="btn">Save settings</button>
+        <span class="s6 muted">No red, no ratings until that date.</span></div>
+    </form></div></div>
+
+  <div class="card"><header><h3>This build</h3></header><div class="body stack" style="gap:11px">
+    <p class="s5 muted">Everything lives in this browser (localStorage) — one device, no server, no login.
+      Switch person from the top right to see the access rules change. The Supabase build in this repository
+      is the multi-user one.</p>
+    <div class="row">
+      <button class="btn sec sm" onclick="exportWorkbook()">Export workbook</button>
+      <button class="btn sec sm" onclick="toggleTheme()">Toggle light / dark</button>
+      <button class="btn danger sm" onclick="resetAll()">Reset demo data</button>
+    </div></div></div></div>`;
+  return h;
+}
+function saveSettings(e) {
+  e.preventDefault();
+  const f = e.target;
+  S.settings.wdWeek = +f.wdWeek.value; S.settings.wdMonth = +f.wdMonth.value;
+  S.settings.open = f.open.value; S.settings.close = f.close.value; S.settings.grace = f.grace.value;
+  S.settings.sla = +f.sla.value; S.settings.diagnosticUntil = f.diag.value || null;
+  save(); toast('Settings saved.'); render();
+}
+function resetAll() {
+  if (!confirm('Clear everything and reload the workbook seed?')) return;
+  const keepMe = S.me; S = seed(); S.me = keepMe; save(); toast('Demo data reset.'); go('my-day');
+}
+function toggleTheme() {
+  const el = document.documentElement;
+  const cur = el.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : cur === 'light' ? 'dark'
+    : (matchMedia('(prefers-color-scheme: dark)').matches ? 'light' : 'dark');
+  el.setAttribute('data-theme', next);
+  try { localStorage.setItem('5c-theme', next); } catch (e) {}
+}
+
+/* ══ ACTIONS ════════════════════════════════════════════════════════════ */
+function toggleDuty(did) {
+  const t = todayISO(), k = t + '|' + did;
+  S.ticks[k] ? delete S.ticks[k] : S.ticks[k] = true;
+  save(); render();
+}
+function moveTask(id, status) {
+  const t = S.tasks.find(x => x.id === id), a = me();
+  if (status === 'Completed') {
+    const unsigned = (t.supports || []).filter(s => s.role === 'Reviewer' && !s.signedOff);
+    const appr = S.approvals.filter(x => x.taskId === t.id && x.decision === 'Pending');
+    if (unsigned.length) { t.status = 'Pending Review'; save(); render();
+      return toast(`Completion is gated: ${unsigned.length} reviewer${unsigned.length === 1 ? '' : 's'} must sign off.`); }
+    if (appr.length) { save(); render(); return toast('Completion is gated: an approval is still open on this task.'); }
+  }
+  if (['Not Started'].includes(t.status) && ['On Track','At Risk','Blocked'].includes(status)) t.started = todayISO();
+  t.status = status;
+  S.comments.push({ id:'m' + Date.now(), subject:t.id, author:a.id, body:`moved ${t.code} to ${status}`, system:true });
+  audit('STATUS', 'task', `${t.code} → ${status}`);
+  save(); render(); toast(`${t.code} → ${status}`);
+}
+function signOff(id) {
+  const t = S.tasks.find(x => x.id === id), a = me();
+  (t.supports || []).forEach(s => { if (s.person === a.id && s.role === 'Reviewer') s.signedOff = true; });
+  const unsigned = t.supports.filter(s => s.role === 'Reviewer' && !s.signedOff);
+  const appr = S.approvals.filter(x => x.taskId === t.id && x.decision === 'Pending');
+  if (!unsigned.length && !appr.length && t.status === 'Pending Review') t.status = 'Completed';
+  audit('SIGN OFF', 'task', t.code); save(); render(); toast('Signed off.');
+}
+function blockPrompt(id) {
+  const a = me();
+  modal(`<div class="card"><header><h3>Raise a blocker</h3></header><div class="body">
+    <form class="stack" style="gap:11px" onsubmit="doBlock(event,'${id}')">
+      <textarea name="desc" required placeholder="What is stopping this?"></textarea>
+      <select name="who" required><option value="">Who can unblock?</option>
+        ${S.people.filter(p => p.id !== a.id && p.status !== 'Deactivated').map(p =>
+          `<option value="${p.id}">${esc(p.name)} · ${esc(p.dept)}</option>`).join('')}</select>
+      <div class="guard"><span aria-hidden="true">▲</span><div>There is no anonymous blocking — a named unblocker gets a 24-hour clock.</div></div>
+      <div class="row"><button class="btn">Raise blocker</button>
+        <button class="btn ghost" type="button" onclick="modal('')">Cancel</button></div>
+    </form></div></div>`);
+}
+function doBlock(e, id) {
+  e.preventDefault();
+  const f = e.target, t = S.tasks.find(x => x.id === id), a = me();
+  S.blockers.push({ id:'b' + Date.now(), raisedBy:a.id, unblocker:f.who.value, taskId:id, closeId:null,
+    description:f.desc.value.trim(), severity:'Medium', raisedAt:new Date().toISOString(),
+    slaDue:new Date(Date.now() + S.settings.sla * 3600000).toISOString(),
+    firstResponse:null, resolvedAt:null, escalatedAt:null });
+  t.status = 'Blocked';
+  audit('BLOCK', 'task', t.code); save(); modal(''); render();
+  toast(`${first(f.who.value)} has been told. 24-hour clock running.`);
+}
+function dropPrompt(id) {
+  modal(`<div class="card"><header><h3>Drop this task</h3></header><div class="body">
+    <form class="stack" style="gap:11px" onsubmit="doDrop(event,'${id}')">
+      <input type="text" name="reason" required placeholder="Why is this being dropped? (recorded)"/>
+      <div class="row"><button class="btn danger">Drop it</button>
+        <button class="btn ghost" type="button" onclick="modal('')">Cancel</button></div></form></div></div>`);
+}
+function doDrop(e, id) {
+  e.preventDefault();
+  const t = S.tasks.find(x => x.id === id);
+  t.status = 'Dropped'; t.dropReason = e.target.reason.value;
+  audit('DROP', 'task', `${t.code} · ${t.dropReason}`); save(); modal(''); go('board');
+}
+function delegatePrompt(id) {
+  const a = me(), t = S.tasks.find(x => x.id === id);
+  const cands = S.people.filter(p => p.status !== 'Deactivated' && canAssignTo(a, p) === 'Direct' && p.id !== t.owner);
+  modal(`<div class="card"><header><h3>Delegate ${t.code}</h3></header><div class="body">
+    <form class="stack" style="gap:11px" onsubmit="doDelegate(event,'${id}')">
+      <select name="who" required><option value="">Delegate to…</option>
+        ${cands.map(p => `<option value="${p.id}">${esc(p.name)} · ${esc(p.dept)}</option>`).join('')}</select>
+      <p class="s5 muted">The owner moves; accountability stays where it is. You stay on as Reviewer.
+        Maximum depth is two hops.</p>
+      <div class="row"><button class="btn">Delegate</button>
+        <button class="btn ghost" type="button" onclick="modal('')">Cancel</button></div></form></div></div>`);
+}
+function doDelegate(e, id) {
+  e.preventDefault();
+  const t = S.tasks.find(x => x.id === id), a = me(), to = e.target.who.value;
+  if ((t.chain || []).length >= 2) { modal(''); return toast('This has moved twice already. Reassign it from the source instead.'); }
+  t.chain = [...(t.chain || []), t.owner];
+  t.supports = [...(t.supports || []), { person: t.owner, role: 'Reviewer', signedOff: false }];
+  t.owner = to; t.dept = person(to).dept;
+  audit('DELEGATE', 'task', `${t.code} → ${nameOf(to)}`); save(); modal(''); render();
+  toast(`${t.code} delegated. You are now a Reviewer on it.`);
+}
+function supportPrompt(id) {
+  const t = S.tasks.find(x => x.id === id);
+  modal(`<div class="card"><header><h3>Add support</h3></header><div class="body">
+    <form class="stack" style="gap:11px" onsubmit="doSupport(event,'${id}')">
+      <select name="who" required><option value="">Who is helping?</option>
+        ${S.people.filter(p => p.status !== 'Deactivated' && p.id !== t.owner).map(p =>
+          `<option value="${p.id}">${esc(p.name)} · ${esc(p.dept)}</option>`).join('')}</select>
+      <select name="role">${['Support','Reviewer','Approver','Watcher'].map(r => `<option>${r}</option>`).join('')}</select>
+      <p class="s5 muted">Support may flag At Risk or Blocked. A Reviewer must sign off before Completed.
+        At most two reviewers, one approver.</p>
+      <div class="row"><button class="btn">Add</button>
+        <button class="btn ghost" type="button" onclick="modal('')">Cancel</button></div></form></div></div>`);
+}
+function doSupport(e, id) {
+  e.preventDefault();
+  const t = S.tasks.find(x => x.id === id), f = e.target;
+  t.supports = t.supports || [];
+  if (f.role.value === 'Reviewer' && t.supports.filter(s => s.role === 'Reviewer').length >= 2) { modal(''); return toast('At most two reviewers per task.'); }
+  if (f.role.value === 'Approver' && t.supports.some(s => s.role === 'Approver')) { modal(''); return toast('At most one approver per task.'); }
+  t.supports.push({ person: f.who.value, role: f.role.value, signedOff: false });
+  audit('SUPPORT', 'task', `${t.code} + ${nameOf(f.who.value)}`); save(); modal(''); render();
+}
+function respond(id, how) {
+  const t = S.tasks.find(x => x.id === id);
+  if (how === 'accept') { t.status = 'Not Started'; t.pendingWith = null; t.acceptedAt = new Date().toISOString();
+    audit('ACCEPT', 'task', t.code); save(); render(); toast(`${t.code} accepted — it is on your board.`); }
+}
+function declinePrompt(id) {
+  modal(`<div class="card"><header><h3>Decline with a reason</h3></header><div class="body">
+    <form class="stack" style="gap:11px" onsubmit="doDecline(event,'${id}')">
+      <input type="text" name="reason" required placeholder="Why not? (returns to the sender with it)"/>
+      <div class="row"><button class="btn">Decline</button>
+        <button class="btn ghost" type="button" onclick="modal('')">Cancel</button></div></form></div></div>`);
+}
+function doDecline(e, id) {
+  e.preventDefault();
+  const t = S.tasks.find(x => x.id === id);
+  t.status = 'Declined'; t.declinedReason = e.target.reason.value; t.pendingWith = t.by;
+  audit('DECLINE', 'task', `${t.code} · ${t.declinedReason}`); save(); modal(''); render();
+  toast('Returned to the sender with your reason.');
+}
+function gotThis(id) {
+  const b = S.blockers.find(x => x.id === id);
+  if (!b.firstResponse) { b.firstResponse = new Date().toISOString(); audit('RESPOND', 'blocker', b.description); save(); }
+  render(); toast('They know you have it. The clock stops here.');
+}
+function resolvePrompt(id) {
+  modal(`<div class="card"><header><h3>Resolve blocker</h3></header><div class="body">
+    <form class="stack" style="gap:11px" onsubmit="doResolve(event,'${id}')">
+      <input type="text" name="note" placeholder="How it was cleared (optional)"/>
+      <div class="row"><button class="btn">Resolve</button>
+        <button class="btn ghost" type="button" onclick="modal('')">Cancel</button></div></form></div></div>`);
+}
+function doResolve(e, id) {
+  e.preventDefault();
+  const b = S.blockers.find(x => x.id === id);
+  b.resolvedAt = new Date().toISOString(); b.resolutionNote = e.target.note.value;
+  b.firstResponse = b.firstResponse || b.resolvedAt;
+  if (b.taskId) { const t = S.tasks.find(x => x.id === b.taskId); if (t && t.status === 'Blocked') t.status = 'At Risk'; }
+  audit('RESOLVE', 'blocker', b.description); save(); modal(''); render(); toast('Cleared.');
+}
+function reviewClose(id, reaction) {
+  const c = S.closes.find(x => x.id === id);
+  c.reviewed = true; c.reviewedBy = S.me; c.reaction = reaction;
+  audit('REVIEW', 'day_close', nameOf(c.person) + ' ' + c.date); save(); render();
+}
+function decideApproval(id, decision) {
+  const x = S.approvals.find(a => a.id === id);
+  x.decision = decision; x.decidedAt = new Date().toISOString();
+  audit('APPROVAL', 'approval', x.context + ' → ' + decision); save(); render();
+}
+function answerAsk(id) {
+  modal(`<div class="card"><header><h3>Answer here</h3></header><div class="body">
+    <form class="stack" style="gap:11px" onsubmit="doAnswer(event,'${id}')">
+      <input type="text" name="answer" required placeholder="A comment resolves it"/>
+      <div class="row"><button class="btn">Send</button>
+        <button class="btn ghost" type="button" onclick="modal('')">Cancel</button></div></form></div></div>`);
+}
+function doAnswer(e, id) { e.preventDefault(); triage(id, 'Answered', e.target.answer.value); modal(''); }
+function triage(id, status, answer) {
+  const a = S.asks.find(x => x.id === id);
+  a.status = status; a.answer = answer || null; a.resolvedAt = new Date().toISOString();
+  audit('ASK', 'ask', a.body + ' → ' + status); save(); render();
+}
+function addComment(e, id) {
+  e.preventDefault();
+  S.comments.push({ id:'m' + Date.now(), subject:id, author:S.me, body:e.target.body.value, system:false });
+  save(); e.target.reset(); render();
+}
+function kudosPrompt(to, taskId) {
+  modal(`<div class="card"><header><h3>Send kudos</h3></header><div class="body">
+    <form class="stack" style="gap:11px" onsubmit="doKudos(event,'${to}','${taskId}')">
+      <input type="text" name="note" required placeholder="What was great?"/>
+      <div class="row"><button class="btn">Send 💛</button>
+        <button class="btn ghost" type="button" onclick="modal('')">Cancel</button></div></form></div></div>`);
+}
+function doKudos(e, to, taskId) {
+  e.preventDefault();
+  S.kudos.unshift({ id:'g' + Date.now(), from:S.me, to, note:e.target.note.value, taskId, at:new Date().toISOString() });
+  save(); modal(''); render(); toast('Kudos sent.');
+}
+function retireDuty(pid, did) {
+  const d = S.charters[pid].duties.find(x => x.id === did);
+  d.active = false; audit('RETIRE', 'duty', d.title); save(); render();
+}
+function addDutyPrompt(pid) {
+  modal(`<div class="card"><header><h3>Add a fixed duty</h3></header><div class="body">
+    <form class="stack" style="gap:11px" onsubmit="doAddDuty(event,'${pid}')">
+      <input type="text" name="title" required placeholder="The duty (same every day/week)"/>
+      <select name="cadence">${['Daily','Weekly','Fortnightly','Monthly','Quarterly'].map(c => `<option>${c}</option>`).join('')}</select>
+      <input type="text" name="dod" required placeholder="Definition of done"/>
+      <div class="row"><button class="btn">Add</button>
+        <button class="btn ghost" type="button" onclick="modal('')">Cancel</button></div></form></div></div>`);
+}
+function doAddDuty(e, pid) {
+  e.preventDefault();
+  const ch = S.charters[pid], f = e.target;
+  if (ch.duties.filter(d => d.active).length >= 5) { modal(''); return toast('Five is the ceiling. Retire one first.'); }
+  ch.duties.push({ id:'d' + Date.now(), title:f.title.value, cadence:f.cadence.value, dod:f.dod.value,
+    mask: f.cadence.value === 'Weekly' ? [1] : null, monthDay: f.cadence.value === 'Monthly' ? 1 : null, active:true });
+  audit('ADD DUTY', 'charter', f.title.value); save(); modal(''); render();
+}
+function addKpiPrompt(pid) {
+  modal(`<div class="card"><header><h3>Set a target</h3></header><div class="body">
+    <form class="stack" style="gap:11px" onsubmit="doAddKpi(event,'${pid}')">
+      <input type="text" name="metric" required placeholder="Metric"/>
+      <div class="grid2">
+        <select name="unit">${['Count','INR','%','Hours','Days'].map(u => `<option>${u}</option>`).join('')}</select>
+        <select name="type"><option>Volume</option><option>Rate</option></select>
+        <select name="dir"><option>Higher is better</option><option>Lower is better</option></select>
+        <select name="cadence">${['Daily','Weekly','Monthly'].map(c => `<option ${c === 'Weekly' ? 'selected' : ''}>${c}</option>`).join('')}</select>
+      </div>
+      <input type="number" name="daily" step="any" min="0" required placeholder="Daily target"/>
+      <label class="row s5"><input type="checkbox" name="primary" style="width:auto;height:auto"/> Primary — pre-fills their Day Close</label>
+      <div class="row"><button class="btn">Save target</button>
+        <button class="btn ghost" type="button" onclick="modal('')">Cancel</button></div></form></div></div>`);
+}
+function doAddKpi(e, pid) {
+  e.preventDefault();
+  const f = e.target;
+  if (S.kpis.filter(k => k.person === pid && k.active && !k.to).length >= 4) { modal(''); return toast('Four KPIs is the ceiling.'); }
+  if (f.primary.checked) S.kpis.filter(k => k.person === pid && !k.to).forEach(k => k.primary = false);
+  S.kpis.push({ id:'k' + Date.now(), person:pid, metric:f.metric.value, unit:f.unit.value,
+    type:f.type.value, dir:f.dir.value, daily:Number(f.daily.value), cadence:f.cadence.value,
+    primary:f.primary.checked, from:todayISO(), to:null, active:true });
+  audit('KPI', 'kpi', f.metric.value); save(); modal(''); render();
+}
+function addPersonPrompt() {
+  modal(`<div class="card"><header><h3>Add a person</h3></header><div class="body">
+    <form class="stack" style="gap:11px" onsubmit="doAddPerson(event)">
+      <input type="text" name="name" required placeholder="Full name"/>
+      <input type="text" name="email" required placeholder="work@email.com"/>
+      <div class="grid2">
+        <select name="dept">${['Sales','Marketing','Operations','Finance','HR','Management'].map(d => `<option>${d}</option>`).join('')}</select>
+        <input type="text" name="desig" required placeholder="Designation (a label, not power)"/>
+        <select name="boss">${S.people.filter(p => p.status !== 'Deactivated').map(p => `<option value="${p.id}">Reports to ${esc(p.name)}</option>`).join('')}</select>
+        <select name="role" onchange="document.getElementById('prev').textContent=previewFor(this.form)">
+          ${['Member','Team Lead','Department Head','Restricted','Observer','Owner'].map(r => `<option>${r}</option>`).join('')}</select>
+      </div>
+      <div class="chips">${['people_admin','hr_admin','finance_admin'].map(c =>
+        `<label class="chip"><input type="checkbox" name="cap" value="${c}" style="width:auto;height:auto;margin-right:5px"
+          onchange="document.getElementById('prev').textContent=previewFor(this.form)"/>${c}</label>`).join('')}</div>
+      <p id="prev" class="s5" style="background:var(--sunken);border-radius:6px;padding:9px 11px"></p>
+      <div class="row"><button class="btn">Create</button>
+        <button class="btn ghost" type="button" onclick="modal('')">Cancel</button></div></form></div></div>`);
+}
+function previewFor(f) {
+  const caps = [...f.querySelectorAll('[name=cap]:checked')].map(x => x.value);
+  return accessPreview(f.name.value || 'They', f.role.value, caps);
+}
+function doAddPerson(e) {
+  e.preventDefault();
+  const f = e.target;
+  const n = S.people.length + 1;
+  S.people.push({ id:'p' + Date.now(), code:'EMP-' + String(n).padStart(2, '0'), name:f.name.value,
+    dept:f.dept.value, desig:f.desig.value, boss:f.boss.value, email:f.email.value,
+    role:f.role.value, caps:[...f.querySelectorAll('[name=cap]:checked')].map(x => x.value),
+    status:'Active', capacity:8, wip:3, settlingUntil: addDays(todayISO(), 14) });
+  const id = S.people[S.people.length - 1].id;
+  S.charters[id] = { owns:'', alone:[], approval:[], approver:f.boss.value, duties:[] };
+  audit('ADD', 'person', f.name.value); save(); modal(''); render(); toast(`${f.name.value} added.`);
+}
+
+/* ── export: multi-tab workbook in the source layout ───────────────────── */
+function exportWorkbook() {
+  const s = S.settings;
+  const esc2 = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const cell = v => typeof v === 'number' && isFinite(v)
+    ? `<Cell><Data ss:Type="Number">${v}</Data></Cell>`
+    : `<Cell><Data ss:Type="String">${esc2(v)}</Data></Cell>`;
+  const row = arr => `<Row>${arr.map(cell).join('')}</Row>`;
+  const sheet = (name, rows) =>
+    `<Worksheet ss:Name="${esc2(name)}"><Table>${rows.map(row).join('')}</Table></Worksheet>`;
+
+  const tabs = [];
+  tabs.push(sheet('START HERE', [
+    ['TEAM OPERATING SYSTEM  —  Task Allocation & Daily EOD Reporting'], [],
+    ['RULES THAT KEEP THIS ALIVE'],
+    ['•  Submission window: 6:00 PM - 7:30 PM. A report filed next morning is marked late.'],
+    ['•  The form must take under 5 minutes. If it takes longer, people stop filing honestly.'],
+    ['•  You must respond to every blocker within 24 hours.'],
+    ['•  Review targets WEEKLY or MONTHLY, never daily.'],
+    ['•  First 3-4 weeks: use this data diagnostically, not punitively.'],
+    ['•  Max 4 KPIs and roughly 5 fixed tasks per person.'], [],
+    ['Exported from 5C Pulse on ' + todayISO() + '.'],
+  ]));
+  tabs.push(sheet('Team Directory', [['TEAM DIRECTORY'], [],
+    ['Employee ID','Team Member','Department','Role / Designation','Reports To','Email','Active?'],
+    ...S.people.map(p => [p.code, p.name, p.dept, p.desig, p.boss ? nameOf(p.boss) : '—', p.email,
+      p.status === 'Deactivated' ? 'No' : 'Yes'])]));
+  const charterRows = [['ROLE CHARTERS'], [],
+    ['Department','Team Member','Owns (Outcome, not activity)','Fixed Task','Cadence','Definition of Done','Can Decide Alone','Needs Your Approval']];
+  S.people.forEach(p => { const ch = S.charters[p.id]; if (!ch) return;
+    ch.duties.filter(d => d.active).forEach((d, i) => charterRows.push([
+      i === 0 ? p.dept : '', i === 0 ? p.name : '', i === 0 ? ch.owns : '', d.title, d.cadence, d.dod,
+      i === 0 ? ch.alone.join('; ') : '', i === 0 ? ch.approval.join('; ') : '']));
+    charterRows.push([]); });
+  tabs.push(sheet('Role Charters', charterRows));
+  tabs.push(sheet('KPI Targets', [['KPI TARGETS'], [],
+    ['Working days per week', s.wdWeek], ['Working days per month', s.wdMonth], [],
+    ['Department','Owner','Metric','Unit','Target Type','Direction','Daily Target','Weekly Target','Monthly Target','Review Cadence'],
+    ...S.kpis.filter(k => k.active && !k.to).map(k => [person(k.person).dept, nameOf(k.person), k.metric, k.unit,
+      k.type, k.dir, k.daily, weeklyTarget(k.daily, k.type, s.wdWeek), monthlyTarget(k.daily, k.type, s.wdMonth), k.cadence])]));
+  tabs.push(sheet('Assigned Tasks', [['ASSIGNED TASKS'], [],
+    ['Task ID','Task Description','Owner','Department','Assigned By','Assigned On','Due Date','Priority','Status','Days Left','Flag'],
+    ...S.tasks.filter(t => t.type !== 'Fixed').map(t => [t.code, t.title, nameOf(t.owner), t.dept, nameOf(t.by),
+      t.assigned, t.due.slice(0, 10), t.priority, t.status,
+      t.status === 'Completed' ? 'Done' : daysLeft(t.due), taskFlag(t.due, t.status)])]));
+  tabs.push(sheet('Daily EOD Log', [['DAILY EOD LOG'], [],
+    ['Date','Week Starting','Month','Team Member','Department','Fixed Tasks Due','Fixed Tasks Done','Fixed %',
+     'Primary Metric','Target','Actual','Achievement %','Assigned: On Track','Assigned: At Risk','Assigned: Completed Today',
+     'Reactive Hours','Blocker?','Blocker Description','Who Can Unblock','Top 3 For Tomorrow','Submitted On Time?','Manager Reviewed?'],
+    ...S.closes.map(c => { const b = S.blockers.find(x => x.closeId === c.id);
+      return [c.date, weekStart(c.date), monthOf(c.date), nameOf(c.person), c.dept, c.fixedDue, c.fixedDone,
+        fixedPct(c.fixedDone, c.fixedDue) ?? '', c.metric || '', c.target ?? '', c.actual ?? '',
+        c.target ? (c.actual || 0) / c.target : '', c.onTrack, c.atRisk, c.doneToday, c.reactive,
+        c.blocker ? 'Yes' : 'No', b ? b.description : '', b ? nameOf(b.unblocker) : '',
+        (c.top3 || []).join('; '), c.onTime ? 'Yes' : 'No', c.reviewed ? 'Yes' : 'No']; })]));
+
+  const rollTab = (label, period, control, expected) => {
+    const cs = S.closes.filter(c => period === 'week' ? weekStart(c.date) === control : monthOf(c.date) === control);
+    const ppl = S.people.filter(p => p.status !== 'Deactivated' && p.role !== 'Observer');
+    const { rows, total } = buildRollup(ppl, cs, expected);
+    const monthly = period === 'month';
+    const head = ['Team Member','Department','Days Submitted','Submission Rate','On-Time Rate','Fixed Tasks Due',
+      'Fixed Tasks Done','Fixed Task %','Total Target','Total Actual','Achievement %'];
+    return sheet(label, [[label.toUpperCase()], [],
+      [monthly ? 'Month to view:' : 'Week to view:', control],
+      [monthly ? 'Expected working days this month:' : 'Expected working days this week:', expected], [],
+      monthly ? [...head, 'Reactive Hrs','Blockers Raised','Rating Input'] : [...head, 'Status'],
+      ...rows.map(r => { const base = [r.name, r.dept, r.days, r.rate ?? '', r.onTimeRate ?? '', r.fD, r.fN,
+        r.fx ?? '', r.tgt, r.act, r.ach ?? ''];
+        return monthly ? [...base, r.reactive, r.blockers, r.rating] : [...base, r.status]; }),
+      monthly ? ['TEAM TOTAL','',total.days,'','',total.fD,total.fN,total.fx ?? '',total.tgt,total.act,total.ach ?? '',total.reactive,total.blockers,'']
+              : ['TEAM TOTAL','',total.days,'','',total.fD,total.fN,total.fx ?? '',total.tgt,total.act,total.ach ?? '','']]);
+  };
+  tabs.push(rollTab('Weekly Rollup', 'week', rollWeek || weekStart(todayISO()), s.wdWeek));
+  tabs.push(rollTab('Monthly Rollup', 'month', rollMonth || monthOf(todayISO()), s.wdMonth));
+
+  const xml = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">${tabs.join('')}</Workbook>`;
+  saveFile('5C-Pulse-' + todayISO() + '.xls', xml, 'application/vnd.ms-excel');
+}
+async function saveFile(filename, text, mime) {
+  // Inside the claude.ai viewer, page-initiated downloads are blocked — the
+  // host grants an explicit save instead. Opened from disk, the classic link works.
+  try {
+    if (window.claude && typeof window.claude.use === 'function') {
+      const dl = await window.claude.use('downloads');
+      if (dl) { await dl.save({ filename, data: text }); toast('Saved.'); return; }
+    }
+  } catch (e) { toast('Save cancelled.'); return; }
+  const url = URL.createObjectURL(new Blob([text], { type: mime }));
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  toast('Downloaded.');
+}
+
+/* ── person switcher (stands in for sign-in) ───────────────────────────── */
+function whoDialog() {
+  let h = `<div class="card"><header><h3>Who are you?</h3>
+    <button class="btn ghost sm" onclick="modal('')">Close</button></header>
+    <div class="body"><p class="s5 muted" style="margin-bottom:12px">
+      There is no login in this single-file build — pick a person and every permission rule applies to them,
+      exactly as the database would enforce it.</p><ul class="list">`;
+  S.people.filter(p => p.status !== 'Deactivated').forEach(p => {
+    h += `<li style="cursor:pointer" onclick="setMe('${p.id}')">
+      <span class="avatar" style="background:var(--tint);color:var(--steel-600)">${esc(p.name.split(' ').map(x => x[0]).slice(0, 2).join(''))}</span>
+      <span style="flex:1"><b>${esc(p.name)}</b><br><span class="s6 muted">${esc(p.desig)} · ${esc(p.dept)}</span></span>
+      <span class="pill c-idle">${esc(p.role)}</span>
+      ${(p.caps || []).map(c => `<span class="cap">${c}</span>`).join('')}
+      ${p.id === S.me ? '<span class="s6" style="color:var(--on-target)">you</span>' : ''}</li>`;
+  });
+  return h + `</ul></div></div>`;
+}
+function setMe(id) { S.me = id; dc = null; asg = null; save(); modal(''); go('my-day'); }
+
+/* ── render ────────────────────────────────────────────────────────────── */
+function renderSoft() {                     // re-render without losing scroll
+  const y = window.scrollY;
+  document.getElementById('app').innerHTML = screenHtml();
+  window.scrollTo(0, y);
+}
+function screenHtml() {
+  const a = me();
+  const allowed = tabsFor(a).map(t => t[0]).concat(['task','assign']);
+  if (!allowed.includes(route)) route = 'my-day';
+  switch (route) {
+    case 'my-day': return myDay();
+    case 'day-close': return dayClose();
+    case 'board': return board();
+    case 'task': return taskDetail(routeArg);
+    case 'assign': return assign();
+    case 'review': return review();
+    case 'blockers': return blockers();
+    case 'rollups': return rollups();
+    case 'charters': return charters();
+    case 'targets': return targets();
+    case 'people': return people();
+    case 'settings': return settings();
+    default: return myDay();
+  }
+}
+function render() {
+  const a = me();
+  document.getElementById('tabs').innerHTML = tabsFor(a)
+    .map(([k, label]) => `<button ${route === k ? 'aria-current="page"' : ''} onclick="go('${k}')">${label}</button>`).join('');
+  document.getElementById('who').innerHTML =
+    `<span class="avatar">${esc(a.name.split(' ').map(x => x[0]).slice(0, 2).join(''))}</span>
+     <span style="text-align:left;line-height:1.2">${esc(a.name.split(' ')[0])}<br>
+     <span style="font-size:11px;opacity:.75">${esc(a.role)}</span></span>`;
+  document.getElementById('who').onclick = () => modal(whoDialog());
+  document.getElementById('calib').hidden = !diagnostic();
+  document.getElementById('app').innerHTML = screenHtml();
+}
+
+/* ── boot ──────────────────────────────────────────────────────────────── */
+try { const th = localStorage.getItem('5c-theme'); if (th) document.documentElement.setAttribute('data-theme', th); } catch (e) {}
+load();
+sweepSla();
+render();
+setInterval(() => { if (['my-day','blockers','day-close'].includes(route)) renderSoft(); }, 60000);
+</script>
