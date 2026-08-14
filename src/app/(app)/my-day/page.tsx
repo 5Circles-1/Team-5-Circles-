@@ -45,7 +45,6 @@ export default async function MyDayPage() {
   const open = openRes.data ?? [];
   const closes = closeRes.data ?? [];
   const todayClose = closes.find(() => true); // most recent; today if submitted
-  const submittedToday = !!(closes.length && (closes[0] as { id: string } & Record<string, unknown>));
   const { count: submittedCount } = await supabase.from('day_close')
     .select('id', { count: 'exact', head: true })
     .eq('person_id', person.id).eq('close_date', today);
