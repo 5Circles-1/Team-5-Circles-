@@ -273,20 +273,20 @@ declare
   approvals_open int;
   has_reviewer boolean;
 begin
-  -- Delegation: owner moves, accountable does not; depth capped at 2 hops
+  -- Delegation: owner moves, accountable does not; depth capped at 2 hops.
+  -- A system move (actor null — the Handover wizard) is a transfer at source,
+  -- not a delegation: the chain resets and no Reviewer is added.
   if new.owner_id is distinct from old.owner_id then
-    if array_length(old.delegation_chain, 1) >= 2 then
-      raise exception 'This has moved twice already. Reassign it from the source instead.'
-        using errcode = 'P0001';
+    if actor is null then
+      new.delegation_chain := '{}';
+    else
+      if array_length(old.delegation_chain, 1) >= 2 then
+        raise exception 'This has moved twice already. Reassign it from the source instead.'
+          using errcode = 'P0001';
+      end if;
+      new.delegation_chain := old.delegation_chain || old.owner_id;
     end if;
-    new.delegation_chain := old.delegation_chain || old.owner_id;
     new.department := app.dept_of(new.owner_id);
-    -- The delegator stays in the loop as a Reviewer
-    if actor is not null and old.owner_id <> new.owner_id then
-      insert into public.task_participants (task_id, person_id, support_role, added_by_id)
-      values (new.id, old.owner_id, 'Reviewer', actor)
-      on conflict do nothing;
-    end if;
   end if;
 
   if new.status = old.status then return new; end if;
@@ -398,6 +398,25 @@ end $$;
 
 create trigger trg_task_transitions before update on public.tasks
 for each row execute function app.task_transition_guards();
+
+-- The delegator stays in the loop as a Reviewer (§6.2). AFTER the owner has
+-- moved, so the "owner wears no second hat" participant guard sees the new
+-- owner, not the delegator.
+create or replace function app.task_delegation_reviewer() returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  if app.current_person_id() is not null
+     and new.owner_id is distinct from old.owner_id then
+    insert into public.task_participants (task_id, person_id, support_role, added_by_id)
+    values (new.id, old.owner_id, 'Reviewer', app.current_person_id())
+    on conflict do nothing;
+  end if;
+  return new;
+end $$;
+
+create trigger trg_task_delegation_reviewer after update of owner_id on public.tasks
+for each row execute function app.task_delegation_reviewer();
 
 -- ── Participants: one owner, many supports, ≤2 reviewers, ≤1 approver ──────
 create or replace function app.participant_guards() returns trigger

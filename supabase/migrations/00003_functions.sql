@@ -202,11 +202,14 @@ end $$;
 create or replace function app.can_view_day_close(pid uuid, row_person uuid) returns boolean
 language sql stable security definer set search_path = public
 as $$
-  -- Full close (numbers + text): the person, their manager chain, the Owner.
-  -- Teammates get submission *status* via the day_close_status view instead.
+  -- Full close (numbers + text): the person, their manager chain, their
+  -- department head (§5.1 "own department fully"), the Owner. Teammates get
+  -- submission *status* via the day_close_status view instead.
   select pid = row_person
       or app.is_owner_role(pid)
       or app.manages(pid, row_person)
+      or (app.role_of(pid) = 'Department Head'
+          and app.dept_of(pid) = app.dept_of(row_person))
 $$;
 
 create or replace function app.can_view_blocker(pid uuid, bid uuid) returns boolean

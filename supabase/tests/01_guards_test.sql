@@ -82,10 +82,18 @@ begin
   end;
 end $$;
 
--- 6 · Delegation depth: two hops maximum, the third is blocked with the message.
+-- 6 · Delegation depth: two hops maximum, the third is blocked with the
+--     message. Delegation semantics only apply to a person acting (a system
+--     handover is a transfer at source), so this test acts as Arjun.
 do $$
 declare tid uuid := '00000000-0000-4000-c000-000000000001';
 begin
+  insert into auth.users (id, email)
+  values ('00000000-0000-4000-f000-000000000001', 'arjun@company.com')
+  on conflict (email) do nothing;
+  perform set_config('request.jwt.claim.sub',
+    (select id::text from auth.users where email = 'arjun@company.com'), false);
+
   update public.tasks set owner_id = (select id from public.people where full_name = 'Priya Nair')
    where id = tid;                                   -- hop 1: Rohan → Priya
   update public.tasks set owner_id = (select id from public.people where full_name = 'Rohan Mehta')
@@ -101,15 +109,20 @@ begin
     end if;
     raise notice 'PASS 6: delegation capped at two hops — %', sqlerrm;
   end;
+  perform set_config('request.jwt.claim.sub', '', false);
 end $$;
 
--- 7 · Completion is gated by reviewer sign-off.
+-- 7 · Completion is gated by reviewer sign-off. The two delegation hops in
+--     test 6 auto-added the delegators as (unsigned) Reviewers — exactly the
+--     §6.2 behaviour — so completing must now be refused.
 do $$
 declare tid uuid := '00000000-0000-4000-c000-000000000001';
 begin
-  insert into public.task_participants (task_id, person_id, support_role)
-  values (tid, '00000000-0000-4000-a000-000000000002', 'Reviewer')
-  on conflict do nothing;
+  if not exists (select 1 from public.task_participants
+                 where task_id = tid and support_role = 'Reviewer'
+                   and removed_at is null and signed_off_at is null) then
+    raise exception 'TEST FAILED: delegation did not auto-add reviewers';
+  end if;
   begin
     update public.tasks set status = 'Completed' where id = tid;
     raise exception 'TEST FAILED: completion with unsigned reviewer was allowed';
