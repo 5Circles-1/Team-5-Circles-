@@ -1,0 +1,35 @@
+/*
+ * 5C PULSE — DESIGN TOKENS
+ * ─────────────────────────
+ * Reverse-engineered from the source workbook (navy banner, steel header row,
+ * cream control cells, Arial setting) — the only 5 Circles artefact available
+ * at build time. If 5 Circles supplies a canonical brand file, replace the
+ * values in THIS FILE ONLY. Nothing else in the codebase references a raw hex.
+ */
+:root {
+  /* Structure — straight from the workbook */
+  --navy-900: #1f3864; /* page banner, primary buttons, ring track */
+  --navy-800: #274877;
+  --steel-600: #2e5c8a; /* table headers, secondary surfaces */
+  --steel-300: #a9c0da; /* hairlines, disabled */
+  --cream-100: #fff2cc; /* control cells: the one input that drives a view */
+
+  /* Canvas */
+  --paper: #fafafb;
+  --surface: #ffffff;
+  --ink: #171a20;
+  --ink-muted: #5d6675;
+  --hairline: rgba(31, 56, 100, 0.12);
+
+  /* Semantics — one meaning each, used nowhere else */
+  --on-target: #1b7a52;
+  --behind: #b7791f;
+  --attention: #a93226; /* overdue work and sub-80% achievement ONLY */
+  --blocked: #6b4e9e; /* deliberately not red: blocked is not failure */
+  --input: #1155cc; /* the workbook's blue "you type here" */
+
+  /* Type — fallback stack ends in Arial so exports match the workbook */
+  --font-display: 'Archivo', 'IBM Plex Sans', Arial, sans-serif;
+  --font-body: 'IBM Plex Sans', Arial, sans-serif;
+  --font-data: 'IBM Plex Mono', 'Courier New', monospace;
+}
