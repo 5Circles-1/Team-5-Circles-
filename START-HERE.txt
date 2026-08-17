@@ -9,7 +9,19 @@ You have two things in this folder. You only need the first one today.
 1)  THE DASHBOARD  —  works right now, nothing to install
 --------------------------------------------------------------------
 
-    Double-click:      OPEN-ME-Dashboard.html
+    *** EXTRACT THIS ZIP FIRST. ***
+
+    Do NOT double-click the file while it is still inside the zip.
+    Windows opens it from a temporary folder that it later deletes,
+    so everything you set up disappears and it looks broken.
+
+        Right-click 5C-Pulse.zip  ->  Extract All...  ->  Desktop
+        Open the new 5C-Pulse folder
+        THEN double-click:   OPEN-ME-Dashboard.html
+
+    The address bar should show your Desktop path. If it shows
+    "Temp" or ".zip", you are still inside the zip - go back and
+    extract it.
 
 That's it. It opens in Chrome, Edge or Safari like any web page and
 the dashboard is there, already filled in with your team.

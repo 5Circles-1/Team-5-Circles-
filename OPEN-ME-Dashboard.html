@@ -563,11 +563,58 @@ function testRing(){
   Alarm.ring(Alarm.ctx.currentTime+0.05,true);
   toast('That is the alarm sound.');
 }
+/* ── is this copy actually able to save anything? ─────────────────────── */
+function storageWorks(){
+  try{const k='__5c_probe__';localStorage.setItem(k,'1');
+    const v=localStorage.getItem(k);localStorage.removeItem(k);return v==='1'}
+  catch(e){return false}
+}
+/* Windows opens a file straight out of a .zip into a throwaway Temp folder.
+   It looks like it works, then everything vanishes. Catch it and say so. */
+function runningFromZip(){
+  if(location.protocol!=='file:')return false;
+  const u=decodeURIComponent(location.href);
+  return /\.zip|\.cb\d|[\\/]Temp[\\/]|AppData[\\/]Local[\\/]Temp|\/private\/var\/folders\//i.test(u);
+}
 function renderEnableBar(){
-  const on=Alarm.ready;
-  document.getElementById('enableBar').innerHTML=on?'':
+  const el=document.getElementById('enableBar');
+  if(runningFromZip()){
+    el.innerHTML=`<div class="enable" style="background:var(--attention)">
+      <span>⚠️ You opened this from inside the zip — nothing you do will be saved.</span>
+      <button onclick="howToFix()">How to fix it</button></div>`;
+    return;
+  }
+  if(!storageWorks()){
+    el.innerHTML=`<div class="enable" style="background:var(--attention)">
+      <span>⚠️ This browser is not letting the page save anything (private window?).</span>
+      <button onclick="howToFix()">How to fix it</button></div>`;
+    return;
+  }
+  el.innerHTML=Alarm.ready?'':
     `<div class="enable"><span>🔔 Turn on sound so you hear it when someone needs you</span>
      <button onclick="Alarm.enable().then(()=>{toast('Alerts on. Try the Test button.');render()})">Turn on alerts</button></div>`;
+}
+function howToFix(){
+  const zip=runningFromZip();
+  modal(`<div class="card"><header><h3>${zip?'Open it from a real folder':'Let the page save'}</h3>
+    <button class="btn ghost sm" onclick="modal('')">✕</button></header><div class="body stack" style="gap:14px">
+    ${zip?`<p class="s4">Windows opened this file straight out of the zip, into a temporary folder
+       it deletes later. That is why things keep resetting.</p>
+      <p class="s4"><b>Do this once:</b></p>
+      <ol class="ol" style="font-size:15px;line-height:1.7">
+        <li>Find <b>5C-Pulse.zip</b> in your Downloads.</li>
+        <li>Right-click it → <b>Extract All…</b> → pick <b>Desktop</b> → Extract.</li>
+        <li>Open the new <b>5C-Pulse</b> folder on your Desktop.</li>
+        <li>Double-click <b>OPEN-ME-Dashboard.html</b> from there.</li>
+      </ol>
+      <p class="s4">The address bar should then read something like
+        <span class="tab s6">C:\\Users\\…\\Desktop\\5C-Pulse\\…</span> with no “Temp” in it.</p>`
+    :`<p class="s4">Your browser is blocking storage for this page, so nothing can be saved.
+        This usually means a private / incognito window, or blocked cookies.</p>
+      <p class="s4">Open it in a normal window, or allow site data for this page.</p>`}
+    <div class="note">Easiest of all: use the online link instead — it never has this problem
+      and works on your phone too.</div>
+  </div></div>`);
 }
 
 /* ── sending ──────────────────────────────────────────────────────────── */
@@ -605,19 +652,31 @@ function dash(){
       <button class="btn warn" onclick="openNotice('${owed[0].id}')">Answer now</button>
     </div></div></div>`;
 
-  /* the shape of the day — different for each department */
+  /* One line by default: what you should be on now, and what is next.
+     The full day is one tap away for anyone who wants it. */
   const sched=schedOf(a.id),cur=nowBlock(sched);
   if(sched.length){
-    h+=`<div class="card"><header><h3>My day at a glance</h3>
-      <span class="s5 muted">${esc(a.dept)} schedule</span></header>
-      <div class="body"><ol class="timeline">`;
-    sched.forEach((r,i)=>{
-      const state=i===cur?'now':i<cur?'past':'next';
-      h+=`<li class="${state}">
-        <span class="tab time">${esc(r.at)}</span>
-        <span class="what">${esc(r.what)}</span>
-        ${i===cur?'<span class="pill c-brand">now</span>':''}</li>`});
-    h+=`</ol></div></div>`;
+    const now=cur>=0?sched[cur]:null,next=sched[cur+1];
+    h+=`<div class="card"><div class="body" style="padding:14px 16px">
+      <div class="between">
+        <div style="min-width:0">
+          <p class="s6 up muted">${now?'Right now':'Starting soon'}</p>
+          <p style="font-size:17px;font-weight:700">${esc(now?now.what:sched[0].what)}</p>
+          ${next?`<p class="s6 muted">Next · ${esc(next.at)} ${esc(next.what)}</p>`:''}
+        </div>
+        <button class="btn ghost sm" onclick="schedOpen=!schedOpen;render()">
+          ${schedOpen?'Hide':'Whole day'}</button>
+      </div>`;
+    if(schedOpen){
+      h+=`<ol class="timeline" style="margin-top:12px;border-top:1px solid var(--hairline);padding-top:10px">`;
+      sched.forEach((r,i)=>{
+        h+=`<li class="${i===cur?'now':i<cur?'past':'next'}">
+          <span class="tab time">${esc(r.at)}</span>
+          <span class="what">${esc(r.what)}</span>
+          ${i===cur?'<span class="pill c-brand">now</span>':''}</li>`});
+      h+=`</ol>`;
+    }
+    h+=`</div></div>`;
   }
 
   /* training — only while there is something left to learn */
@@ -1006,14 +1065,21 @@ function setup(){
     <p class="s5 muted">Ask ${esc(S.people.filter(p=>p.role==='Admin').map(p=>p.name).join(' or ')||'your admin')}.</p></div></div>`;
   if(!su)su={step:0,dept:'Sales'};
   if(!su.dept)su.dept='Sales';
-  const steps=['Company','Team','Daily tasks','Schedule','Training','Done'];
+  /* Four steps, all of them necessary. Schedules and training are already
+     filled in per department — the admin only touches them if they want to,
+     under Advanced at the bottom. */
+  const steps=['Your company','Your team','Their daily tasks','Share it'];
 
   let h=`<div class="stack" style="max-width:760px;margin:0 auto">
     <div><h1>Set up the dashboard</h1>
       <p class="muted">Do this once. Everyone else just opens it and starts.</p></div>
-    <div class="stepbar">${steps.map((s,i)=>`<div class="${i<=su.step?'on':''}"></div>`).join('')}</div>
+    ${typeof su.step==='number'
+      ? `<div class="stepbar">${steps.map((s,i)=>`<div class="${i<=su.step?'on':''}"></div>`).join('')}</div>`
+      : ''}
     <div class="card"><div class="body stack" style="gap:16px">
-      <h2>${su.step+1}. ${steps[su.step]}</h2>`;
+      <h2>${typeof su.step==='number'
+        ? `${su.step+1} of ${steps.length} · ${steps[su.step]}`
+        : (su.step==='schedule'?'Edit a department’s day':'Edit a training plan')}</h2>`;
 
   if(su.step===0){
     h+=`<label class="fld"><span>Company name</span>
@@ -1086,11 +1152,11 @@ function setup(){
       </div></div>`});
   }
 
-  /* 4 · Schedule — the working day, per department */
-  if(su.step===3){
-    h+=`<p class="s5 muted">Each department runs a different day. Sales is built around calling
-      blocks, Operations starts on order intake, Finance ends on the tally. Pick a department and
-      adjust — everyone in it sees this on their dashboard, with the current block highlighted.</p>
+  /* Schedule editing — optional, tucked away under Advanced */
+  if(su.step==='schedule'){
+    h+=`<p class="s5 muted">Every department already has a sensible day filled in — Sales around
+      calling blocks, Operations from order intake, Finance ending on the tally. You do not need to
+      touch this. Change it only if your day genuinely runs differently.</p>
       <div class="chips">${DEPTS.map(d=>`<button class="chip" aria-pressed="${su.dept===d}"
         onclick="su.dept='${d}';render()">${d}</button>`).join('')}</div>`;
     const rows=S.schedules[su.dept]||[];
@@ -1112,11 +1178,12 @@ function setup(){
       </div>`;
   }
 
-  /* 5 · Training — what a new joiner learns, per department */
-  if(su.step===4){
+  /* Training editing — optional, tucked away under Advanced */
+  if(su.step==='training'){
     h+=`<p class="s5 muted">Anyone you add to a department automatically gets its training list on
       their dashboard, grouped by Day 1, Week 1 and Month 1. It disappears once they have ticked
-      everything, and you can watch progress from the Today tab.</p>
+      everything, and you can watch progress from the Today tab. Already filled in — edit only if
+      you want to.</p>
       <div class="chips">${DEPTS.map(d=>`<button class="chip" aria-pressed="${su.dept===d}"
         onclick="su.dept='${d}';render()">${d}</button>`).join('')}</div>`;
     const rows=S.training[su.dept]||[];
@@ -1145,7 +1212,7 @@ function setup(){
       </div>`;
   }
 
-  if(su.step===5){
+  if(su.step===3){
     const total=S.people.length,withTasks=S.people.filter(p=>(S.fixed[p.id]||[]).length).length;
     h+=`<div class="note">Everything below is ready. Team members do not need to set anything up —
       they open the link, pick their name, and their day is waiting for them.</div>
@@ -1168,22 +1235,29 @@ function setup(){
         server behind it.</div>`;
   }
 
+  const inWizard=typeof su.step==='number';
   h+=`<div class="row" style="justify-content:space-between;margin-top:6px">
-      <button class="btn sec" ${su.step===0?'disabled':''} onclick="su.step--;render()">Back</button>
-      ${su.step<5?`<button class="btn" onclick="su.step++;render()">Next</button>`:''}
+      <button class="btn sec" ${inWizard&&su.step===0?'disabled':''}
+        onclick="${inWizard?'su.step--':"su.step=3"};render()">Back</button>
+      ${inWizard&&su.step<3?`<button class="btn" onclick="su.step++;render()">Next</button>`:''}
     </div></div></div>`;
 
-  h+=`<div class="card"><header><h3>Team setup file</h3></header><div class="body stack" style="gap:10px">
-    <p class="s5 muted">Send your setup to the team, or load one somebody sent you.</p>
-    <div class="row">
-      <button class="btn sec sm" onclick="shareSetup()">📤 Share this setup</button>
-      <button class="btn sec sm" onclick="loadSetupFile()">📥 Load a setup file</button>
-    </div></div></div>
-
-  <div class="card"><header><h3>Start over</h3></header><div class="body row">
-    <button class="btn danger sm" onclick="wipeTeam()">Remove everyone and start fresh</button>
-    <button class="btn sec sm" onclick="resetAll()">Put the sample team back</button>
-  </div></div>`;
+  /* Everything below is optional. The wizard above is the whole job. */
+  h+=`<details class="card" ${inWizard?'':'open'}><summary style="cursor:pointer;padding:14px 16px;
+      font-weight:600">Advanced — you can ignore all of this</summary>
+    <div class="body stack" style="gap:12px;border-top:1px solid var(--hairline)">
+      <p class="s5 muted">Already set up sensibly for every department. Open these only if you want
+        to change how a day runs or what a new joiner learns.</p>
+      <div class="row">
+        <button class="btn sec sm" onclick="su.step='schedule';render()">🕘 Edit a department's day</button>
+        <button class="btn sec sm" onclick="su.step='training';render()">🎓 Edit a training plan</button>
+      </div>
+      <div class="row" style="border-top:1px solid var(--hairline);padding-top:12px">
+        <button class="btn sec sm" onclick="loadSetupFile()">📥 Load a setup someone sent me</button>
+        <button class="btn danger sm" onclick="wipeTeam()">Remove everyone and start fresh</button>
+        <button class="btn ghost sm" onclick="resetAll()">Put the sample team back</button>
+      </div>
+    </div></details>`;
   return h+`</div>`;
 }
 function setRole(id,r){person(id).role=r;save();render()}
@@ -1386,7 +1460,7 @@ function doApplySetup(o){
 }
 
 /* ── shell ────────────────────────────────────────────────────────────── */
-let route='dash';
+let route='dash',schedOpen=false;
 function go(r,arg){route=r;if(r==='notify'&&arg==='new')nf={to:'ALL',title:'',body:'',level:'ping'};
   window.scrollTo(0,0);render()}
 function modal(h){document.getElementById('modal').innerHTML=h?
