@@ -1,0 +1,272 @@
+<title>5C Pulse</title>
+<style>
+  :root{
+    --bg:#F2F6FA; --card:#FFFFFF; --ink:#142A3D; --mut:#5C7386; --line:#D8E4EE;
+    --brand:#0281C2; --brand-deep:#026A9E; --brand-soft:#E4F2FA;
+    --ok:#1E9E62; --ok-soft:#E4F5EC; --warm:#B45309; --warm-soft:#FBEFDD;
+    --code-bg:#0E2233; --code-ink:#D9E8F4;
+    --shadow:0 1px 2px rgba(15,34,48,.05), 0 10px 30px -18px rgba(15,34,48,.25);
+  }
+  :root:not([data-theme="light"]){ }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0B1622; --card:#122334; --ink:#E6F0F8; --mut:#8FA7BA; --line:#24394D;
+      --brand:#33A3DC; --brand-deep:#7CC4E8; --brand-soft:#123249;
+      --ok:#37B57D; --ok-soft:#0F2E22; --warm:#E2924A; --warm-soft:#33230F;
+      --code-bg:#0A1B29; --code-ink:#C9DDEC;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -18px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0B1622; --card:#122334; --ink:#E6F0F8; --mut:#8FA7BA; --line:#24394D;
+    --brand:#33A3DC; --brand-deep:#7CC4E8; --brand-soft:#123249;
+    --ok:#37B57D; --ok-soft:#0F2E22; --warm:#E2924A; --warm-soft:#33230F;
+    --code-bg:#0A1B29; --code-ink:#C9DDEC;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -18px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box; margin:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    font-size:16.5px; line-height:1.6; padding:0 18px 80px;
+  }
+  .wrap{max-width:760px; margin:0 auto}
+  .wide{max-width:960px; margin:0 auto}
+
+  header.hero{padding:46px 0 8px; text-align:center}
+  header.hero img{width:76px; height:76px}
+  header.hero h1{font-size:clamp(30px,5vw,42px); font-weight:800; letter-spacing:-.02em; text-wrap:balance; margin-top:10px}
+  header.hero .tag{color:var(--mut); font-size:18px; margin-top:6px; text-wrap:balance}
+
+  .facts{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:26px 0 8px}
+  .fact{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; box-shadow:var(--shadow)}
+  .fact b{display:block; font-size:15.5px}
+  .fact span{color:var(--mut); font-size:14px}
+
+  h2{font-size:24px; font-weight:800; letter-spacing:-.015em; margin:54px 0 6px; text-wrap:balance}
+  .sub{color:var(--mut); margin-bottom:18px}
+  .eyebrow{display:inline-block; font-size:11.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--brand); margin-top:54px}
+  .eyebrow + h2{margin-top:2px}
+
+  /* demo frame */
+  .browser{background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; box-shadow:var(--shadow)}
+  .browser .bar{display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--line)}
+  .browser .bar i{width:11px; height:11px; border-radius:50%; background:var(--line); display:block}
+  .browser .bar .url{flex:1; text-align:center; font-size:13px; color:var(--mut);
+    background:var(--bg); border-radius:8px; padding:4px 12px; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .browser iframe{display:block; width:100%; height:640px; border:0; background:#EEF3F7}
+  .demo-note{text-align:center; color:var(--mut); font-size:14px; margin-top:10px}
+
+  /* steps */
+  .step{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px 22px; margin-bottom:14px; box-shadow:var(--shadow)}
+  .step .n{display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px;
+    border-radius:50%; background:var(--brand); color:#fff; font-weight:800; font-size:15px; margin-right:10px; flex:none}
+  .step h3{display:flex; align-items:center; font-size:18.5px; font-weight:800; letter-spacing:-.01em; margin-bottom:8px}
+  .step p{margin-bottom:8px; max-width:66ch}
+  .step p:last-child{margin-bottom:0}
+  .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.88em;
+    background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:1.5px 7px; white-space:nowrap}
+  .path{font-weight:700}
+  .path .sep{color:var(--mut); font-weight:400; padding:0 2px}
+  a{color:var(--brand-deep); font-weight:600}
+
+  .copybtn{display:inline-flex; align-items:center; gap:9px; background:var(--brand); color:#fff;
+    border:0; border-radius:999px; padding:12px 22px; font-size:16px; font-weight:800; cursor:pointer; font-family:inherit}
+  .copybtn:hover{background:var(--brand-deep)}
+  .copybtn.done{background:var(--ok)}
+  .copybtn small{font-weight:600; opacity:.85}
+  .copyrow{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:12px 0 6px}
+  details.raw{margin-top:10px}
+  details.raw summary{color:var(--mut); font-size:14px; cursor:pointer; font-weight:600}
+  details.raw pre{margin-top:8px; background:var(--code-bg); color:var(--code-ink); border-radius:12px;
+    padding:14px 16px; font-size:12px; line-height:1.5; overflow:auto; max-height:340px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+  .callout{border-radius:14px; padding:14px 18px; margin:10px 0; font-size:15.5px}
+  .callout.warm{background:var(--warm-soft); color:var(--warm)}
+  .callout.good{background:var(--ok-soft); color:var(--ok)}
+  .callout b{font-weight:800}
+  .callout p{color:inherit}
+
+  .qa{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 20px; margin-bottom:12px; box-shadow:var(--shadow)}
+  .qa b{display:block; font-size:16.5px; margin-bottom:4px}
+  .qa p{color:var(--mut); font-size:15.5px; max-width:70ch}
+  .qa p strong{color:var(--ink)}
+
+  footer{margin-top:60px; text-align:center; color:var(--mut); font-size:14px}
+  @media (max-width:640px){ .browser iframe{height:600px} }
+</style>
+
+<header class="hero wrap">
+  <img src="__LOGO__" alt="5 Circles logo">
+  <h1>5C Pulse</h1>
+  <p class="tag">One place for the team’s day — tasks, chat on record, and a bell nobody can miss.</p>
+</header>
+
+<div class="wrap">
+  <div class="facts">
+    <div class="fact"><b>Everyone signs in</b><span>with their face on the screen and a 4-digit PIN you hand them.</span></div>
+    <div class="fact"><b>Your data stays yours</b><span>every person, task and message lives in a Google Sheet in your own Drive.</span></div>
+    <div class="fact"><b>Works on any phone</b><span>one web address for the whole team — nothing to install.</span></div>
+  </div>
+</div>
+
+<div class="wide">
+  <span class="eyebrow" style="display:block; text-align:center">Try it right now</span>
+  <h2 style="text-align:center; margin-top:2px">This is the tool — play with it</h2>
+  <p class="sub" style="text-align:center; max-width:60ch; margin-left:auto; margin-right:auto">
+    Set yourself up as the admin, add a teammate, give a task, ring the bell.
+    This copy runs entirely inside this page — nothing is saved anywhere.</p>
+  <div class="browser">
+    <div class="bar"><i></i><i></i><i></i><span class="url">your-team’s-own-address.google.com/…/exec</span></div>
+    <iframe title="5C Pulse demo" srcdoc="__DEMO_SRCDOC__"></iframe>
+  </div>
+  <p class="demo-note">Made a mess? Use “Start the demo over” in the yellow bar.</p>
+</div>
+
+<div class="wrap">
+  <span class="eyebrow">The real thing</span>
+  <h2>Put it on the internet — about 10 minutes, free</h2>
+  <p class="sub" style="max-width:66ch">Do this once, on a computer. You’ll paste two files into Google
+    and get back a web address that belongs to your team. After that, everyone just opens the link on
+    their phone. No accounts to create, no card, nothing to install — it runs on the Google account
+    you already have.</p>
+
+  <div class="step">
+    <h3><span class="n">1</span>Open a new Google script</h3>
+    <p>Go to <a href="https://script.new" target="_blank" rel="noopener">script.new</a>, signed in as
+      <span class="kbd">webinars5circles@gmail.com</span>. A page called
+      <span class="path">Untitled project</span> opens with a file named <span class="kbd">Code.gs</span>.</p>
+    <p>Click <span class="path">Untitled project</span> at the top and name it <b>5C Pulse</b>.</p>
+    <p style="color:var(--mut); font-size:14.5px">If script.new doesn’t open, go to
+      <a href="https://script.google.com" target="_blank" rel="noopener">script.google.com</a> and press
+      <span class="path">New project</span>.</p>
+  </div>
+
+  <div class="step">
+    <h3><span class="n">2</span>Paste file 1 into Code.gs</h3>
+    <p>Click inside the editor, select everything that’s already there
+      (<span class="kbd">Ctrl&#8239;+&#8239;A</span>), and paste file 1 over it.</p>
+    <div class="copyrow">
+      <button class="copybtn" id="copyCode">Copy file 1 · Code.gs <small>__KB_CODE__</small></button>
+    </div>
+    <details class="raw"><summary>If the copy button doesn’t work, open this and copy it yourself</summary>
+      <pre id="rawCode">__CODE_PRE__</pre></details>
+  </div>
+
+  <div class="step">
+    <h3><span class="n">3</span>Add a second file named <span class="kbd" style="font-size:.8em">index</span></h3>
+    <p>In the <span class="path">Files</span> list on the left, click the
+      <span class="path">+</span> and choose <span class="path">HTML</span>.
+      Name it exactly <span class="kbd">index</span> — Google adds the “.html” by itself.</p>
+    <p>Open it, select everything (<span class="kbd">Ctrl&#8239;+&#8239;A</span>), and paste file 2 over it.
+      Then save everything with <span class="kbd">Ctrl&#8239;+&#8239;S</span>.</p>
+    <div class="copyrow">
+      <button class="copybtn" id="copyIndex">Copy file 2 · index <small>__KB_INDEX__</small></button>
+    </div>
+    <details class="raw"><summary>If the copy button doesn’t work, open this and copy it yourself</summary>
+      <pre id="rawIndex">__INDEX_PRE__</pre></details>
+  </div>
+
+  <div class="step">
+    <h3><span class="n">4</span>Put it online</h3>
+    <p>Top right: <span class="path">Deploy<span class="sep">›</span>New deployment</span>.
+      Next to “Select type”, press the gear and choose <span class="path">Web app</span>. Then set:</p>
+    <p><b>Execute as:</b> <span class="kbd">Me</span> &nbsp;·&nbsp;
+       <b>Who has access:</b> <span class="kbd">Anyone</span></p>
+    <p>Press <span class="path">Deploy</span>. Google will ask you to
+      <span class="path">Authorize access</span> — pick your account.</p>
+    <div class="callout warm"><b>You’ll see a warning that Google hasn’t verified this app.</b>
+      That’s normal — it means “this is your own private script, not an app from the store”.
+      Click <span class="path">Advanced</span>, then <span class="path">Go to 5C Pulse (unsafe)</span>,
+      then <span class="path">Allow</span>.</div>
+    <p>“Who has access: Anyone” only means the <em>login screen</em> is reachable — every screen
+      beyond it needs a PIN.</p>
+  </div>
+
+  <div class="step">
+    <h3><span class="n">5</span>That address is your team’s tool</h3>
+    <p>Google shows a <b>Web app URL</b> ending in <span class="kbd">/exec</span>.
+      <b>Copy it and keep it</b> — that link is 5C Pulse for your whole team, on every device.</p>
+    <p>Open it. You’ll get the welcome screen you just tried in the demo: type the company name and
+      your own name, and the tool makes you the admin and hands you your PIN.</p>
+    <div class="callout good"><b>Write your PIN down the moment you see it.</b>
+      It’s shown once. (If you ever lose it, any other admin can reset it — so make a second
+      admin once the team is in.)</div>
+  </div>
+
+  <div class="step">
+    <h3><span class="n">6</span>Invite the team from your phone, one name at a time</h3>
+    <p>In the app: <span class="path">Team<span class="sep">›</span>Add someone</span>. Each person gets
+      their own PIN, shown to you once, with a <span class="path">Copy invite message</span> button —
+      it writes the WhatsApp message for you: the link, their face, their PIN.</p>
+    <p>They open the link on their phone, tap their face, type the PIN — that’s the whole training.</p>
+  </div>
+
+  <span class="eyebrow">Good to know</span>
+  <h2>Questions you’ll have on day two</h2>
+
+  <div class="qa"><b>Where exactly is our data?</b>
+    <p>In a spreadsheet called <strong>“5C Pulse — Team Data”</strong> in the Google Drive of the account
+      that did the setup. The Team tab has an <strong>Open the Google Sheet</strong> button. Every person,
+      task, message and answer is a row there — it’s your permanent record, and you can read it like any sheet.</p></div>
+
+  <div class="qa"><b>How does the bell work?</b>
+    <p>A ring takes over the other person’s screen and keeps sounding until they pick an answer —
+      and their answer comes back to you on the task, on record. It rings as long as they have the
+      page open (tell the team: keep the tab open during working hours, volume up). If their screen
+      was off, it rings the moment they come back.</p></div>
+
+  <div class="qa"><b>Someone forgot their PIN.</b>
+    <p>Team tab → their card → <strong>Reset PIN</strong>. They’re signed out everywhere and you get a
+      fresh PIN to hand them, shown once.</p></div>
+
+  <div class="qa"><b>What if a stranger finds our link?</b>
+    <p>They see the login faces and nothing else — no tasks, no messages, no way in without a PIN.
+      Five wrong guesses locks that person’s login for five minutes. Still, treat the link like the
+      office keys: share it only with the team.</p></div>
+
+  <div class="qa"><b>I want to change the tool later.</b>
+    <p>Paste the newer file over the old one in the editor, then
+      <strong>Deploy → Manage deployments → ✏️ → Version: New version → Deploy</strong>.
+      The address stays exactly the same — nobody has to re-bookmark anything.</p></div>
+
+  <div class="qa"><b>What does it cost?</b>
+    <p>Nothing. It runs inside the free allowance of your own Google account, sized far beyond what a
+      small team’s taps and messages will ever use.</p></div>
+
+  <footer>Made for 5 Circles · The same two files also sit in your handover folder as
+    <span class="kbd">Code.gs</span> and <span class="kbd">index.html</span></footer>
+</div>
+
+<script>
+(function () {
+  var FILES = __FILES_JSON__;
+  function wire(btnId, key, rawId) {
+    var btn = document.getElementById(btnId);
+    var original = btn.innerHTML;
+    btn.addEventListener('click', function () {
+      var text = FILES[key];
+      var done = function () {
+        btn.classList.add('done');
+        btn.innerHTML = 'Copied — now paste it in Google ✓';
+        setTimeout(function () { btn.classList.remove('done'); btn.innerHTML = original; }, 3500);
+      };
+      var fallback = function () {
+        var d = document.getElementById(rawId).closest('details');
+        d.open = true;
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); done(); } catch (e) {}
+        document.body.removeChild(ta);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, fallback);
+      } else fallback();
+    });
+  }
+  wire('copyCode', 'code', 'rawCode');
+  wire('copyIndex', 'index', 'rawIndex');
+})();
+</script>

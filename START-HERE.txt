@@ -2,82 +2,86 @@
   5C PULSE  —  START HERE
 ====================================================================
 
-You have two things in this folder. You only need the first one today.
+Everything you need is one file:
+
+        OPEN-ME.html
+
+Double-click it (extract this zip first if you got it as a zip:
+right-click -> Extract All -> Desktop). It opens in Chrome or Edge
+like a web page, and it contains:
+
+    1.  A LIVE DEMO of the tool, right on the page. Play with it:
+        set yourself up as the admin, add a teammate, give a task,
+        ring the bell. Nothing you do there is saved anywhere.
+
+    2.  THE SETUP GUIDE — six short steps that put the real tool on
+        the internet using your own Google account
+        (webinars5circles@gmail.com). Takes about 10 minutes, costs
+        nothing, and gives you ONE WEB ADDRESS the whole team opens
+        on their phones.
+
+Why the online version matters: everyone gets their own PIN login,
+everything is saved in a Google Sheet in YOUR Drive, and the bell
+rings on the OTHER person's phone — things a file on one computer
+can never do.
 
 
 --------------------------------------------------------------------
-1)  THE DASHBOARD  —  works right now, nothing to install
+WHAT THE TOOL DOES  (once it's online)
 --------------------------------------------------------------------
 
-    *** EXTRACT THIS ZIP FIRST. ***
+    - Tasks: give anyone a job in one line, with a date. They see it
+      the moment they open the tool. To do -> Doing -> Done.
+    - "I'm stuck" flag: rings the person who gave the task, so
+      nobody stays stuck quietly.
+    - Chat on record: team-wide or one-to-one. Every word is kept in
+      your Google Sheet.
+    - The bell: a message that takes over the screen and keeps
+      ringing until the person answers - and you see their answer.
+    - Team tab (admins): add people, hand out PINs, reset PINs,
+      remove people. When someone leaves, their open tasks move to
+      you so nothing is lost.
 
-    Do NOT double-click the file while it is still inside the zip.
-    Windows opens it from a temporary folder that it later deletes,
-    so everything you set up disappears and it looks broken.
-
-        Right-click 5C-Pulse.zip  ->  Extract All...  ->  Desktop
-        Open the new 5C-Pulse folder
-        THEN double-click:   OPEN-ME-Dashboard.html
-
-    The address bar should show your Desktop path. If it shows
-    "Temp" or ".zip", you are still inside the zip - go back and
-    extract it.
-
-That's it. It opens in Chrome, Edge or Safari like any web page and
-the dashboard is there, already filled in with your team.
-
-    - Pick your name at the TOP RIGHT to see the day as that person.
-    - Admins (Arjun, Priya) also get a "Setup" tab.
-    - Click "Turn on alerts" once so the alarm can make sound.
-    - Press the "Test" button, top right, to hear the alarm.
-
-Everything saves automatically in that browser on that computer.
-
-WHAT IT CANNOT DO:
-    There is no password and no login in this file. Whoever opens it
-    can pick any name. And a ping rings on THIS computer (and its
-    other tabs) — it cannot reach a teammate's laptop, because there
-    is no server involved. It is for trying the thing out and for
-    running your own day, not yet for the whole team.
-
-    For real logins and pings that reach people, see (2).
+Logins are a face + a 4-digit PIN. You hand out the PINs; the tool
+shows each one to you exactly once. Five wrong guesses locks a
+login for five minutes.
 
 
 --------------------------------------------------------------------
-2)  THE FULL WEB APP  —  needs a developer, about half a day
+WHAT'S IN THIS FOLDER
 --------------------------------------------------------------------
 
-This is the same product with a server behind it, which is what gives
-you real sign-in, real security, and pings that reach the whole team
-wherever they are.
+    OPEN-ME.html        the demo + the setup guide  (start here)
 
-    Folders:   src/         the app screens
-               supabase/    the database and its security rules
-               README.md    the technical instructions
+    appsscript/         the two files the guide asks you to paste
+                        into Google (Code.gs and index.html), plus
+                        demo.html - the same demo as a single file.
 
-Hand those to whoever does your tech, or ask me and I will walk you
-through it. It needs two free accounts (Supabase and Vercel) and
-about 25 minutes of setup.
+    standalone/legacy/  the older offline dashboard (no logins, one
+                        computer only). Kept for reference.
+
+    src/ + supabase/    a bigger developer version of the same idea,
+                        for a programmer, if the company ever wants
+                        it. You don't need it.
 
 
 --------------------------------------------------------------------
 QUICK ANSWERS
 --------------------------------------------------------------------
 
-"Nothing happens when I double-click the HTML file."
-    Right-click it, choose "Open with", and pick Chrome or Edge.
+"Where does our data live?"
+    In a Google Sheet called "5C Pulse - Team Data", in the Drive of
+    the account that did the setup. The Team tab has a button that
+    opens it.
 
-"I hear no sound."
-    Click the blue "Turn on alerts" bar at the top once. Browsers
-    block sound until you click something. Then press "Test".
+"Someone forgot their PIN."
+    Any admin: Team tab -> their card -> Reset PIN. A fresh PIN is
+    shown to you once.
 
-"How do I add a team member?"
-    Setup tab -> Team -> type their name, pick their department,
-    press Add. They immediately get that department's daily tasks,
-    schedule and training list.
+"I want to hear the bell."
+    Sounds start after your first tap on the page (that's how
+    browsers work). Phones: volume up, keep the tab open during
+    work hours.
 
-"How do I give someone a job to do?"
-    "Give work" tab -> tap their face -> one line -> a date -> send.
-
-"I want to start with my real team, not the sample one."
-    Setup tab -> scroll to the bottom -> "Start from an empty team".
+"I changed my mind about a name / the company name."
+    Team tab (admins) - company name is at the bottom.
