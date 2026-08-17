@@ -1,0 +1,71 @@
+====================================================================
+  5C PULSE  —  START HERE
+====================================================================
+
+You have two things in this folder. You only need the first one today.
+
+
+--------------------------------------------------------------------
+1)  THE DASHBOARD  —  works right now, nothing to install
+--------------------------------------------------------------------
+
+    Double-click:      OPEN-ME-Dashboard.html
+
+That's it. It opens in Chrome, Edge or Safari like any web page and
+the dashboard is there, already filled in with your team.
+
+    - Pick your name at the TOP RIGHT to see the day as that person.
+    - Admins (Arjun, Priya) also get a "Setup" tab.
+    - Click "Turn on alerts" once so the alarm can make sound.
+    - Press the "Test" button, top right, to hear the alarm.
+
+Everything saves automatically in that browser on that computer.
+
+WHAT IT CANNOT DO:
+    There is no password and no login in this file. Whoever opens it
+    can pick any name. And a ping rings on THIS computer (and its
+    other tabs) — it cannot reach a teammate's laptop, because there
+    is no server involved. It is for trying the thing out and for
+    running your own day, not yet for the whole team.
+
+    For real logins and pings that reach people, see (2).
+
+
+--------------------------------------------------------------------
+2)  THE FULL WEB APP  —  needs a developer, about half a day
+--------------------------------------------------------------------
+
+This is the same product with a server behind it, which is what gives
+you real sign-in, real security, and pings that reach the whole team
+wherever they are.
+
+    Folders:   src/         the app screens
+               supabase/    the database and its security rules
+               README.md    the technical instructions
+
+Hand those to whoever does your tech, or ask me and I will walk you
+through it. It needs two free accounts (Supabase and Vercel) and
+about 25 minutes of setup.
+
+
+--------------------------------------------------------------------
+QUICK ANSWERS
+--------------------------------------------------------------------
+
+"Nothing happens when I double-click the HTML file."
+    Right-click it, choose "Open with", and pick Chrome or Edge.
+
+"I hear no sound."
+    Click the blue "Turn on alerts" bar at the top once. Browsers
+    block sound until you click something. Then press "Test".
+
+"How do I add a team member?"
+    Setup tab -> Team -> type their name, pick their department,
+    press Add. They immediately get that department's daily tasks,
+    schedule and training list.
+
+"How do I give someone a job to do?"
+    "Give work" tab -> tap their face -> one line -> a date -> send.
+
+"I want to start with my real team, not the sample one."
+    Setup tab -> scroll to the bottom -> "Start from an empty team".
