@@ -1032,6 +1032,9 @@ function setup(){
   if(su.step===1){
     h+=`<p class="s5 muted">Add everyone who will use this. Mark an admin if they should also
       be able to set things up.</p>
+      <div class="row" style="justify-content:flex-end;margin-bottom:4px">
+        <button class="btn danger sm" onclick="wipeTeam()">Remove everyone and start fresh</button>
+      </div>
       <div class="stack" style="gap:8px">`;
     S.people.forEach(p=>{
       h+=`<div class="mini" style="gap:10px;flex-wrap:wrap">
@@ -1155,14 +1158,14 @@ function setup(){
         <li><span style="flex:1">Alarm sound</span><b>${Alarm.ready?'On':'Not yet turned on'}</b></li>
       </ul>
       <div class="stack" style="gap:9px">
-        <button class="btn lg" onclick="su=null;go('dash')">Open the dashboard</button>
-        <button class="btn sec" onclick="sendNotice('ALL','The dashboard is ready','Pick your name at the top right and you will see your day.','ping');toast('Told everyone.')">
-          Tell the team it is ready</button>
+        <button class="btn lg" onclick="shareSetup()">📤 Share this setup with the team</button>
+        <button class="btn sec" onclick="su=null;go('dash')">Open the dashboard</button>
       </div>
-      <div class="warnbox">Worth knowing: this single file keeps its data in the browser it is
-        opened in. Pings ring on this computer and in any other tab or window of it — perfect for
-        trying everything out and for a shared screen. To ring a teammate on <em>their</em> laptop,
-        the hosted version needs to be running, which is the same product with a server behind it.</div>`;
+      <div class="warnbox">Worth knowing: this file keeps its data in the browser it is opened in.
+        Sharing the setup gives everyone the same starting point, but each person's ticks and tasks
+        live on their own computer, and a ping rings on this computer and its other tabs — not on a
+        teammate's laptop. For one shared live view, the hosted version is the same product with a
+        server behind it.</div>`;
   }
 
   h+=`<div class="row" style="justify-content:space-between;margin-top:6px">
@@ -1170,9 +1173,16 @@ function setup(){
       ${su.step<5?`<button class="btn" onclick="su.step++;render()">Next</button>`:''}
     </div></div></div>`;
 
-  h+=`<div class="card"><header><h3>Danger zone</h3></header><div class="body row">
-    <button class="btn sec sm" onclick="wipeTeam()">Start from an empty team</button>
-    <button class="btn sec sm" onclick="resetAll()">Reset back to the sample team</button>
+  h+=`<div class="card"><header><h3>Team setup file</h3></header><div class="body stack" style="gap:10px">
+    <p class="s5 muted">Send your setup to the team, or load one somebody sent you.</p>
+    <div class="row">
+      <button class="btn sec sm" onclick="shareSetup()">📤 Share this setup</button>
+      <button class="btn sec sm" onclick="loadSetupFile()">📥 Load a setup file</button>
+    </div></div></div>
+
+  <div class="card"><header><h3>Start over</h3></header><div class="body row">
+    <button class="btn danger sm" onclick="wipeTeam()">Remove everyone and start fresh</button>
+    <button class="btn sec sm" onclick="resetAll()">Put the sample team back</button>
   </div></div>`;
   return h+`</div>`;
 }
@@ -1234,7 +1244,9 @@ function fillTemplate(pid){
   save();render();toast('Added the '+p.dept+' set — edit anything you like.');
 }
 function wipeTeam(){
-  if(!confirm('Remove every person except you, and clear all tasks?'))return;
+  if(!confirm('Remove everyone except you, and clear all tasks, ticks and messages?\n\n'
+    +'You stay on as the admin so you can add your real team. '
+    +'The schedules and training plans are kept — they are not tied to any person.'))return;
   const keep=me();
   S={...seed(),people:[{...keep,role:'Admin'}],fixed:{[keep.id]:[]},tasks:[],notices:[],
      ticks:{},closes:[],trainingDone:{},me:keep.id,seq:0,setupDone:false,
@@ -1244,6 +1256,133 @@ function wipeTeam(){
 function resetAll(){
   if(!confirm('Reset everything back to the sample team?'))return;
   S=seed();save();su=null;go('dash');
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SHARING THE SETUP
+   Opening the link gives each person their own blank copy — there is no
+   server holding a shared team. So the admin packs the setup (people,
+   daily tasks, schedules, training) into a link or a small file, and the
+   team loads it once. After that everyone's dashboard looks the same.
+   ══════════════════════════════════════════════════════════════════════ */
+function packSetup(){
+  const idx={};S.people.forEach((p,i)=>idx[p.id]=i);
+  return {
+    c:[S.company.name,S.company.sub],
+    st:[S.settings.startTime,S.settings.closeTime],
+    p:S.people.map(p=>[p.name,p.dept,p.desig||'',p.role==='Admin'?1:0]),
+    f:S.people.map(p=>(S.fixed[p.id]||[]).map(d=>[d.title,d.when])),
+    sc:DEPTS.map(d=>(S.schedules[d]||[]).map(r=>[r.at,r.what])),
+    tr:DEPTS.map(d=>(S.training[d]||[]).map(r=>[r.when,r.title])),
+  };
+}
+function applySetup(o){
+  S.company={name:o.c[0],sub:o.c[1]};
+  S.settings.startTime=o.st[0];S.settings.closeTime=o.st[1];
+  S.people=o.p.map(a=>({id:uid('p'),name:a[0],dept:a[1],desig:a[2]||a[1],
+    role:a[3]?'Admin':'Member',email:'',active:true}));
+  S.fixed={};
+  S.people.forEach((p,i)=>{S.fixed[p.id]=(o.f[i]||[])
+    .map(d=>({id:uid('d'),title:d[0],when:d[1]}))});
+  S.schedules={};S.training={};
+  DEPTS.forEach((d,i)=>{
+    S.schedules[d]=(o.sc[i]||[]).map(r=>({id:uid('s'),at:r[0],what:r[1]}));
+    S.training[d]=(o.tr[i]||[]).map(r=>({id:uid('r'),when:r[0],title:r[1]}));
+  });
+  /* the joiner's own live data starts clean */
+  S.tasks=[];S.notices=[];S.ticks={};S.closes=[];S.trainingDone={};S.seq=0;
+  S.me=S.people[0].id;S.setupDone=true;
+  save();
+}
+const b64e=s=>btoa(String.fromCharCode(...new TextEncoder().encode(s)))
+  .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const b64d=s=>new TextDecoder().decode(Uint8Array.from(
+  atob(s.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0)));
+
+function shareSetup(){
+  const payload=b64e(JSON.stringify(packSetup()));
+  const base=location.href.split('#')[0];
+  const link=base+'#s='+payload;
+  const long=link.length>7000;
+  const msg=`${S.company.name} — team dashboard\n\n`
+    +`1. Open this link\n2. Tap "Use this setup"\n3. Pick your name at the top right\n`
+    +`4. Tap "Turn on alerts" once so you hear pings\n\n${link}`;
+  modal(`<div class="card"><header><h3>Share with the team</h3>
+    <button class="btn ghost sm" onclick="modal('')">✕</button></header><div class="body stack" style="gap:14px">
+    <p class="s5">Everyone who opens the plain link gets an empty copy. Send them
+      <b>this</b> instead and they land on your exact setup — same people, same daily tasks,
+      same schedules, same training.</p>
+    ${long?`<div class="warnbox">Your setup is large, so the link may be too long for some
+      chat apps. If it does not work, use the file button below.</div>`:''}
+    <label class="fld"><span>Message to send them</span>
+      <textarea id="shareMsg" rows="7" onclick="this.select()">${esc(msg)}</textarea></label>
+    <div class="row">
+      <button class="btn" onclick="copyShare()">📋 Copy the message</button>
+      <button class="btn sec" onclick="downloadSetup()">💾 Save as a file instead</button>
+    </div>
+    <p class="s6 muted">Each person still keeps their own tasks and ticks on their own computer.
+      To have one shared live view — where a ping reaches someone else's laptop — the hosted
+      version is the one you want.</p>
+  </div></div>`);
+}
+function copyShare(){
+  const t=document.getElementById('shareMsg');
+  t.select();
+  const done=()=>toast('Copied. Paste it into WhatsApp or email.');
+  if(navigator.clipboard){navigator.clipboard.writeText(t.value).then(done,()=>{
+    try{document.execCommand('copy');done()}catch(e){toast('Select the text and copy it.')}});
+  }else{try{document.execCommand('copy');done()}catch(e){toast('Select the text and copy it.')}}
+}
+async function downloadSetup(){
+  const data=JSON.stringify(packSetup());
+  const filename=S.company.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'-setup.json';
+  try{
+    if(window.claude&&typeof window.claude.use==='function'){
+      const dl=await window.claude.use('downloads');
+      if(dl){await dl.save({filename,data});toast('Saved. Send that file to the team.');return}
+    }
+  }catch(e){toast('Save cancelled.');return}
+  const url=URL.createObjectURL(new Blob([data],{type:'application/json'}));
+  const a=document.createElement('a');a.href=url;a.download=filename;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  toast('Downloaded. Send that file to the team.');
+}
+function loadSetupFile(){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='.json,application/json';
+  inp.onchange=()=>{
+    const f=inp.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{
+      try{offerSetup(JSON.parse(r.result))}
+      catch(e){toast('That file could not be read.')}
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+/* A teammate arriving with a setup link or file is asked before anything
+   is overwritten — never silently replace someone's data. */
+function offerSetup(o){
+  if(!o||!o.p||!o.p.length)return toast('That setup looks empty.');
+  modal(`<div class="card"><header><h3>Use this setup?</h3></header><div class="body stack" style="gap:14px">
+    <p class="s4"><b>${esc(o.c[0])}</b> has set up the dashboard with
+      <b>${o.p.length} people</b>, their daily tasks, department schedules and training lists.</p>
+    <p class="s5 muted">Loading it replaces whatever is on this computer now. Your own tasks and
+      ticks start clean.</p>
+    <div class="stack" style="gap:9px">
+      <button class="btn lg" onclick='doApplySetup(${JSON.stringify(o).replace(/'/g,"&#39;")})'>
+        Use this setup</button>
+      <button class="btn sec" onclick="modal('');history.replaceState(null,'',location.pathname)">
+        No thanks, keep what I have</button>
+    </div></div></div>`);
+}
+function doApplySetup(o){
+  applySetup(o);
+  try{history.replaceState(null,'',location.pathname)}catch(e){}
+  modal('');go('dash');
+  setTimeout(()=>modal(whoDialog()),350);
+  toast('Loaded. Now pick your name.');
 }
 
 /* ── shell ────────────────────────────────────────────────────────────── */
@@ -1302,6 +1441,12 @@ try{const t=localStorage.getItem('5c-theme');if(t)document.documentElement.setAt
 load();
 Alarm.originalTitle=document.title;
 render();
+/* Arrived on a setup link? Offer it before anything else happens. */
+try{
+  const m=location.hash.match(/[#&]s=([A-Za-z0-9\-_]+)/);
+  if(m)setTimeout(()=>{try{offerSetup(JSON.parse(b64d(m[1])))}
+    catch(e){toast('That setup link could not be read.')}},250);
+}catch(e){}
 /* If sound was enabled before, restore it on the first tap anywhere. */
 try{
   if(localStorage.getItem('5c-sound')==='on'){
