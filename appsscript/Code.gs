@@ -88,11 +88,13 @@ function jok(payload) {
 function ss() {
   var props = PropertiesService.getScriptProperties();
   var id = props.getProperty('SS_ID');
-  var book = null;
+  var book;
   if (id) {
-    try { book = SpreadsheetApp.openById(id); } catch (e) { book = null; }
-  }
-  if (!book) {
+    // Never create a replacement here. openById also throws on a passing
+    // Drive/Sheets hiccup, and creating a fresh book would silently orphan
+    // the team's real data and show everyone the first-run setup screen.
+    book = SpreadsheetApp.openById(id);
+  } else {
     book = SpreadsheetApp.create('5C Pulse — Team Data');
     props.setProperty('SS_ID', book.getId());
   }
@@ -163,6 +165,15 @@ function updateRow(name, cols, obj) {
   sheet(name).getRange(obj._row, 1, 1, cols.length).setValues([row]);
 }
 
+/** One cell only — for writes that must not carry a stale snapshot of the rest
+ *  of the row back to the sheet (see pull's presence touch). */
+function updateCell(name, cols, obj, col, value) {
+  var idx = cols.indexOf(col);
+  if (idx < 0) throw new Error('Unknown column: ' + col);
+  sheet(name).getRange(obj._row, idx + 1).setValue(value);
+  obj[col] = value;
+}
+
 /* ── meta / version (cheap polling) ───────────────────────────────────────── */
 
 function metaGet(key) {
@@ -185,7 +196,13 @@ function metaSet(key, value) {
 function bumpVersion() {
   var v = Number(metaGet('version') || 0) + 1;
   metaSet('version', v);
-  try { CacheService.getScriptCache().put('v', String(v), 21600); } catch (e) {}
+  try {
+    CacheService.getScriptCache().put('v', String(v), 21600);
+  } catch (e) {
+    // A cache that kept the OLD number would tell every client "nothing new"
+    // for hours. Drop the key instead so reads fall back to the sheet.
+    try { CacheService.getScriptCache().remove('v'); } catch (e2) {}
+  }
   return v;
 }
 
@@ -238,14 +255,15 @@ function publicPerson(p) {
   return { id: p.id, name: p.name, dept: p.dept, role: p.role, active: String(p.active) !== 'false' };
 }
 
-/** What the login screen may know: company + names. Never PINs, never data. */
+/** What the login screen may know: company + names, and nothing else — not who
+ *  the admins are, which would tell a stranger exactly which PIN to guess at. */
 function publicState() {
   var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS).filter(function (p) { return String(p.active) !== 'false'; });
   if (people.length === 0) return { setupNeeded: true };
   return {
     setupNeeded: false,
     company: metaGet('company') || '5 Circles',
-    people: people.map(publicPerson)
+    people: people.map(function (p) { return { id: p.id, name: p.name }; })
   };
 }
 
@@ -317,28 +335,55 @@ function login(data) {
 }
 
 function logout(me) {
-  me.token = '';
-  updateRow(SHEETS.PEOPLE, PEOPLE_COLS, me);
+  updateCell(SHEETS.PEOPLE, PEOPLE_COLS, me, 'token', '');
   return {};
+}
+
+/* ── presence ─────────────────────────────────────────────────────────────
+   Who is around right now. Kept in the cache so an idle poll costs no sheet
+   reads, and written to the sheet at most once a minute per person. */
+
+function presenceMap() {
+  try {
+    var raw = CacheService.getScriptCache().get('seen');
+    if (raw) return JSON.parse(raw) || {};
+  } catch (e) {}
+  return {};
+}
+
+function touchPresence(me) {
+  var now = new Date().toISOString();
+  var last = new Date(me.last_seen || 0).getTime();
+  if (isNaN(last) || Date.now() - last > 60000) {
+    // ONE cell. Writing the whole row here would carry this request's
+    // pre-lock snapshot back over a PIN reset or sign-out that landed in
+    // between, undoing it.
+    updateCell(SHEETS.PEOPLE, PEOPLE_COLS, me, 'last_seen', now);
+  }
+  try {
+    var cache = CacheService.getScriptCache();
+    var map = presenceMap();
+    map[me.id] = now;
+    cache.put('seen', JSON.stringify(map), 3600);
+  } catch (e) {}
+  return now;
 }
 
 /* ── the one read the app lives on ────────────────────────────────────────── */
 
 function pull(me, data) {
   var v = currentVersion();
-  if (data && Number(data.since) === v) return { v: v, unchanged: true };
+  touchPresence(me);
+  var seen = presenceMap();
+
+  // Nothing new to send, but presence still travels — otherwise everyone
+  // "goes offline" the moment the team stops typing.
+  if (data && Number(data.since) === v) return { v: v, unchanged: true, seen: seen };
 
   var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
   var tasks = readAll(SHEETS.TASKS, TASKS_COLS);
   var messages = readAll(SHEETS.MESSAGES, MESSAGES_COLS);
   if (messages.length > MSG_PULL_LIMIT) messages = messages.slice(messages.length - MSG_PULL_LIMIT);
-
-  // touch last_seen at most once a minute — presence without write-storms
-  var seen = new Date(me.last_seen || 0).getTime();
-  if (isNaN(seen) || Date.now() - seen > 60000) {
-    me.last_seen = new Date().toISOString();
-    updateRow(SHEETS.PEOPLE, PEOPLE_COLS, me);
-  }
 
   var appUrl = '';
   try { appUrl = ScriptApp.getService().getUrl() || ''; } catch (e) {}
@@ -351,7 +396,8 @@ function pull(me, data) {
     sheetUrl: me.role === 'Admin' ? ss().getUrl() : '',
     people: people.map(function (p) {
       var pub = publicPerson(p);
-      pub.last_seen = p.last_seen || '';
+      var cached = seen[p.id] || '';
+      pub.last_seen = cached > (p.last_seen || '') ? cached : (p.last_seen || '');
       return pub;
     }),
     tasks: tasks.map(function (t) {
@@ -456,9 +502,10 @@ function toggleStuck(me, data) {
   updateRow(SHEETS.TASKS, TASKS_COLS, task);
 
   if (nowStuck && task.by_id !== me.id) {
-    // Being stuck should never be silent: the giver's screen rings
-    postMessage(me.id, task.by_id, 'STUCK on: ' + task.title +
-      (data.why ? ' — ' + String(data.why).trim().slice(0, 300) : ''), 'ring', task.id);
+    // Being stuck should never be silent: the giver's screen rings. If the
+    // giver has left the team, the whole team hears it instead.
+    var to = activePersonById(task.by_id) ? task.by_id : 'ALL';
+    postMessage(me.id, to, 'STUCK on: ' + task.title, 'ring', task.id);
   }
   bumpVersion();
   return {};
@@ -475,14 +522,14 @@ function editTask(me, data) {
   }
   if (data.note !== undefined) task.note = String(data.note).trim().slice(0, 2000);
   if (data.due !== undefined) task.due = /^\d{4}-\d{2}-\d{2}$/.test(String(data.due)) ? data.due : '';
-  if (data.ownerId !== undefined) {
+  // An unchanged owner needs no check — otherwise a task whose owner has since
+  // left the team could never be edited again, not even to fix a typo.
+  if (data.ownerId !== undefined && data.ownerId !== task.owner_id) {
     var owner = activePersonById(data.ownerId);
     if (!owner) throw new Error('Pick who is doing it.');
-    if (owner.id !== task.owner_id) {
-      task.owner_id = owner.id;
-      if (owner.id !== me.id) {
-        postMessage(me.id, owner.id, 'This task is now with you: ' + task.title, 'ring', task.id);
-      }
+    task.owner_id = owner.id;
+    if (owner.id !== me.id) {
+      postMessage(me.id, owner.id, 'This task is now with you: ' + task.title, 'ring', task.id);
     }
   }
   task.updated = new Date().toISOString();
@@ -512,12 +559,22 @@ function sendMessage(me, data) {
   var text = String(data.text || '').trim();
   if (!text) throw new Error('Write something first.');
   var to = data.toId || 'ALL';
-  if (to !== 'ALL' && !activePersonById(to)) throw new Error('That person is not on the team.');
+  if (to !== 'ALL' && !activePersonById(to)) {
+    // The other party has left. A comment on the task still belongs on record,
+    // so it goes to the team rather than failing in the person's face.
+    if (data.taskId) to = 'ALL';
+    else throw new Error('That person is not on the team.');
+  }
   var kind = data.kind === 'ring' ? 'ring' : 'chat';
   if (kind === 'ring' && to === 'ALL' && me.role !== 'Admin') {
     throw new Error('Only an admin can ring the whole team at once.');
   }
-  if (data.taskId && !taskById(data.taskId)) throw new Error('Task not found.');
+  if (data.taskId) {
+    // Comments live under the same rule as the rest of the task
+    var t = taskById(data.taskId);
+    if (!t) throw new Error('Task not found.');
+    assertTaskParty(me, t);
+  }
   var msg = postMessage(me.id, to, text, kind, data.taskId || '');
   bumpVersion();
   return { messageId: msg.id };
@@ -542,12 +599,28 @@ function ackMessage(me, data) {
 
 /* ── people (admin) ───────────────────────────────────────────────────────── */
 
-function assertAdmin(me) {
-  if (me.role !== 'Admin') throw new Error('Only an admin can do that.');
+/** The caller as the sheet sees them RIGHT NOW, inside the lock. The copy the
+ *  request arrived with was read before waiting for the lock, so another admin
+ *  may have changed this person's role — or removed them — in between. */
+function admin(me) {
+  var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
+  var fresh = null;
+  for (var i = 0; i < people.length; i++) if (people[i].id === me.id) { fresh = people[i]; break; }
+  if (!fresh || String(fresh.active) === 'false') throw new Error('Your access has changed. Please sign in again.');
+  if (fresh.role !== 'Admin') throw new Error('Only an admin can do that.');
+  return fresh;
+}
+
+function activeAdminCount() {
+  var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS), n = 0;
+  for (var i = 0; i < people.length; i++) {
+    if (String(people[i].active) !== 'false' && people[i].role === 'Admin') n++;
+  }
+  return n;
 }
 
 function addPerson(me, data) {
-  assertAdmin(me);
+  me = admin(me);
   var name = String(data.name || '').trim();
   if (!name) throw new Error('Type their name.');
   var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
@@ -580,7 +653,7 @@ function addPerson(me, data) {
 }
 
 function editPerson(me, data) {
-  assertAdmin(me);
+  me = admin(me);
   var p = activePersonById(data.personId);
   if (!p) throw new Error('Person not found.');
   if (data.name !== undefined) {
@@ -591,6 +664,9 @@ function editPerson(me, data) {
   if (data.dept !== undefined) p.dept = String(data.dept).trim() || p.dept;
   if (data.role !== undefined && (data.role === 'Admin' || data.role === 'Member')) {
     if (p.id === me.id && data.role !== 'Admin') throw new Error('You cannot remove your own admin access.');
+    if (p.role === 'Admin' && data.role !== 'Admin' && activeAdminCount() <= 1) {
+      throw new Error('Someone has to stay admin. Make another person an admin first.');
+    }
     p.role = data.role;
   }
   updateRow(SHEETS.PEOPLE, PEOPLE_COLS, p);
@@ -599,7 +675,7 @@ function editPerson(me, data) {
 }
 
 function resetPin(me, data) {
-  assertAdmin(me);
+  me = admin(me);
   var p = activePersonById(data.personId);
   if (!p) throw new Error('Person not found.');
   var pin = makePin();
@@ -614,10 +690,13 @@ function resetPin(me, data) {
 }
 
 function removePerson(me, data) {
-  assertAdmin(me);
+  me = admin(me);
   var p = activePersonById(data.personId);
   if (!p) throw new Error('Person not found.');
   if (p.id === me.id) throw new Error('You cannot remove yourself.');
+  if (p.role === 'Admin' && activeAdminCount() <= 1) {
+    throw new Error('Someone has to stay admin. Make another person an admin first.');
+  }
 
   // Zero orphaned work: their open tasks move to the admin doing the removal
   var tasks = readAll(SHEETS.TASKS, TASKS_COLS);
@@ -643,7 +722,7 @@ function removePerson(me, data) {
 }
 
 function setCompany(me, data) {
-  assertAdmin(me);
+  me = admin(me);
   var name = String(data.company || '').trim();
   if (!name) throw new Error('Type the company name.');
   metaSet('company', name);

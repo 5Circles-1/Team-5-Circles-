@@ -666,6 +666,9 @@
       return bookApi();
     },
     openById: function (id) {
+      // Fault injection for the tests: Google's Sheets service does fail
+      // transiently, and the app must not mistake that for "sheet deleted".
+      if (window.FAKE_OPEN_FAILS) throw new Error('Service Spreadsheets failed while accessing document');
       var d = load();
       if (!d) throw new Error('Spreadsheet not found');
       return bookApi();
@@ -770,11 +773,13 @@ function jok(payload) {
 function ss() {
   var props = PropertiesService.getScriptProperties();
   var id = props.getProperty('SS_ID');
-  var book = null;
+  var book;
   if (id) {
-    try { book = SpreadsheetApp.openById(id); } catch (e) { book = null; }
-  }
-  if (!book) {
+    // Never create a replacement here. openById also throws on a passing
+    // Drive/Sheets hiccup, and creating a fresh book would silently orphan
+    // the team's real data and show everyone the first-run setup screen.
+    book = SpreadsheetApp.openById(id);
+  } else {
     book = SpreadsheetApp.create('5C Pulse — Team Data');
     props.setProperty('SS_ID', book.getId());
   }
@@ -845,6 +850,15 @@ function updateRow(name, cols, obj) {
   sheet(name).getRange(obj._row, 1, 1, cols.length).setValues([row]);
 }
 
+/** One cell only — for writes that must not carry a stale snapshot of the rest
+ *  of the row back to the sheet (see pull's presence touch). */
+function updateCell(name, cols, obj, col, value) {
+  var idx = cols.indexOf(col);
+  if (idx < 0) throw new Error('Unknown column: ' + col);
+  sheet(name).getRange(obj._row, idx + 1).setValue(value);
+  obj[col] = value;
+}
+
 /* ── meta / version (cheap polling) ───────────────────────────────────────── */
 
 function metaGet(key) {
@@ -867,7 +881,13 @@ function metaSet(key, value) {
 function bumpVersion() {
   var v = Number(metaGet('version') || 0) + 1;
   metaSet('version', v);
-  try { CacheService.getScriptCache().put('v', String(v), 21600); } catch (e) {}
+  try {
+    CacheService.getScriptCache().put('v', String(v), 21600);
+  } catch (e) {
+    // A cache that kept the OLD number would tell every client "nothing new"
+    // for hours. Drop the key instead so reads fall back to the sheet.
+    try { CacheService.getScriptCache().remove('v'); } catch (e2) {}
+  }
   return v;
 }
 
@@ -920,14 +940,15 @@ function publicPerson(p) {
   return { id: p.id, name: p.name, dept: p.dept, role: p.role, active: String(p.active) !== 'false' };
 }
 
-/** What the login screen may know: company + names. Never PINs, never data. */
+/** What the login screen may know: company + names, and nothing else — not who
+ *  the admins are, which would tell a stranger exactly which PIN to guess at. */
 function publicState() {
   var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS).filter(function (p) { return String(p.active) !== 'false'; });
   if (people.length === 0) return { setupNeeded: true };
   return {
     setupNeeded: false,
     company: metaGet('company') || '5 Circles',
-    people: people.map(publicPerson)
+    people: people.map(function (p) { return { id: p.id, name: p.name }; })
   };
 }
 
@@ -999,28 +1020,55 @@ function login(data) {
 }
 
 function logout(me) {
-  me.token = '';
-  updateRow(SHEETS.PEOPLE, PEOPLE_COLS, me);
+  updateCell(SHEETS.PEOPLE, PEOPLE_COLS, me, 'token', '');
   return {};
+}
+
+/* ── presence ─────────────────────────────────────────────────────────────
+   Who is around right now. Kept in the cache so an idle poll costs no sheet
+   reads, and written to the sheet at most once a minute per person. */
+
+function presenceMap() {
+  try {
+    var raw = CacheService.getScriptCache().get('seen');
+    if (raw) return JSON.parse(raw) || {};
+  } catch (e) {}
+  return {};
+}
+
+function touchPresence(me) {
+  var now = new Date().toISOString();
+  var last = new Date(me.last_seen || 0).getTime();
+  if (isNaN(last) || Date.now() - last > 60000) {
+    // ONE cell. Writing the whole row here would carry this request's
+    // pre-lock snapshot back over a PIN reset or sign-out that landed in
+    // between, undoing it.
+    updateCell(SHEETS.PEOPLE, PEOPLE_COLS, me, 'last_seen', now);
+  }
+  try {
+    var cache = CacheService.getScriptCache();
+    var map = presenceMap();
+    map[me.id] = now;
+    cache.put('seen', JSON.stringify(map), 3600);
+  } catch (e) {}
+  return now;
 }
 
 /* ── the one read the app lives on ────────────────────────────────────────── */
 
 function pull(me, data) {
   var v = currentVersion();
-  if (data && Number(data.since) === v) return { v: v, unchanged: true };
+  touchPresence(me);
+  var seen = presenceMap();
+
+  // Nothing new to send, but presence still travels — otherwise everyone
+  // "goes offline" the moment the team stops typing.
+  if (data && Number(data.since) === v) return { v: v, unchanged: true, seen: seen };
 
   var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
   var tasks = readAll(SHEETS.TASKS, TASKS_COLS);
   var messages = readAll(SHEETS.MESSAGES, MESSAGES_COLS);
   if (messages.length > MSG_PULL_LIMIT) messages = messages.slice(messages.length - MSG_PULL_LIMIT);
-
-  // touch last_seen at most once a minute — presence without write-storms
-  var seen = new Date(me.last_seen || 0).getTime();
-  if (isNaN(seen) || Date.now() - seen > 60000) {
-    me.last_seen = new Date().toISOString();
-    updateRow(SHEETS.PEOPLE, PEOPLE_COLS, me);
-  }
 
   var appUrl = '';
   try { appUrl = ScriptApp.getService().getUrl() || ''; } catch (e) {}
@@ -1033,7 +1081,8 @@ function pull(me, data) {
     sheetUrl: me.role === 'Admin' ? ss().getUrl() : '',
     people: people.map(function (p) {
       var pub = publicPerson(p);
-      pub.last_seen = p.last_seen || '';
+      var cached = seen[p.id] || '';
+      pub.last_seen = cached > (p.last_seen || '') ? cached : (p.last_seen || '');
       return pub;
     }),
     tasks: tasks.map(function (t) {
@@ -1138,9 +1187,10 @@ function toggleStuck(me, data) {
   updateRow(SHEETS.TASKS, TASKS_COLS, task);
 
   if (nowStuck && task.by_id !== me.id) {
-    // Being stuck should never be silent: the giver's screen rings
-    postMessage(me.id, task.by_id, 'STUCK on: ' + task.title +
-      (data.why ? ' — ' + String(data.why).trim().slice(0, 300) : ''), 'ring', task.id);
+    // Being stuck should never be silent: the giver's screen rings. If the
+    // giver has left the team, the whole team hears it instead.
+    var to = activePersonById(task.by_id) ? task.by_id : 'ALL';
+    postMessage(me.id, to, 'STUCK on: ' + task.title, 'ring', task.id);
   }
   bumpVersion();
   return {};
@@ -1157,14 +1207,14 @@ function editTask(me, data) {
   }
   if (data.note !== undefined) task.note = String(data.note).trim().slice(0, 2000);
   if (data.due !== undefined) task.due = /^\d{4}-\d{2}-\d{2}$/.test(String(data.due)) ? data.due : '';
-  if (data.ownerId !== undefined) {
+  // An unchanged owner needs no check — otherwise a task whose owner has since
+  // left the team could never be edited again, not even to fix a typo.
+  if (data.ownerId !== undefined && data.ownerId !== task.owner_id) {
     var owner = activePersonById(data.ownerId);
     if (!owner) throw new Error('Pick who is doing it.');
-    if (owner.id !== task.owner_id) {
-      task.owner_id = owner.id;
-      if (owner.id !== me.id) {
-        postMessage(me.id, owner.id, 'This task is now with you: ' + task.title, 'ring', task.id);
-      }
+    task.owner_id = owner.id;
+    if (owner.id !== me.id) {
+      postMessage(me.id, owner.id, 'This task is now with you: ' + task.title, 'ring', task.id);
     }
   }
   task.updated = new Date().toISOString();
@@ -1194,12 +1244,22 @@ function sendMessage(me, data) {
   var text = String(data.text || '').trim();
   if (!text) throw new Error('Write something first.');
   var to = data.toId || 'ALL';
-  if (to !== 'ALL' && !activePersonById(to)) throw new Error('That person is not on the team.');
+  if (to !== 'ALL' && !activePersonById(to)) {
+    // The other party has left. A comment on the task still belongs on record,
+    // so it goes to the team rather than failing in the person's face.
+    if (data.taskId) to = 'ALL';
+    else throw new Error('That person is not on the team.');
+  }
   var kind = data.kind === 'ring' ? 'ring' : 'chat';
   if (kind === 'ring' && to === 'ALL' && me.role !== 'Admin') {
     throw new Error('Only an admin can ring the whole team at once.');
   }
-  if (data.taskId && !taskById(data.taskId)) throw new Error('Task not found.');
+  if (data.taskId) {
+    // Comments live under the same rule as the rest of the task
+    var t = taskById(data.taskId);
+    if (!t) throw new Error('Task not found.');
+    assertTaskParty(me, t);
+  }
   var msg = postMessage(me.id, to, text, kind, data.taskId || '');
   bumpVersion();
   return { messageId: msg.id };
@@ -1224,12 +1284,28 @@ function ackMessage(me, data) {
 
 /* ── people (admin) ───────────────────────────────────────────────────────── */
 
-function assertAdmin(me) {
-  if (me.role !== 'Admin') throw new Error('Only an admin can do that.');
+/** The caller as the sheet sees them RIGHT NOW, inside the lock. The copy the
+ *  request arrived with was read before waiting for the lock, so another admin
+ *  may have changed this person's role — or removed them — in between. */
+function admin(me) {
+  var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
+  var fresh = null;
+  for (var i = 0; i < people.length; i++) if (people[i].id === me.id) { fresh = people[i]; break; }
+  if (!fresh || String(fresh.active) === 'false') throw new Error('Your access has changed. Please sign in again.');
+  if (fresh.role !== 'Admin') throw new Error('Only an admin can do that.');
+  return fresh;
+}
+
+function activeAdminCount() {
+  var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS), n = 0;
+  for (var i = 0; i < people.length; i++) {
+    if (String(people[i].active) !== 'false' && people[i].role === 'Admin') n++;
+  }
+  return n;
 }
 
 function addPerson(me, data) {
-  assertAdmin(me);
+  me = admin(me);
   var name = String(data.name || '').trim();
   if (!name) throw new Error('Type their name.');
   var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
@@ -1262,7 +1338,7 @@ function addPerson(me, data) {
 }
 
 function editPerson(me, data) {
-  assertAdmin(me);
+  me = admin(me);
   var p = activePersonById(data.personId);
   if (!p) throw new Error('Person not found.');
   if (data.name !== undefined) {
@@ -1273,6 +1349,9 @@ function editPerson(me, data) {
   if (data.dept !== undefined) p.dept = String(data.dept).trim() || p.dept;
   if (data.role !== undefined && (data.role === 'Admin' || data.role === 'Member')) {
     if (p.id === me.id && data.role !== 'Admin') throw new Error('You cannot remove your own admin access.');
+    if (p.role === 'Admin' && data.role !== 'Admin' && activeAdminCount() <= 1) {
+      throw new Error('Someone has to stay admin. Make another person an admin first.');
+    }
     p.role = data.role;
   }
   updateRow(SHEETS.PEOPLE, PEOPLE_COLS, p);
@@ -1281,7 +1360,7 @@ function editPerson(me, data) {
 }
 
 function resetPin(me, data) {
-  assertAdmin(me);
+  me = admin(me);
   var p = activePersonById(data.personId);
   if (!p) throw new Error('Person not found.');
   var pin = makePin();
@@ -1296,10 +1375,13 @@ function resetPin(me, data) {
 }
 
 function removePerson(me, data) {
-  assertAdmin(me);
+  me = admin(me);
   var p = activePersonById(data.personId);
   if (!p) throw new Error('Person not found.');
   if (p.id === me.id) throw new Error('You cannot remove yourself.');
+  if (p.role === 'Admin' && activeAdminCount() <= 1) {
+    throw new Error('Someone has to stay admin. Make another person an admin first.');
+  }
 
   // Zero orphaned work: their open tasks move to the admin doing the removal
   var tasks = readAll(SHEETS.TASKS, TASKS_COLS);
@@ -1325,7 +1407,7 @@ function removePerson(me, data) {
 }
 
 function setCompany(me, data) {
-  assertAdmin(me);
+  me = admin(me);
   var name = String(data.company || '').trim();
   if (!name) throw new Error('Type the company name.');
   metaSet('company', name);
@@ -1463,8 +1545,16 @@ var lastMsgHigh = '';         // newest message `created` we've already reacted 
 var activeTab = 'tasks';
 var chatChannel = 'ALL';
 var chatSeen = {};
-try { chatSeen = JSON.parse(STORE.getItem(LSK.chatSeen) || '{}') || {}; } catch (e) { chatSeen = {}; }
+// Read marks belong to a person, not to a browser — otherwise the next person
+// to sign in on the same laptop inherits them and never sees a chat badge.
+function chatSeenKey() { return LSK.chatSeen + ':' + (Auth.me ? Auth.me.id : 'anon'); }
+function loadChatSeen() {
+  try { chatSeen = JSON.parse(STORE.getItem(chatSeenKey()) || '{}') || {}; } catch (e) { chatSeen = {}; }
+}
 var openComments = {};        // taskId -> true
+var commentDrafts = {};       // taskId -> half-typed comment, kept across renders
+var pollAgain = false;
+var sessionEpoch = 0;         // bumped on every sign-in/out; stale replies bail
 var FAST = /[?&]fast/.test(location.search);
 var POLL_VISIBLE = FAST ? 1200 : 12000;
 var POLL_HIDDEN  = FAST ? 2500 : 45000;
@@ -1492,7 +1582,9 @@ var Audio5 = {
       if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
       if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
     } catch (e) {}
-    return !!this.ctx;
+    // A context created before the first tap exists but stays silent, so
+    // "we have a context" is not the same as "sound will actually come out".
+    return !!(this.ctx && this.ctx.state === 'running');
   },
   tone: function (at, freq, dur, vol, type) {
     try {
@@ -1539,7 +1631,11 @@ var Ring = {
     if (this.iv) { clearInterval(this.iv); this.iv = null; }
   }
 };
-document.addEventListener('pointerdown', function () { Audio5.ensure(); }, { capture: true });
+document.addEventListener('pointerdown', function () {
+  // The first tap anywhere is what lets the browser make sound. If a ring is
+  // already waiting, start it the moment that happens.
+  if (Audio5.ensure() && Alarm.current) { $('alHint').textContent = ''; Ring.start(); }
+}, { capture: true });
 
 function osNotify(title, body) {
   try {
@@ -1557,24 +1653,29 @@ function askNotifyPermission() {
 /* ═══ alarm takeover ═════════════════════════════════════════════════════ */
 var Alarm = {
   current: null,
+  answered: {},          // answered on this device, before the server confirms
   pending: function () {
     if (!S || !Auth.me) return [];
+    var self = this;
     return S.messages.filter(function (m) {
       if (m.kind !== 'ring') return false;
       if (m.from_id === Auth.me.id) return false;
       if (m.to_id !== 'ALL' && m.to_id !== Auth.me.id) return false;
+      if (self.answered[m.id]) return false;
       return !(m.acks || []).some(function (a) { return a.who === Auth.me.id; });
     });
   },
   check: function () {
+    if (!inApp) return;
     var q = this.pending();
     if (!q.length) { this.clear(); return; }
     var m = q[0];
-    if (this.current && this.current.id === m.id) { Ring.start(); return; }
-    this.current = m;
+    var already = this.current && this.current.id === m.id;
+    this.current = m;              // always the object from the LATEST pull
+    if (already) { Ring.start(); return; }
     $('alFrom').textContent = nameOf(m.from_id) + (m.to_id === 'ALL' ? ' · to everyone' : '') + ' · needs an answer';
     $('alText').textContent = m.text;
-    $('alHint').textContent = Audio5.ctx ? (q.length > 1 ? (q.length - 1) + ' more waiting after this one' : '')
+    $('alHint').textContent = Audio5.ensure() ? (q.length > 1 ? (q.length - 1) + ' more waiting after this one' : '')
       : 'Tap anywhere once to turn the sound on';
     $('alarm').classList.remove('hide');
     Ring.start();
@@ -1584,14 +1685,26 @@ var Alarm = {
     var m = this.current;
     if (!m) return;
     Ring.stop();
-    // optimistic: mark locally so the overlay moves on instantly
-    m.acks = (m.acks || []).concat([{ who: Auth.me.id, answer: ans, at: new Date().toISOString() }]);
+    // Remembered by id, never by mutating the message: the next poll replaces
+    // every message object, and the answer would be lost — the ring would
+    // simply start again in the person's face.
+    this.answered[m.id] = true;
     this.current = null;
     this.check();
+    var self = this;
     rpc('ack', { messageId: m.id, answer: ans }).then(function (res) {
-      if (!res.ok) toast(res.error || 'Could not send the answer.', true);
+      if (!res.ok) {
+        delete self.answered[m.id];
+        toast(res.error || 'Could not send that answer.', true);
+        self.check();
+        return;
+      }
       pollNow();
-    }, function (e) { toast(String(e.message || e), true); });
+    }, function () {
+      delete self.answered[m.id];
+      toast('Could not reach the team — it will ring again.', true);
+      self.check();
+    });
     renderAll();
   },
   clear: function () {
@@ -1619,17 +1732,24 @@ function boot() {
       if (window.FAKE_RESET) window.FAKE_RESET();
       try {
         STORE.removeItem(LSK.token);
-        STORE.removeItem(LSK.chatSeen);
+        for (var i = STORE.length - 1; i >= 0; i--) {
+          var k = STORE.key(i);
+          if (k && k.indexOf(LSK.chatSeen) === 0) STORE.removeItem(k);
+        }
       } catch (e) {}
       location.reload();
     });
   }
   if (Auth.token) {
     rpc('pull', {}).then(function (res) {
-      if (res.ok) { applyPull(res); enterApp(); }
-      else { saveToken(''); startLogin(); }
+      if (res.ok) { applyPull(res); enterApp(); return; }
+      // Only a rejected token means "sign in again". Everything else is
+      // Google having a moment, and signing the team out over that would be
+      // the app losing their session for no reason.
+      if (res.auth === false) { saveToken(''); startLogin(); return; }
+      $('splashMsg').textContent = 'Google is slow right now — trying again…';
+      setTimeout(boot, 4000);
     }, function () {
-      // network hiccup with a saved token: try again rather than logging out
       $('splashMsg').textContent = 'Can’t reach Google right now — retrying…';
       setTimeout(boot, 3000);
     });
@@ -1639,15 +1759,17 @@ function boot() {
 }
 
 function startLogin() {
+  var stuck = function (msg) {
+    show('scrSplash');
+    $('splashMsg').textContent = msg;
+    setTimeout(startLogin, 4000);      // never dead-end: keep trying
+  };
   rpc('state', {}).then(function (res) {
-    if (!res.ok) { $('splashMsg').textContent = res.error || 'Something went wrong.'; return; }
+    if (!res.ok) { stuck(res.error || 'Something went wrong — trying again…'); return; }
     if (res.setupNeeded) { show('scrSetup'); return; }
     renderLoginFaces(res);
     show('scrLogin');
-  }, function (e) {
-    $('splashMsg').textContent = String(e.message || e);
-    setTimeout(startLogin, 4000);
-  });
+  }, function (e) { stuck(String(e.message || e)); });
 }
 
 /* ═══ setup (first run) ══════════════════════════════════════════════════ */
@@ -1765,11 +1887,53 @@ var pollBusy = false;
 
 function enterApp() {
   inApp = true;
+  sessionEpoch++;
+  loadChatSeen();
   show('scrApp');
   renderAll();
   Alarm.check();
   schedulePoll();
+  startClock();
   askNotifyPermission();
+}
+
+/* "due today", "overdue" and "here now" are all read off the clock, so they
+   have to be redrawn as time passes — not only when someone types something. */
+var clockTimer = null;
+var clockDay = todayStr();
+function startClock() {
+  clearInterval(clockTimer);
+  clockTimer = setInterval(function () {
+    if (!inApp || !S) return;
+    var today = todayStr();
+    if (today !== clockDay) { clockDay = today; renderAll(); return; }
+    renderTeam();
+    if (activeTab === 'tasks') renderTasks();
+  }, 60000);
+}
+
+/** Presence that arrives on an otherwise-unchanged poll. */
+function presenceSignature() {
+  return S.people.map(function (p) { return p.id + fmtAgo(p.last_seen); }).join('|');
+}
+function applySeen(seen) {
+  if (!S || !seen) return;
+  var before = presenceSignature();
+  S.people.forEach(function (p) {
+    if (seen[p.id] && seen[p.id] > (p.last_seen || '')) p.last_seen = seen[p.id];
+  });
+  // Timestamps tick constantly; only redraw when the words on screen change,
+  // or the Team tab would rebuild itself under the user's finger.
+  if (activeTab === 'team' && presenceSignature() !== before) renderTeam();
+}
+
+function chatAtBottom() {
+  if (activeTab !== 'chat') return true;
+  var log = $('chatLog');
+  if (!log) return true;
+  // Someone reading back through history should stay where they are
+  return (log.scrollHeight - log.scrollTop - log.clientHeight) < 80 ||
+         (document.documentElement.scrollHeight - window.scrollY - window.innerHeight) < 120;
 }
 
 function schedulePoll() {
@@ -1779,17 +1943,28 @@ function schedulePoll() {
 
 function pollNow() {
   if (!inApp) return;
-  if (pollBusy) { schedulePoll(); return; }
+  // A poll already on the wire cannot include the change just made, so
+  // remember to go again the moment it lands instead of waiting a full round.
+  if (pollBusy) { pollAgain = true; return; }
   pollBusy = true;
-  rpc('pull', { since: lastV }).then(function (res) {
+  var epoch = sessionEpoch;
+  var finish = function () {
     pollBusy = false;
-    if (res.ok === false && res.auth === false) { signedOutElsewhere(); return; }
-    if (res.ok && !res.unchanged) {
-      applyPull(res); renderAll(); Alarm.check();
-      if (activeTab === 'chat') scrollChat();
-    }
+    if (epoch !== sessionEpoch || !inApp) return;   // signed out while in flight
+    if (pollAgain) { pollAgain = false; pollNow(); return; }
     schedulePoll();
-  }, function () { pollBusy = false; schedulePoll(); });
+  };
+  rpc('pull', { since: lastV }).then(function (res) {
+    if (epoch !== sessionEpoch || !inApp) { pollBusy = false; return; }
+    if (res.ok === false && res.auth === false) { pollBusy = false; signedOutElsewhere(); return; }
+    if (res.ok && res.unchanged && res.seen) { applySeen(res.seen); }
+    if (res.ok && !res.unchanged) {
+      var stick = chatAtBottom();
+      applyPull(res); renderAll(); Alarm.check();
+      if (activeTab === 'chat' && stick) scrollChat();
+    }
+    finish();
+  }, finish);
 }
 
 document.addEventListener('visibilitychange', function () {
@@ -1797,9 +1972,17 @@ document.addEventListener('visibilitychange', function () {
 });
 
 function resetSessionState() {
+  sessionEpoch++;
   S = null; lastV = -1; lastMsgHigh = '';
-  chatChannel = 'ALL'; openComments = {};
+  chatChannel = 'ALL'; openComments = {}; commentDrafts = {};
+  chatSeen = {}; pollAgain = false;
+  Alarm.answered = {};
   Alarm.clear();
+  clearInterval(clockTimer);
+  // Nothing from the last person may be left hanging over the login screen
+  ['veilTask', 'veilPin', 'veilAsk'].forEach(function (id) { $(id).classList.add('hide'); });
+  if (askResolve) { askResolve(false); askResolve = null; }
+  pinRevealDone = null;
 }
 
 function signedOutElsewhere() {
@@ -1895,9 +2078,15 @@ function taskSort(a, b) {
 }
 
 function renderTasks() {
-  // Don't wipe a comment someone is halfway through typing
+  // Keep whatever is half-typed, then carry it back into the fresh markup —
+  // the board must stay live while someone is composing a comment.
   var ae = document.activeElement;
-  if (ae && ae.hasAttribute && ae.hasAttribute('data-cmtin') && ae.value) return;
+  var focusedTask = (ae && ae.getAttribute && ae.getAttribute('data-cmtin')) || null;
+  var caret = focusedTask ? ae.selectionStart : 0;
+  Array.prototype.forEach.call(document.querySelectorAll('[data-cmtin]'), function (i) {
+    commentDrafts[i.getAttribute('data-cmtin')] = i.value;
+  });
+
   var mine = [], gave = [], rest = [];
   S.tasks.forEach(function (t) {
     if (t.owner_id === Auth.me.id) mine.push(t);
@@ -1913,6 +2102,15 @@ function renderTasks() {
   }
   $('taskSections').innerHTML = html;
   bindTaskEvents();
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-cmtin]'), function (i) {
+    var id = i.getAttribute('data-cmtin');
+    if (commentDrafts[id]) i.value = commentDrafts[id];
+    if (id === focusedTask) {
+      i.focus();
+      try { i.setSelectionRange(caret, caret); } catch (e) {}
+    }
+  });
 }
 
 function taskSection(title, list, emptyMsg) {
@@ -1978,37 +2176,63 @@ function ackSummary(m) {
   return '<div class="ackline">✔ ' + bits.join(' · ') + '</div>';
 }
 
+/** Runs an action once, keeping the button quiet until the server answers —
+ *  a second tap on "Done" or "I'm stuck" would ring someone for nothing. */
+function once(btn, run) {
+  if (btn.disabled) return;
+  btn.disabled = true;
+  var free = function () { btn.disabled = false; };
+  var p = run();
+  if (p && p.then) p.then(free, free); else free();
+}
+
 function bindTaskEvents() {
   Array.prototype.forEach.call($('taskSections').querySelectorAll('.task'), function (card) {
     var id = card.getAttribute('data-id');
     Array.prototype.forEach.call(card.querySelectorAll('[data-st]'), function (b) {
       b.addEventListener('click', function () {
-        rpc('setStatus', { taskId: id, status: b.getAttribute('data-st') })
-          .then(afterWrite, writeFailed);
+        once(b, function () {
+          return rpc('setStatus', { taskId: id, status: b.getAttribute('data-st') })
+            .then(afterWrite, writeFailed);
+        });
       });
     });
     Array.prototype.forEach.call(card.querySelectorAll('[data-act]'), function (b) {
       var act = b.getAttribute('data-act');
       b.addEventListener('click', function () {
-        if (act === 'stuck') rpc('toggleStuck', { taskId: id }).then(afterWrite, writeFailed);
+        if (act === 'stuck') {
+          once(b, function () { return rpc('toggleStuck', { taskId: id }).then(afterWrite, writeFailed); });
+        }
         if (act === 'cmt') { openComments[id] = !openComments[id]; renderTasks(); }
         if (act === 'edit') openTaskSheet(id);
-        if (act === 'cmtsend') {
-          var inp = card.querySelector('[data-cmtin]');
-          var text = inp.value.trim();
-          if (!text) return;
-          inp.value = '';
-          var t = S.tasks.filter(function (x) { return x.id === id; })[0];
-          var other = t ? (t.owner_id === Auth.me.id ? t.by_id : t.owner_id) : 'ALL';
-          rpc('send', { toId: other === Auth.me.id ? 'ALL' : other, text: text, taskId: id })
-            .then(afterWrite, writeFailed);
-        }
+        if (act === 'cmtsend') sendComment(card, id, b);
       });
     });
     var cin = card.querySelector('[data-cmtin]');
-    if (cin) cin.addEventListener('keydown', function (ev) {
-      if (ev.key === 'Enter') card.querySelector('[data-act="cmtsend"]').click();
-    });
+    if (cin) {
+      cin.addEventListener('input', function () { commentDrafts[id] = cin.value; });
+      cin.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' && !ev.repeat) card.querySelector('[data-act="cmtsend"]').click();
+      });
+    }
+  });
+}
+
+function sendComment(card, id, btn) {
+  var inp = card.querySelector('[data-cmtin]');
+  var text = inp.value.trim();
+  if (!text) { inp.value = ''; commentDrafts[id] = ''; return; }
+  var t = S.tasks.filter(function (x) { return x.id === id; })[0];
+  var other = t ? (t.owner_id === Auth.me.id ? t.by_id : t.owner_id) : 'ALL';
+  var p = personById(other);
+  if (other === Auth.me.id || !p || !p.active) other = 'ALL';   // they've left the team
+  once(btn, function () {
+    return rpc('send', { toId: other, text: text, taskId: id }).then(function (res) {
+      if (!res.ok) { toast(res.error || 'That didn’t send.', true); return; }
+      inp.value = '';                 // cleared only once it is safely on record
+      commentDrafts[id] = '';
+      pollNow();
+    }, writeFailed);
   });
 }
 
@@ -2021,6 +2245,7 @@ function writeFailed(e) { toast(String(e.message || e), true); }
 /* ── give / edit task sheet ────────────────────────────────── */
 var sheetTaskId = null;   // null = new task
 var sheetOwnerId = null;
+var sheetTaskEditing = false;
 
 $('fabTask').addEventListener('click', function () { openTaskSheet(null); });
 $('tkCancel').addEventListener('click', function () { $('veilTask').classList.add('hide'); });
@@ -2034,7 +2259,7 @@ function openTaskSheet(taskId) {
   $('tkNote').value = t ? t.note : '';
   $('tkDue').value = t ? t.due : '';
   $('tkRing').checked = false;
-  $('tkRingRow').classList.toggle('hide', !!t);
+  sheetTaskEditing = !!t;
   sheetOwnerId = t ? t.owner_id : Auth.me.id;
   renderWhoGrid();
   $('veilTask').classList.remove('hide');
@@ -2056,6 +2281,8 @@ function renderWhoGrid() {
       renderWhoGrid();
     });
   });
+  // Nothing to ring when the task is your own
+  $('tkRingRow').classList.toggle('hide', sheetTaskEditing || sheetOwnerId === Auth.me.id);
 }
 
 $('tkGo').addEventListener('click', function () {
@@ -2071,8 +2298,12 @@ $('tkGo').addEventListener('click', function () {
   };
   var fail = function (e) { $('tkGo').disabled = false; toast(String(e.message || e), true); };
   if (sheetTaskId) {
-    rpc('editTask', { taskId: sheetTaskId, title: title, note: $('tkNote').value, due: $('tkDue').value, ownerId: sheetOwnerId })
-      .then(done, fail);
+    var payload = { taskId: sheetTaskId, title: title, note: $('tkNote').value, due: $('tkDue').value };
+    var cur = S.tasks.filter(function (x) { return x.id === sheetTaskId; })[0];
+    // Only send the owner when it actually changed — a finished task belonging
+    // to someone who has left must still be editable.
+    if (!cur || sheetOwnerId !== cur.owner_id) payload.ownerId = sheetOwnerId;
+    rpc('editTask', payload).then(done, fail);
   } else {
     rpc('createTask', { ownerId: sheetOwnerId, title: title, note: $('tkNote').value, due: $('tkDue').value, ring: $('tkRing').checked })
       .then(done, fail);
@@ -2106,7 +2337,7 @@ function markChatSeen() {
   var high = chatSeen[chatChannel] || '';
   chatMessages(chatChannel).forEach(function (m) { if (m.created > high) high = m.created; });
   chatSeen[chatChannel] = high;
-  try { STORE.setItem(LSK.chatSeen, JSON.stringify(chatSeen)); } catch (e) {}
+  try { STORE.setItem(chatSeenKey(), JSON.stringify(chatSeen)); } catch (e) {}
   renderBadges();
 }
 
@@ -2173,18 +2404,26 @@ function scrollChat() {
   }, 40);
 }
 
+var chatSending = false;
 function sendChat(kind) {
   var text = $('chatText').value.trim();
   if (!text) { $('chatText').focus(); return; }
+  if (chatSending) return;          // a held Enter must not post the line twice
+  chatSending = true;
+  $('chatSend').disabled = true;
+  var done = function () { chatSending = false; $('chatSend').disabled = false; };
   rpc('send', { toId: chatChannel, text: text, kind: kind }).then(function (res) {
+    done();
     if (!res.ok) { toast(res.error || 'Could not send.', true); return; }
     $('chatText').value = '';
     pollNow();
     setTimeout(scrollChat, 300);
-  }, writeFailed);
+  }, function (e) { done(); writeFailed(e); });
 }
 $('chatSend').addEventListener('click', function () { sendChat('chat'); });
-$('chatText').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') sendChat('chat'); });
+$('chatText').addEventListener('keydown', function (ev) {
+  if (ev.key === 'Enter' && !ev.repeat) sendChat('chat');
+});
 $('chatRing').addEventListener('click', function () {
   var who = chatChannel === 'ALL' ? 'the whole team' : nameOf(chatChannel);
   if (!$('chatText').value.trim()) { toast('Write the message first — then ring.', true); $('chatText').focus(); return; }

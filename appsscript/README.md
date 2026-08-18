@@ -47,4 +47,32 @@ The non-technical walkthrough (with copy buttons and a live demo) is
   the demo embedded and copy buttons carrying the two files).
 - Playwright suites (kept outside the repo during development) drive two tabs
   as two people: setup → add member → task + ring → alarm answered → status →
-  stuck → comments → chat → PIN reset forces sign-out → lockout.
+  stuck → comments → chat → PIN reset forces sign-out → lockout. A second
+  suite covers what an adversarial review turned up (below); `FAKE_OPEN_FAILS`
+  injects a Sheets outage.
+
+## What the review changed
+
+An adversarial pass over both files found these, each now fixed and covered
+by a test:
+
+- **A Sheets hiccup could orphan the team's data.** `ss()` treated any
+  `openById` failure as "the sheet is gone" and created a fresh empty one,
+  repointing `SS_ID`. It now only creates when no `SS_ID` exists and otherwise
+  lets the error surface, so a transient outage looks like an outage.
+- **A poll could undo a PIN reset.** `pull()` wrote the whole People row from
+  a snapshot taken before the request's lock, so a reset (or sign-out) landing
+  in between was reverted — the new PIN silently wouldn't work. Presence now
+  writes one cell.
+- **Answering a ring could fail to stick.** The optimistic ack mutated a
+  message object that the next poll had already replaced, so the alarm came
+  straight back. Answers are tracked by message id.
+- **A transient error signed everyone out.** `boot()` discarded the saved
+  token on any `{ok:false}`; only `auth:false` does that now.
+- **Stale admin rights.** Admin actions trusted the role read before the lock;
+  they now re-read the caller inside it, and the team can never be left with
+  zero admins.
+- Comments on a task now follow the same owner/giver/admin rule as the rest of
+  the task; the login screen no longer reveals who the admins are; tasks whose
+  owner has left stay editable; double-taps can't post twice; chat read marks
+  are per person; presence and "due today" keep up with the clock.

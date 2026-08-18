@@ -218,6 +218,9 @@
       return bookApi();
     },
     openById: function (id) {
+      // Fault injection for the tests: Google's Sheets service does fail
+      // transiently, and the app must not mistake that for "sheet deleted".
+      if (window.FAKE_OPEN_FAILS) throw new Error('Service Spreadsheets failed while accessing document');
       var d = load();
       if (!d) throw new Error('Spreadsheet not found');
       return bookApi();
