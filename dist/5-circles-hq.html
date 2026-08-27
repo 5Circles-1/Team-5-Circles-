@@ -1,0 +1,489 @@
+<title>5 Circles HQ</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=JetBrains+Mono:wght@500;700&display=swap">
+
+<style>
+:root{
+  --paper:#FCFBF8; --paper-2:#F4F2EC; --paper-3:#EFEDE5; --rule:#E2DED3;
+  --ink:#14181D; --slate:#6D7681;
+  --band:#0E1B2A; --band-ink:#FFFFFF; --band-sub:#A9B4C0;
+  --blue:#387ED1; --blue-deep:#1F5BA0; --blue-wash:#E7EFF9;
+  --teal:#2F9C8E; --teal-wash:#E4F1EE;
+  --clay:#C2543A; --clay-wash:#F8E7E1;
+  --shadow:0 1px 2px rgba(20,24,29,.06), 0 1px 8px rgba(20,24,29,.04);
+  --ui:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0E1B2A; --paper-2:#15212F; --paper-3:#1B2939; --rule:#2A3949;
+    --ink:#E8EBEF; --slate:#96A2B0;
+    --band:#15212F; --band-ink:#F2F5F8; --band-sub:#8E9BA9;
+    --blue:#6EA8E8; --blue-deep:#8FBEF0; --blue-wash:#17293D;
+    --teal:#54BFAF; --teal-wash:#15302E;
+    --clay:#E4816A; --clay-wash:#33201B;
+    --shadow:0 1px 2px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0E1B2A; --paper-2:#15212F; --paper-3:#1B2939; --rule:#2A3949;
+  --ink:#E8EBEF; --slate:#96A2B0;
+  --band:#15212F; --band-ink:#F2F5F8; --band-sub:#8E9BA9;
+  --blue:#6EA8E8; --blue-deep:#8FBEF0; --blue-wash:#17293D;
+  --teal:#54BFAF; --teal-wash:#15302E;
+  --clay:#E4816A; --clay-wash:#33201B;
+  --shadow:0 1px 2px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--ui); font-size:15px; line-height:1.5;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:600px;margin:0 auto}
+
+/* masthead ------------------------------------------------------------ */
+.mast{background:var(--band);color:var(--band-ink);padding:18px 20px 16px}
+.mark{font-weight:800;font-size:19px;letter-spacing:.14em}
+.dateline{font-family:var(--mono);font-size:11.5px;color:var(--band-sub);
+  letter-spacing:.04em;margin-top:3px}
+
+/* tabs ---------------------------------------------------------------- */
+.tabs{display:flex;background:var(--band);padding:0 6px;
+  position:sticky;top:0;z-index:20}
+.tab{appearance:none;border:0;background:transparent;color:var(--band-sub);
+  font:600 12.5px var(--ui);padding:11px 4px 12px;cursor:pointer;white-space:nowrap;
+  border-bottom:3px solid transparent;flex:1 1 auto;
+  display:flex;align-items:center;justify-content:center;gap:4px}
+.tab:hover{color:var(--band-ink)}
+.tab[aria-selected="true"]{color:var(--band-ink);border-bottom-color:var(--blue)}
+.tab .badge{font-family:var(--mono);font-size:9.5px;font-weight:700;
+  background:var(--clay);color:#fff;border-radius:9px;padding:0 4px;line-height:1.6}
+@media (max-width:374px){ .tabs{padding:0 2px} .tab{font-size:11.5px;gap:3px;padding:11px 3px 12px} }
+
+/* generic ------------------------------------------------------------- */
+main{padding:16px 16px 56px}
+.view[hidden]{display:none}
+.lede{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--slate);font-weight:700}
+h2{font-size:15px;font-weight:600;margin:0}
+.sec{margin-top:22px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;
+  gap:10px;padding-bottom:7px;margin-bottom:10px;border-bottom:2px solid var(--rule)}
+.sec-head.warn{border-bottom-color:var(--clay)}
+.sec-head.warn h2{color:var(--clay)}
+.sec-head.now{border-bottom-color:var(--blue)}
+.sec-head.now h2{color:var(--blue-deep)}
+
+/* state grid ---------------------------------------------------------- */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{background:var(--paper-2);border:1px solid var(--rule);border-radius:6px;
+  padding:10px 10px 9px}
+.tile .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--slate);font-weight:700;
+  display:block;min-height:22px}
+.tile .v{font-family:var(--mono);font-size:26px;font-weight:700;
+  font-variant-numeric:tabular-nums;line-height:1.1;display:block;margin-top:2px}
+.v.ok{color:var(--teal)} .v.hot{color:var(--clay)} .v.due{color:var(--blue-deep)}
+.v.mute{color:var(--slate);font-size:19px;padding-top:6px}
+
+/* rows ---------------------------------------------------------------- */
+.row{background:var(--paper-2);border:1px solid var(--rule);border-left:3px solid var(--rule);
+  border-radius:6px;padding:9px 11px;margin-bottom:7px;box-shadow:var(--shadow)}
+.row.late{border-left-color:var(--clay);background:var(--clay-wash)}
+.row.today{border-left-color:var(--blue);background:var(--blue-wash)}
+.row.done{border-left-color:var(--teal);background:var(--teal-wash)}
+.row.done .t{text-decoration:line-through;color:var(--slate)}
+.t{font-weight:500;overflow-wrap:anywhere}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:6px;
+  font-family:var(--mono);font-size:11px;color:var(--slate);
+  font-variant-numeric:tabular-nums}
+.meta b{color:var(--ink);font-weight:500}
+.hot{color:var(--clay);font-weight:700}
+.empty{font-size:13.5px;color:var(--teal);padding:9px 2px;font-weight:500}
+
+/* chips --------------------------------------------------------------- */
+.chip{appearance:none;font:700 10.5px var(--mono);letter-spacing:.05em;
+  text-transform:uppercase;border:1px solid var(--rule);background:var(--paper);
+  color:var(--slate);border-radius:99px;padding:3px 9px;cursor:pointer}
+.chip:hover{border-color:var(--slate)}
+.chip.s-doing{border-color:var(--blue);color:var(--blue-deep);background:var(--blue-wash)}
+.chip.s-done{border-color:var(--teal);color:var(--teal);background:var(--teal-wash)}
+.chip.s-stuck{border-color:var(--clay);color:var(--clay);background:var(--clay-wash)}
+.x{appearance:none;border:0;background:transparent;color:var(--slate);
+  font:400 17px var(--ui);line-height:1;cursor:pointer;padding:2px 4px;margin-left:auto}
+.x:hover{color:var(--clay)}
+
+/* forms --------------------------------------------------------------- */
+form.add{background:var(--paper-2);border:1px solid var(--rule);border-radius:6px;
+  padding:11px;display:grid;gap:7px;margin-bottom:16px}
+.add .duo{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.add .trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+input,select,textarea{font:400 14px var(--ui);color:var(--ink);background:var(--paper);
+  border:1px solid var(--rule);border-radius:5px;padding:8px 9px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:52px}
+input[type=date]{font-family:var(--mono);font-size:13px}
+:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+button.go{font:600 14px var(--ui);background:var(--blue);color:#fff;border:0;
+  border-radius:5px;padding:9px;cursor:pointer}
+button.go:hover{background:var(--blue-deep)}
+
+/* notes / footer ------------------------------------------------------ */
+.note{background:var(--paper-3);border:1px solid var(--rule);border-radius:6px;
+  padding:10px 12px;font-size:13px;color:var(--slate);margin-bottom:16px;
+  display:flex;gap:10px;align-items:center;justify-content:space-between}
+.link{appearance:none;border:0;background:transparent;color:var(--blue-deep);
+  font:600 13px var(--ui);cursor:pointer;padding:0;text-decoration:underline;
+  text-underline-offset:2px;white-space:nowrap}
+footer{border-top:1px solid var(--rule);margin-top:26px;padding:14px 16px 30px;
+  display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center;
+  font-size:12.5px;color:var(--slate)}
+.guide{margin:0;padding:0;list-style:none;display:grid;gap:9px}
+.guide li{display:grid;grid-template-columns:52px 1fr;gap:11px;font-size:13.5px;
+  color:var(--slate);align-items:start}
+.guide .when{font:700 10px var(--mono);letter-spacing:.07em;text-transform:uppercase;
+  color:var(--blue-deep);padding-top:3px}
+.guide b{color:var(--ink);font-weight:600}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <div class="mark">5 CIRCLES HQ</div>
+    <div class="dateline" id="dateline"></div>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button class="tab" role="tab" data-v="today" aria-selected="true">Today</button>
+    <button class="tab" role="tab" data-v="tasks" aria-selected="false">Tasks<span class="badge" id="b-tasks" hidden></span></button>
+    <button class="tab" role="tab" data-v="content" aria-selected="false">Content<span class="badge" id="b-content" hidden></span></button>
+    <button class="tab" role="tab" data-v="leads" aria-selected="false">Leads<span class="badge" id="b-leads" hidden></span></button>
+    <button class="tab" role="tab" data-v="close" aria-selected="false">Day Close</button>
+  </nav>
+
+  <main>
+    <!-- TODAY -->
+    <section class="view" id="v-today">
+      <div class="note" id="samplenote" hidden>
+        <span>The rows below are examples, so you can see how it works.</span>
+        <button class="link" id="clearsamples">Clear them</button>
+      </div>
+
+      <div class="grid">
+        <div class="tile"><span class="k">Overdue tasks</span><span class="v" id="k-over">0</span></div>
+        <div class="tile"><span class="k">Due today</span><span class="v" id="k-due">0</span></div>
+        <div class="tile"><span class="k">Stuck</span><span class="v" id="k-stuck">0</span></div>
+        <div class="tile"><span class="k">Leads to call</span><span class="v" id="k-leads">0</span></div>
+        <div class="tile"><span class="k">Content late</span><span class="v" id="k-late">0</span></div>
+        <div class="tile"><span class="k">Closed yday</span><span class="v mute" id="k-closed">0 / 1</span></div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-head warn"><h2>Fix first</h2><span class="lede">Overdue &amp; stuck</span></div>
+        <div id="l-fix"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-head now"><h2>Due today</h2><span class="lede">Finish before you leave</span></div>
+        <div id="l-due"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-head now"><h2>Call today</h2><span class="lede">Follow-ups waiting</span></div>
+        <div id="l-call"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-head warn"><h2>Content running late</h2><span class="lede">Past its post date</span></div>
+        <div id="l-cont"></div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-head"><h2>How the day runs</h2></div>
+        <ul class="guide">
+          <li><span class="when">Morning</span><span>Open this page. <b>Fix the red list first</b> — everything above the fold is what is already late or blocked.</span></li>
+          <li><span class="when">During</span><span>Tap a status chip to move work along: <b>To do → Doing → Done</b>. Truly blocked? Tap to <b>Stuck</b> — that is a flare, not a failure, and it jumps to the top here.</span></li>
+          <li><span class="when">Evening</span><span>File your <b>Day Close</b> before you leave. Under a minute, then a ✅ in the WhatsApp group.</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- TASKS -->
+    <section class="view" id="v-tasks" hidden>
+      <form class="add" id="f-task">
+        <input name="task" placeholder="What needs doing?" required autocomplete="off">
+        <div class="duo">
+          <input name="who" placeholder="Who" list="people" autocomplete="off">
+          <input name="due" type="date" required>
+        </div>
+        <button class="go">Add task</button>
+      </form>
+      <div id="l-tasks"></div>
+    </section>
+
+    <!-- CONTENT -->
+    <section class="view" id="v-content" hidden>
+      <form class="add" id="f-content">
+        <input name="topic" placeholder="Topic or hook" required autocomplete="off">
+        <div class="trio">
+          <select name="account"><option>5 Circles</option><option>Rahul</option><option>Traders Club</option></select>
+          <select name="format"><option>Reel</option><option>Carousel</option><option>Story</option><option>Post</option><option>Live</option></select>
+          <input name="date" type="date" required>
+        </div>
+        <button class="go">Add post</button>
+      </form>
+      <div id="l-content"></div>
+    </section>
+
+    <!-- LEADS -->
+    <section class="view" id="v-leads" hidden>
+      <form class="add" id="f-lead">
+        <div class="duo">
+          <input name="name" placeholder="Name" required autocomplete="off">
+          <input name="phone" placeholder="Phone" inputmode="tel" autocomplete="off">
+        </div>
+        <div class="trio">
+          <select name="source"><option>Instagram</option><option>Ad</option><option>Webinar</option><option>Referral</option><option>Walk-in</option><option>Other</option></select>
+          <select name="program"><option>Options Lab</option><option>Traders Club</option><option>Workshop</option><option>Other</option></select>
+          <input name="next" type="date" required>
+        </div>
+        <button class="go">Add lead</button>
+      </form>
+      <div id="l-leads"></div>
+    </section>
+
+    <!-- DAY CLOSE -->
+    <section class="view" id="v-close" hidden>
+      <form class="add" id="f-close">
+        <input name="name" placeholder="Your name" list="people" required autocomplete="off">
+        <textarea name="done" placeholder="What I finished today" required></textarea>
+        <input name="stuck" placeholder="Stuck on (leave blank if nothing)" autocomplete="off">
+        <input name="tmr" placeholder="Tomorrow's #1 thing" autocomplete="off">
+        <button class="go">File day close</button>
+      </form>
+      <div id="l-close"></div>
+    </section>
+  </main>
+
+  <datalist id="people"></datalist>
+
+  <footer>
+    <button class="link" id="export">Copy everything for Google Sheets</button>
+    <button class="link" id="reset">Start empty</button>
+    <span id="foot-note">Saved on this device only. Nothing is sent anywhere.</span>
+    <textarea id="dump" hidden readonly aria-label="Your data, ready to paste"
+      style="width:100%;min-height:120px;font:400 11px var(--mono)"></textarea>
+  </footer>
+</div>
+
+<script>
+const KEY = '5c-hq-v1';
+const iso = d => new Date(d.getTime() - d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const TODAY = iso(new Date());
+const shift = n => { const d = new Date(); d.setDate(d.getDate()+n); return iso(d); };
+const uid = () => Math.random().toString(36).slice(2,9);
+const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nice = s => s ? new Date(s+'T00:00').toLocaleDateString(undefined,{day:'numeric',month:'short'}) : '';
+
+const SEED = () => ({
+  seeded: true,
+  tasks: [
+    {id:uid(), task:"Edit & schedule Thursday's theta reel", who:'Rahul', due:shift(-1), status:'Doing'},
+    {id:uid(), task:'WhatsApp today’s new ad leads before 1 pm', who:'Rahul', due:TODAY, status:'To do'},
+    {id:uid(), task:'Fix classroom mic echo before Saturday', who:'Rahul', due:shift(-2), status:'Stuck'},
+    {id:uid(), task:"Post Monday's market-myth carousel", who:'Rahul', due:shift(-3), status:'Done'}
+  ],
+  content: [
+    {id:uid(), topic:'Theta: the rent you pay to hold hope', account:'5 Circles', format:'Reel', date:shift(1), stage:'Edit'},
+    {id:uid(), topic:'Saturday session recap + photos', account:'Traders Club', format:'Post', date:shift(-1), stage:'Shoot'}
+  ],
+  leads: [
+    {id:uid(), name:'Aman Verma', phone:'98765 43210', source:'Ad', program:'Options Lab', status:'New', next:TODAY},
+    {id:uid(), name:'Priya S.', phone:'91234 56780', source:'Webinar', program:'Traders Club', status:'Interested', next:shift(2)}
+  ],
+  closes: [
+    {id:uid(), date:shift(-1), name:'Rahul', done:'Recorded 2 reels, replied to 14 DMs, closed 1 admission', stuck:'', tmr:'Call Aman about Options Lab'}
+  ]
+});
+
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)) || SEED(); } catch { S = SEED(); }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+
+const TASK_CYCLE = ['To do','Doing','Done','Stuck'];
+const STAGES = ['Idea','Script','Shoot','Edit','Ready','Posted'];
+const LEAD_ST = ['New','Contacted','Interested','Joined','Not now'];
+
+/* derived --------------------------------------------------------------- */
+const overdue = t => t.due && t.due < TODAY && t.status !== 'Done';
+const dueToday = t => t.due === TODAY && t.status !== 'Done';
+const needsFix = t => t.status === 'Stuck' || overdue(t);
+const latePost = c => c.date < TODAY && c.stage !== 'Posted';
+const toCall = l => l.next && l.next <= TODAY && l.status !== 'Joined' && l.status !== 'Not now';
+const people = () => [...new Set([...S.tasks.map(t=>t.who), ...S.closes.map(c=>c.name)].filter(Boolean))];
+
+/* rendering ------------------------------------------------------------- */
+const taskRow = (t, showX) => {
+  const cls = t.status==='Done' ? 'done' : overdue(t) ? 'late' : dueToday(t) ? 'today' : '';
+  return `<div class="row ${cls}">
+    <div class="t">${esc(t.task)}</div>
+    <div class="meta">
+      <button class="chip s-${t.status.toLowerCase().replace(' ','')}" data-cycle="${t.id}">${t.status}</button>
+      ${t.who ? `<span><b>${esc(t.who)}</b></span>` : ''}
+      <span class="${overdue(t)?'hot':''}">${overdue(t)?'was due ':'due '}${nice(t.due)}</span>
+      ${showX ? `<button class="x" data-del="tasks:${t.id}" aria-label="Delete task">&times;</button>` : ''}
+    </div></div>`;
+};
+const contentRow = (c, showX) => {
+  const cls = c.stage==='Posted' ? 'done' : latePost(c) ? 'late' : c.date===TODAY ? 'today' : '';
+  return `<div class="row ${cls}">
+    <div class="t">${esc(c.topic)}</div>
+    <div class="meta">
+      <button class="chip ${c.stage==='Posted'?'s-done':c.stage==='Idea'?'':'s-doing'}" data-stage="${c.id}">${c.stage}</button>
+      <span><b>${esc(c.account)}</b> · ${esc(c.format)}</span>
+      <span class="${latePost(c)?'hot':''}">${nice(c.date)}</span>
+      ${showX ? `<button class="x" data-del="content:${c.id}" aria-label="Delete post">&times;</button>` : ''}
+    </div></div>`;
+};
+const leadRow = (l, showX) => {
+  const cls = l.status==='Joined' ? 'done' : toCall(l) ? 'late' : '';
+  return `<div class="row ${cls}">
+    <div class="t">${esc(l.name)} ${l.phone?`<span class="meta" style="display:inline;margin:0">${esc(l.phone)}</span>`:''}</div>
+    <div class="meta">
+      <button class="chip ${l.status==='Joined'?'s-done':l.status==='Not now'?'':'s-doing'}" data-lead="${l.id}">${l.status}</button>
+      <span><b>${esc(l.program)}</b> · ${esc(l.source)}</span>
+      <span class="${toCall(l)?'hot':''}">${toCall(l)?'call now':'call '+nice(l.next)}</span>
+      ${showX ? `<button class="x" data-del="leads:${l.id}" aria-label="Delete lead">&times;</button>` : ''}
+    </div></div>`;
+};
+const closeRow = c => `<div class="row ${c.stuck?'late':'done'}">
+    <div class="t">${esc(c.done)}</div>
+    ${c.stuck?`<div class="meta"><span class="hot">Stuck: ${esc(c.stuck)}</span></div>`:''}
+    ${c.tmr?`<div class="meta"><span>Tomorrow: <b>${esc(c.tmr)}</b></span></div>`:''}
+    <div class="meta"><span><b>${esc(c.name)}</b></span><span>${nice(c.date)}</span>
+      <button class="x" data-del="closes:${c.id}" aria-label="Delete entry">&times;</button></div>
+  </div>`;
+
+const fill = (el, rows, msg) =>
+  document.getElementById(el).innerHTML = rows.length ? rows.join('') : `<div class="empty">${msg}</div>`;
+
+const setK = (id, n, zeroOk=true) => {
+  const el = document.getElementById(id);
+  el.textContent = n;
+  el.className = 'v ' + (n === 0 ? (zeroOk ? 'ok' : 'mute') : (id === 'k-due' || id === 'k-leads' ? 'due' : 'hot'));
+};
+const badge = (id, n) => {
+  const el = document.getElementById(id);
+  el.hidden = !n; el.textContent = n;
+};
+
+function render(){
+  const fixes = S.tasks.filter(needsFix).sort((a,b)=>(a.due||'').localeCompare(b.due||''));
+  const dues  = S.tasks.filter(dueToday);
+  const calls = S.leads.filter(toCall);
+  const lates = S.content.filter(latePost).sort((a,b)=>a.date.localeCompare(b.date));
+  const team  = people();
+  const closedY = S.closes.filter(c=>c.date===shift(-1)).length;
+
+  setK('k-over',  S.tasks.filter(overdue).length);
+  setK('k-due',   dues.length);
+  setK('k-stuck', S.tasks.filter(t=>t.status==='Stuck').length);
+  setK('k-leads', calls.length);
+  setK('k-late',  lates.length);
+  const ky = document.getElementById('k-closed');
+  ky.textContent = `${closedY} / ${Math.max(team.length,1)}`;
+  ky.className = 'v mute' + (closedY && closedY >= team.length ? ' ok' : '');
+
+  badge('b-tasks', fixes.length);
+  badge('b-content', lates.length);
+  badge('b-leads', calls.length);
+
+  fill('l-fix',  fixes.map(t=>taskRow(t)),  'Nothing overdue, nothing stuck.');
+  fill('l-due',  dues.map(t=>taskRow(t)),   'Nothing due today.');
+  fill('l-call', calls.map(l=>leadRow(l)),  'No follow-ups pending.');
+  fill('l-cont', lates.map(c=>contentRow(c)), 'Content is on schedule.');
+
+  fill('l-tasks', [...S.tasks].sort((a,b)=>
+      (a.status==='Done')-(b.status==='Done') || (a.due||'').localeCompare(b.due||''))
+      .map(t=>taskRow(t,true)), 'No tasks yet. Add the first one above.');
+  fill('l-content', [...S.content].sort((a,b)=>a.date.localeCompare(b.date))
+      .map(c=>contentRow(c,true)), 'No posts planned yet.');
+  fill('l-leads', [...S.leads].sort((a,b)=>(a.next||'').localeCompare(b.next||''))
+      .map(l=>leadRow(l,true)), 'No leads yet. Log every enquiry the day it arrives.');
+  fill('l-close', [...S.closes].sort((a,b)=>b.date.localeCompare(a.date))
+      .map(closeRow), 'No day closes filed yet.');
+
+  document.getElementById('people').innerHTML = team.map(p=>`<option value="${esc(p)}">`).join('');
+  document.getElementById('samplenote').hidden = !S.seeded;
+  save();
+}
+
+/* interaction ----------------------------------------------------------- */
+document.getElementById('tabs').addEventListener('click', e => {
+  const b = e.target.closest('.tab'); if(!b) return;
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected', String(t===b)));
+  document.querySelectorAll('.view').forEach(v=>v.hidden = v.id !== 'v-'+b.dataset.v);
+  scrollTo({top:0});
+});
+
+document.addEventListener('click', e => {
+  const el = e.target;
+  const step = (arr, cur) => arr[(arr.indexOf(cur)+1) % arr.length];
+  if(el.dataset.cycle){
+    const t = S.tasks.find(x=>x.id===el.dataset.cycle); t.status = step(TASK_CYCLE, t.status);
+  } else if(el.dataset.stage){
+    const c = S.content.find(x=>x.id===el.dataset.stage); c.stage = step(STAGES, c.stage);
+  } else if(el.dataset.lead){
+    const l = S.leads.find(x=>x.id===el.dataset.lead); l.status = step(LEAD_ST, l.status);
+  } else if(el.dataset.del){
+    const [k,id] = el.dataset.del.split(':'); S[k] = S[k].filter(x=>x.id!==id);
+  } else return;
+  render();
+});
+
+const wire = (id, key, build) => document.getElementById(id).addEventListener('submit', e => {
+  e.preventDefault();
+  const f = Object.fromEntries(new FormData(e.target));
+  S[key].unshift({id:uid(), ...build(f)});
+  e.target.reset(); render();
+});
+wire('f-task','tasks', f => ({task:f.task.trim(), who:f.who.trim(), due:f.due, status:'To do'}));
+wire('f-content','content', f => ({topic:f.topic.trim(), account:f.account, format:f.format, date:f.date, stage:'Idea'}));
+wire('f-lead','leads', f => ({name:f.name.trim(), phone:f.phone.trim(), source:f.source, program:f.program, status:'New', next:f.next}));
+wire('f-close','closes', f => ({date:TODAY, name:f.name.trim(), done:f.done.trim(), stuck:f.stuck.trim(), tmr:f.tmr.trim()}));
+
+document.getElementById('clearsamples').onclick = () => {
+  S = {seeded:false, tasks:[], content:[], leads:[], closes:[]}; render();
+};
+document.getElementById('reset').onclick = () => {
+  if(confirm('Delete everything on this device and start empty?')){
+    S = {seeded:false, tasks:[], content:[], leads:[], closes:[]}; render();
+  }
+};
+/* Tab-separated pastes straight into Google Sheets, one column per field. */
+document.getElementById('export').onclick = async () => {
+  const cell = v => String(v ?? '').replace(/[\t\n\r]+/g,' ');
+  const block = (title, head, rows) =>
+    [title, head.join('\t'), ...rows.map(r=>r.map(cell).join('\t')), ''].join('\n');
+  const tsv = [
+    block('TASKS', ['Task','Who','Due','Status'], S.tasks.map(t=>[t.task,t.who,t.due,t.status])),
+    block('CONTENT', ['Post date','Account','Format','Topic','Stage'], S.content.map(c=>[c.date,c.account,c.format,c.topic,c.stage])),
+    block('LEADS', ['Name','Phone','Source','Program','Status','Next follow-up'], S.leads.map(l=>[l.name,l.phone,l.source,l.program,l.status,l.next])),
+    block('DAY CLOSE', ['Date','Name','Finished','Stuck on','Tomorrow #1'], S.closes.map(c=>[c.date,c.name,c.done,c.stuck,c.tmr]))
+  ].join('\n');
+  const note = document.getElementById('foot-note');
+  const box = document.getElementById('dump');
+  try {
+    await navigator.clipboard.writeText(tsv);
+    note.textContent = 'Copied. Open your Google Sheet and paste.';
+  } catch {
+    box.value = tsv; box.hidden = false; box.focus(); box.select();
+    note.textContent = 'Select all in the box, copy, then paste into your Sheet.';
+  }
+};
+
+document.getElementById('dateline').textContent =
+  new Date().toLocaleDateString(undefined,{weekday:'long', day:'numeric', month:'long'}).toUpperCase()
+  + ' · THIS PAGE FILLS ITSELF';
+render();
+</script>
