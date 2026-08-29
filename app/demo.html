@@ -1,0 +1,1781 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<base target="_top">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root{
+  --paper:#FCFBF8;--paper-2:#F4F2EC;--paper-3:#EFEDE5;--rule:#E2DED3;
+  --ink:#14181D;--slate:#6D7681;--band:#0E1B2A;--band-ink:#fff;--band-sub:#A9B4C0;
+  --blue:#387ED1;--blue-deep:#1F5BA0;--blue-wash:#E7EFF9;
+  --teal:#2F9C8E;--teal-wash:#E4F1EE;--clay:#C2543A;--clay-wash:#F8E7E1;
+  --ui:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  --shadow:0 1px 2px rgba(20,24,29,.06),0 1px 8px rgba(20,24,29,.04);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0E1B2A;--paper-2:#15212F;--paper-3:#1B2939;--rule:#2A3949;
+  --ink:#E8EBEF;--slate:#96A2B0;--band:#15212F;--band-sub:#8E9BA9;
+  --blue:#6EA8E8;--blue-deep:#8FBEF0;--blue-wash:#17293D;
+  --teal:#54BFAF;--teal-wash:#15302E;--clay:#E4816A;--clay-wash:#33201B;
+  --shadow:0 1px 2px rgba(0,0,0,.35);}}
+*{box-sizing:border-box}
+/* A class that sets display (.ring is display:flex) otherwise beats the
+   hidden attribute, leaving an invisible full-screen layer eating taps. */
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 var(--ui);-webkit-text-size-adjust:100%}
+.wrap{max-width:620px;margin:0 auto}
+.mast{background:var(--band);color:var(--band-ink);padding:14px 16px 12px;display:flex;align-items:flex-start;gap:12px}
+.mark{font-weight:800;font-size:17px;letter-spacing:.13em;flex:1}
+.dateline{font:11px var(--mono);color:var(--band-sub);letter-spacing:.04em;margin-top:2px}
+.whoami{font:11px var(--mono);color:var(--band-sub);text-align:right;line-height:1.7}
+.whoami b{color:var(--band-ink);display:block;font-weight:700}
+.mlink{appearance:none;border:0;background:transparent;color:var(--blue);font:600 11px var(--ui);cursor:pointer;padding:0}
+.tabs{display:flex;background:var(--band);padding:0 4px;position:sticky;top:0;z-index:20}
+.tab{appearance:none;border:0;background:transparent;color:var(--band-sub);font:600 12px var(--ui);
+  padding:10px 3px 11px;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;
+  flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:4px}
+.tab[aria-selected="true"]{color:var(--band-ink);border-bottom-color:var(--blue)}
+.badge{font:700 9.5px var(--mono);background:var(--clay);color:#fff;border-radius:9px;padding:0 4px;line-height:1.6}
+main{padding:14px 14px 60px}
+.view[hidden]{display:none}
+h2{font-size:15px;font-weight:600;margin:0}
+.lede{font:700 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--slate)}
+.sec{margin-top:20px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+  padding-bottom:6px;margin-bottom:9px;border-bottom:2px solid var(--rule)}
+.sec-head.warn{border-bottom-color:var(--clay)}.sec-head.warn h2{color:var(--clay)}
+.sec-head.now{border-bottom-color:var(--blue)}.sec-head.now h2{color:var(--blue-deep)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.tile{background:var(--paper-2);border:1px solid var(--rule);border-radius:6px;padding:9px}
+.tile .k{font:700 9px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--slate);display:block;min-height:21px}
+.tile .v{font:700 25px var(--mono);font-variant-numeric:tabular-nums;line-height:1.1;display:block;margin-top:2px}
+.v.ok{color:var(--teal)}.v.hot{color:var(--clay)}.v.due{color:var(--blue-deep)}.v.mute{color:var(--slate);font-size:18px;padding-top:5px}
+.row{background:var(--paper-2);border:1px solid var(--rule);border-left:3px solid var(--rule);
+  border-radius:6px;padding:9px 11px;margin-bottom:7px;box-shadow:var(--shadow)}
+.row.late{border-left-color:var(--clay);background:var(--clay-wash)}
+.row.today{border-left-color:var(--blue);background:var(--blue-wash)}
+.row.done{border-left-color:var(--teal);background:var(--teal-wash)}
+.row.done .t{text-decoration:line-through;color:var(--slate)}
+.t{font-weight:500;overflow-wrap:anywhere}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 9px;margin-top:6px;
+  font:11px var(--mono);color:var(--slate);font-variant-numeric:tabular-nums}
+.meta b{color:var(--ink);font-weight:500}
+.hot{color:var(--clay);font-weight:700}
+.empty{font-size:13.5px;color:var(--teal);padding:8px 2px;font-weight:500}
+.chip{appearance:none;font:700 10px var(--mono);letter-spacing:.04em;text-transform:uppercase;
+  border:1px solid var(--rule);background:var(--paper);color:var(--slate);border-radius:99px;padding:3px 9px;cursor:pointer}
+.chip.s-doing{border-color:var(--blue);color:var(--blue-deep);background:var(--blue-wash)}
+.chip.s-done{border-color:var(--teal);color:var(--teal);background:var(--teal-wash)}
+.chip.s-stuck{border-color:var(--clay);color:var(--clay);background:var(--clay-wash)}
+.ghost{appearance:none;border:1px solid var(--rule);background:var(--paper);color:var(--slate);
+  border-radius:99px;font:600 10.5px var(--ui);padding:3px 9px;cursor:pointer}
+.ghost:hover{border-color:var(--slate);color:var(--ink)}
+form.add{background:var(--paper-2);border:1px solid var(--rule);border-radius:6px;padding:11px;display:grid;gap:7px;margin-bottom:14px}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:7px}.trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+input,select,textarea{font:400 14px var(--ui);color:var(--ink);background:var(--paper);
+  border:1px solid var(--rule);border-radius:5px;padding:8px 9px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:52px}
+input[type=date]{font:13px var(--mono)}
+:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+button.go{font:600 14px var(--ui);background:var(--blue);color:#fff;border:0;border-radius:5px;padding:9px;cursor:pointer}
+button.go:disabled{opacity:.55}
+.note{background:var(--paper-3);border:1px solid var(--rule);border-radius:6px;padding:10px 12px;
+  font-size:13px;color:var(--slate);margin-bottom:14px}
+.err{background:var(--clay-wash);border-color:var(--clay);color:var(--clay);font-weight:500}
+.thread{margin-top:8px;padding-top:8px;border-top:1px dashed var(--rule);display:grid;gap:6px}
+.msg{font-size:13px}.msg b{font-weight:600}.msg .when{font:10px var(--mono);color:var(--slate);margin-left:5px}
+/* login */
+.gate{max-width:380px;margin:0 auto;padding:28px 20px 40px}
+.gate h1{font-size:20px;font-weight:800;letter-spacing:.1em;margin:0 0 4px}
+.gate p{color:var(--slate);font-size:13.5px;margin:0 0 18px}
+.who{display:grid;gap:6px;margin-bottom:14px;max-height:44vh;overflow:auto}
+.who button{appearance:none;text-align:left;border:1px solid var(--rule);background:var(--paper-2);
+  border-radius:6px;padding:10px 12px;font:500 15px var(--ui);color:var(--ink);cursor:pointer}
+.who button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-wash);color:var(--blue-deep);font-weight:600}
+.pinbox{font:700 22px var(--mono);letter-spacing:.5em;text-align:center}
+/* ring */
+.ring{position:fixed;inset:0;background:rgba(14,27,42,.96);z-index:100;display:flex;
+  align-items:center;justify-content:center;padding:24px}
+.ringcard{background:var(--paper);border-radius:10px;padding:22px;max-width:400px;width:100%;text-align:center}
+.ringcard .from{font:700 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--clay)}
+.ringcard .txt{font-size:17px;font-weight:600;margin:10px 0 16px}
+@media (prefers-reduced-motion:no-preference){.ring{animation:pulse 1.4s ease-in-out infinite}}
+@keyframes pulse{0%,100%{background:rgba(14,27,42,.96)}50%{background:rgba(59,30,24,.96)}}
+footer{border-top:1px solid var(--rule);margin-top:24px;padding:13px 14px 28px;
+  display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;font-size:12.5px;color:var(--slate)}
+</style></head><body>
+
+<div id="gate" class="gate" hidden></div>
+
+<div id="app" class="wrap" hidden>
+  <header class="mast">
+    <div style="flex:1">
+      <div class="mark" id="company">5 CIRCLES HQ</div>
+      <div class="dateline" id="dateline"></div>
+    </div>
+    <div class="whoami"><b id="myname"></b>
+      <button class="mlink" id="teamlink" hidden>Team</button>
+      <button class="mlink" id="signout">Sign out</button></div>
+  </header>
+  <nav class="tabs" id="tabs" role="tablist">
+    <button class="tab" role="tab" data-v="today" aria-selected="true">Today</button>
+    <button class="tab" role="tab" data-v="mine" aria-selected="false">Mine<span class="badge" id="b-mine" hidden></span></button>
+    <button class="tab" role="tab" data-v="tasks" aria-selected="false">Tasks</button>
+    <button class="tab" role="tab" data-v="content" aria-selected="false">Content</button>
+    <button class="tab" role="tab" data-v="leads" aria-selected="false">Leads</button>
+    <button class="tab" role="tab" data-v="close" aria-selected="false">Close</button>
+    <button class="tab" role="tab" data-v="team" aria-selected="false" hidden>Team</button>
+  </nav>
+  <main>
+    <div id="banner" hidden></div>
+
+    <section class="view" id="v-today">
+      <div class="grid">
+        <div class="tile"><span class="k">Overdue</span><span class="v" id="k-over">0</span></div>
+        <div class="tile"><span class="k">Due today</span><span class="v" id="k-due">0</span></div>
+        <div class="tile"><span class="k">Stuck</span><span class="v" id="k-stuck">0</span></div>
+        <div class="tile"><span class="k">Leads to call</span><span class="v" id="k-leads">0</span></div>
+        <div class="tile"><span class="k">Content late</span><span class="v" id="k-late">0</span></div>
+        <div class="tile"><span class="k">Closed yday</span><span class="v mute" id="k-closed">0 / 0</span></div>
+      </div>
+      <div class="sec"><div class="sec-head warn"><h2>Fix first</h2><span class="lede">Overdue &amp; stuck</span></div><div id="l-fix"></div></div>
+      <div class="sec"><div class="sec-head now"><h2>Due today</h2><span class="lede">Across the team</span></div><div id="l-due"></div></div>
+      <div class="sec"><div class="sec-head now"><h2>Call today</h2><span class="lede">Follow-ups waiting</span></div><div id="l-call"></div></div>
+      <div class="sec"><div class="sec-head warn"><h2>Content running late</h2><span class="lede">Past its post date</span></div><div id="l-cont"></div></div>
+      <div class="sec"><div class="sec-head"><h2>Yesterday's day close</h2><span class="lede" id="closedcount"></span></div><div id="l-closes"></div></div>
+    </section>
+
+    <section class="view" id="v-mine" hidden>
+      <div class="note">Only your work. Everything here is visible to the whole team too.</div>
+      <div class="sec"><div class="sec-head warn"><h2>Your overdue &amp; stuck</h2></div><div id="m-fix"></div></div>
+      <div class="sec"><div class="sec-head now"><h2>Your day</h2></div><div id="m-due"></div></div>
+      <div class="sec"><div class="sec-head"><h2>Your leads to call</h2></div><div id="m-leads"></div></div>
+      <div class="sec"><div class="sec-head"><h2>Your content</h2></div><div id="m-cont"></div></div>
+    </section>
+
+    <section class="view" id="v-tasks" hidden>
+      <form class="add" id="f-task">
+        <input name="title" placeholder="What needs doing?" required autocomplete="off">
+        <div class="trio">
+          <select name="ownerId" id="task-owner"></select>
+          <input name="due" type="date" required>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--slate)">
+            <input type="checkbox" name="ring" style="width:auto"> Ring them</label>
+        </div>
+        <button class="go">Give this task</button>
+      </form>
+      <div id="l-tasks"></div>
+    </section>
+
+    <section class="view" id="v-content" hidden>
+      <form class="add" id="f-content">
+        <input name="topic" placeholder="Topic or hook" required autocomplete="off">
+        <div class="trio">
+          <select name="account"><option>5 Circles</option><option>Rahul</option><option>Traders Club</option></select>
+          <select name="format"><option>Reel</option><option>Carousel</option><option>Story</option><option>Post</option><option>Live</option></select>
+          <input name="date" type="date" required>
+        </div>
+        <select name="ownerId" id="content-owner"></select>
+        <button class="go">Add post</button>
+      </form>
+      <div id="l-content"></div>
+    </section>
+
+    <section class="view" id="v-leads" hidden>
+      <form class="add" id="f-lead">
+        <div class="duo"><input name="name" placeholder="Name" required autocomplete="off">
+          <input name="phone" placeholder="Phone" inputmode="tel" autocomplete="off"></div>
+        <div class="trio">
+          <select name="source"><option>Instagram</option><option>Ad</option><option>Webinar</option><option>Referral</option><option>Walk-in</option><option>Other</option></select>
+          <select name="program"><option>Options Lab</option><option>Traders Club</option><option>Workshop</option><option>Other</option></select>
+          <input name="next" type="date" required></div>
+        <button class="go">Add lead</button>
+      </form>
+      <div id="l-leads"></div>
+    </section>
+
+    <section class="view" id="v-close" hidden>
+      <form class="add" id="f-close">
+        <textarea name="done" placeholder="What I finished today" required></textarea>
+        <input name="stuck" placeholder="Stuck on (blank if nothing) — this alerts the team" autocomplete="off">
+        <input name="tomorrow" placeholder="Tomorrow's #1 thing" autocomplete="off">
+        <button class="go" id="closebtn">File my day close</button>
+      </form>
+      <div id="l-myclose"></div>
+    </section>
+
+    <section class="view" id="v-team" hidden>
+      <form class="add" id="f-person">
+        <div class="duo"><input name="name" placeholder="Name" required autocomplete="off">
+          <input name="dept" placeholder="Department" autocomplete="off"></div>
+        <select name="role"><option>Member</option><option>Admin</option></select>
+        <button class="go">Add to team</button>
+      </form>
+      <div id="l-team"></div>
+    </section>
+  </main>
+  <footer><span id="foot"></span></footer>
+</div>
+
+<div id="ring" class="ring" hidden><div class="ringcard">
+  <div class="from" id="ringfrom"></div><div class="txt" id="ringtext"></div>
+  <input id="ringreply" placeholder="Your answer" autocomplete="off" style="margin-bottom:9px">
+  <button class="go" id="ringok" style="width:100%">Send answer</button>
+</div></div>
+
+<script>
+/**
+ * Fake Google — just enough of the Apps Script services that Code.gs calls,
+ * backed by this browser's localStorage. It lets the REAL server code run
+ * inside a plain web page, which powers the demo and the automated tests.
+ *
+ * Shared state model: the "spreadsheet" lives in localStorage (shared by
+ * every tab of this browser), so two tabs behave like two people using the
+ * same server. Login tokens live in sessionStorage (per tab), so each tab
+ * is its own signed-in device.
+ *
+ * This file never ships to Google — the real deployment is Code.gs + index.
+ */
+(function () {
+  'use strict';
+
+  var KEY = '5cp2_db';
+
+  // Some sandboxes (embedded demos) block localStorage entirely — fall back to
+  // page memory so the demo still works, just without cross-tab sharing.
+  var MEM = {};
+  function lsGet(k) {
+    try { var v = localStorage.getItem(k); if (v !== null) return v; } catch (e) {}
+    return MEM[k] !== undefined ? MEM[k] : null;
+  }
+  function lsSet(k, v) {
+    try { localStorage.setItem(k, v); } catch (e) {}
+    MEM[k] = v;
+  }
+  function lsDel(k) {
+    try { localStorage.removeItem(k); } catch (e) {}
+    delete MEM[k];
+  }
+
+  function load() {
+    try {
+      var raw = lsGet(KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return null;
+  }
+  function save(db) { lsSet(KEY, JSON.stringify(db)); }
+  function blank() { return { id: 'fake-book', name: '', sheets: {}, props: {}, cache: {} }; }
+
+  /* ── synchronous SHA-256 (Code.gs hashes PINs with Utilities.computeDigest)
+        Compact public-domain implementation; verified against known vectors
+        in the test suite. Input here is always ASCII (uuid salt + digits). ── */
+  function sha256Bytes(ascii) {
+    function rr(v, a) { return (v >>> a) | (v << (32 - a)); }
+    var maxWord = Math.pow(2, 32);
+    var words = [], asciiBitLength = ascii.length * 8;
+    var hash = [], k = [];
+    var primeCounter = 0;
+    var isComposite = {};
+    for (var candidate = 2; primeCounter < 64; candidate++) {
+      if (!isComposite[candidate]) {
+        for (var i = 0; i < 313; i += candidate) isComposite[i] = candidate;
+        hash[primeCounter] = (Math.pow(candidate, 0.5) * maxWord) | 0;
+        k[primeCounter++] = (Math.pow(candidate, 1 / 3) * maxWord) | 0;
+      }
+    }
+    ascii += '\x80';
+    while (ascii.length % 64 - 56) ascii += '\x00';
+    for (i = 0; i < ascii.length; i++) {
+      var j = ascii.charCodeAt(i);
+      if (j >> 8) throw new Error('sha256 fake: ASCII input only');
+      words[i >> 2] |= j << ((3 - i) % 4) * 8;
+    }
+    words[words.length] = (asciiBitLength / maxWord) | 0;
+    words[words.length] = asciiBitLength;
+    for (j = 0; j < words.length;) {
+      var w = words.slice(j, j += 16);
+      var oldHash = hash.slice(0, 8);
+      hash = hash.slice(0, 8);
+      for (i = 0; i < 64; i++) {
+        var w15 = w[i - 15], w2 = w[i - 2];
+        var a = hash[0], e = hash[4];
+        var temp1 = hash[7]
+          + (rr(e, 6) ^ rr(e, 11) ^ rr(e, 25))
+          + ((e & hash[5]) ^ (~e & hash[6]))
+          + k[i]
+          + (w[i] = (i < 16) ? w[i] : (w[i - 16]
+              + (rr(w15, 7) ^ rr(w15, 18) ^ (w15 >>> 3))
+              + w[i - 7]
+              + (rr(w2, 17) ^ rr(w2, 19) ^ (w2 >>> 10))) | 0);
+        var temp2 = (rr(a, 2) ^ rr(a, 13) ^ rr(a, 22))
+          + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+        hash = [(temp1 + temp2) | 0].concat(hash);
+        hash[4] = (hash[4] + temp1) | 0;
+      }
+      for (i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+    }
+    var bytes = [];
+    for (i = 0; i < 8; i++) {
+      for (var b = 3; b >= 0; b--) bytes.push((hash[i] >> (b * 8)) & 0xFF);
+    }
+    return bytes;
+  }
+  window.__sha256 = sha256Bytes;   // exposed for the test suite's known-answer check
+
+  /* ── Utilities ── */
+  window.Utilities = {
+    DigestAlgorithm: { SHA_256: 'SHA_256' },
+    computeDigest: function (alg, str) { return sha256Bytes(String(str)); },
+    getUuid: function () {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 3 | 8)).toString(16);
+      });
+    }
+  };
+
+  /* ── PropertiesService / CacheService / LockService / ScriptApp ── */
+  window.PropertiesService = {
+    getScriptProperties: function () {
+      return {
+        getProperty: function (k) { var d = load(); return d && d.props[k] != null ? d.props[k] : null; },
+        setProperty: function (k, v) { var d = load() || blank(); d.props[k] = String(v); save(d); }
+      };
+    }
+  };
+  window.CacheService = {
+    getScriptCache: function () {
+      return {
+        get: function (k) { var d = load(); return d && d.cache[k] != null ? String(d.cache[k]) : null; },
+        put: function (k, v) { var d = load() || blank(); d.cache[k] = String(v); save(d); }
+      };
+    }
+  };
+  window.LockService = {
+    getScriptLock: function () { return { waitLock: function () {}, releaseLock: function () {} }; }
+  };
+  window.ScriptApp = {
+    getService: function () {
+      return { getUrl: function () { return location.href.split('#')[0]; } };
+    }
+  };
+
+  /* ── SpreadsheetApp ── */
+  function sheetApi(name) {
+    return {
+      getName: function () { return name; },
+      getLastRow: function () { var d = load(); return ((d && d.sheets[name]) || []).length; },
+      getMaxRows: function () { return 1000; },
+      appendRow: function (row) {
+        var d = load() || blank();
+        (d.sheets[name] = d.sheets[name] || []).push(row.slice());
+        save(d);
+      },
+      getRange: function (row, col, numRows, numCols) {
+        if (typeof row === 'string') {
+          // A1-notation ranges are only used for setNumberFormat — a no-op here
+          return { setNumberFormat: function () { return this; } };
+        }
+        if (numRows === undefined) numRows = 1;
+        if (numCols === undefined) numCols = 1;
+        return {
+          setNumberFormat: function () { return this; },
+          getValues: function () {
+            var d = load();
+            var rows = (d && d.sheets[name]) || [];
+            var out = [];
+            for (var r = 0; r < numRows; r++) {
+              var src = rows[row - 1 + r] || [];
+              var line = [];
+              for (var c = 0; c < numCols; c++) {
+                line.push(src[col - 1 + c] !== undefined ? src[col - 1 + c] : '');
+              }
+              out.push(line);
+            }
+            return out;
+          },
+          setValues: function (vals) {
+            var d = load() || blank();
+            var rows = d.sheets[name] = d.sheets[name] || [];
+            for (var r = 0; r < vals.length; r++) {
+              var tr = rows[row - 1 + r] = rows[row - 1 + r] || [];
+              for (var c = 0; c < vals[r].length; c++) tr[col - 1 + c] = vals[r][c];
+            }
+            save(d);
+          },
+          setValue: function (v) { this.setValues([[v]]); }
+        };
+      }
+    };
+  }
+
+  function bookApi() {
+    return {
+      getId: function () { return 'fake-book'; },
+      getUrl: function () { return location.href.split('#')[0] + '#demo-sheet'; },
+      getSheetByName: function (n) {
+        var d = load();
+        return d && d.sheets[n] ? sheetApi(n) : null;
+      },
+      insertSheet: function (n) {
+        var d = load() || blank();
+        d.sheets[n] = d.sheets[n] || [];
+        save(d);
+        return sheetApi(n);
+      },
+      getSheets: function () {
+        var d = load();
+        return Object.keys((d && d.sheets) || {}).map(sheetApi);
+      },
+      deleteSheet: function (sh) {
+        var d = load();
+        if (d) { delete d.sheets[sh.getName()]; save(d); }
+      }
+    };
+  }
+
+  window.SpreadsheetApp = {
+    create: function (name) {
+      var d = load() || blank();
+      d.name = name;
+      save(d);
+      return bookApi();
+    },
+    openById: function (id) {
+      // Fault injection for the tests: Google's Sheets service does fail
+      // transiently, and the app must not mistake that for "sheet deleted".
+      if (window.FAKE_OPEN_FAILS) throw new Error('Service Spreadsheets failed while accessing document');
+      var d = load();
+      if (!d) throw new Error('Spreadsheet not found');
+      return bookApi();
+    }
+  };
+
+  window.FAKE_RESET = function () {
+    lsDel(KEY);
+  };
+})();
+
+</script>
+<script>
+/* ═══ the REAL server code (Code.gs), running on the fake Google ═══ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   5C PULSE · server  (File 1 of 2 — paste this into Code.gs)
+
+   What this is
+   ────────────
+   The whole backend for the 5 Circles team tool, running on Google's servers
+   through Apps Script. On first use it creates a Google Sheet called
+   "5C Pulse — Team Data" in the owner's Drive and stores everything there:
+   people, tasks, and every message, on record.
+
+   Login is a name + 4-digit PIN. PINs are salted-and-hashed; a signed-in
+   device holds a random token. Five wrong PIN tries locks that person's
+   login for five minutes.
+
+   Nothing is ever hard-deleted: people are deactivated, tasks and messages
+   stay in the sheet forever. The sheet itself is the audit trail the admin
+   can open any day.
+
+   Deploy as a Web App:  Execute as: Me · Who has access: Anyone
+   (The URL is unguessable and every action beyond the login screen needs a
+   PIN-backed token, so "Anyone" only exposes the login screen itself.)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+var SHEETS = {
+  META:     'Meta',
+  PEOPLE:   'People',
+  TASKS:    'Tasks',
+  MESSAGES: 'Messages',
+  CONTENT:  'Content',
+  LEADS:    'Leads',
+  CLOSES:   'DayClose'
+};
+
+var PEOPLE_COLS   = ['id','name','dept','role','pin_hash','salt','token','active','created','last_seen','failed_tries','locked_until'];
+var TASKS_COLS    = ['id','title','note','owner_id','by_id','due','status','stuck','created','updated','done_at'];
+var MESSAGES_COLS = ['id','from_id','to_id','text','kind','task_id','created','acks'];
+var CONTENT_COLS  = ['id','date','account','format','topic','stage','owner_id','link','notes','created','updated'];
+var LEADS_COLS    = ['id','added','name','phone','source','program','status','next','owner_id','notes','created','updated'];
+var CLOSES_COLS   = ['id','date','person_id','done','stuck','tomorrow','created'];
+
+var STAGES     = ['Idea','Script','Shoot','Edit','Ready','Posted'];
+var LEAD_STATE = ['New','Contacted','Interested','Joined','Not now'];
+
+var MSG_PULL_LIMIT = 400;
+var CLOSE_PULL_LIMIT = 600;  // ~40 working days for a team of 15   // the sheet keeps everything; a pull sends the recent slice
+var PIN_TRIES = 5;
+var PIN_LOCK_MS = 5 * 60 * 1000;
+
+/* ── entry points ─────────────────────────────────────────────────────────── */
+
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('index')
+    .setTitle('5C Pulse')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
+}
+
+/** The single RPC the client calls via google.script.run. */
+function api(token, action, data) {
+  data = data || {};
+  try {
+    // Reads that must work before anyone is signed in
+    if (action === 'state')  return jok(publicState());
+    if (action === 'setup')  return jok(setupTeam(data));
+    if (action === 'login')  return jok(login(data));
+
+    var me = personByToken(token);
+    if (!me) return { ok: false, auth: false, error: 'Please sign in again.' };
+
+    switch (action) {
+      case 'pull':        return jok(pull(me, data));
+      case 'createTask':  return jok(withLock(function () { return createTask(me, data); }));
+      case 'setStatus':   return jok(withLock(function () { return setStatus(me, data); }));
+      case 'toggleStuck': return jok(withLock(function () { return toggleStuck(me, data); }));
+      case 'editTask':    return jok(withLock(function () { return editTask(me, data); }));
+      case 'send':        return jok(withLock(function () { return sendMessage(me, data); }));
+      case 'ack':         return jok(withLock(function () { return ackMessage(me, data); }));
+      case 'addContent':  return jok(withLock(function () { return addContent(me, data); }));
+      case 'setStage':    return jok(withLock(function () { return setStage(me, data); }));
+      case 'editContent': return jok(withLock(function () { return editContent(me, data); }));
+      case 'addLead':     return jok(withLock(function () { return addLead(me, data); }));
+      case 'setLeadStatus': return jok(withLock(function () { return setLeadStatus(me, data); }));
+      case 'editLead':    return jok(withLock(function () { return editLead(me, data); }));
+      case 'addClose':    return jok(withLock(function () { return addClose(me, data); }));
+      case 'addPerson':   return jok(withLock(function () { return addPerson(me, data); }));
+      case 'editPerson':  return jok(withLock(function () { return editPerson(me, data); }));
+      case 'resetPin':    return jok(withLock(function () { return resetPin(me, data); }));
+      case 'removePerson':return jok(withLock(function () { return removePerson(me, data); }));
+      case 'setCompany':  return jok(withLock(function () { return setCompany(me, data); }));
+      case 'logout':      return jok(withLock(function () { return logout(me); }));
+      default:            return { ok: false, error: 'Unknown action: ' + action };
+    }
+  } catch (err) {
+    return { ok: false, error: String(err && err.message ? err.message : err) };
+  }
+}
+
+function jok(payload) {
+  payload = payload || {};
+  payload.ok = true;
+  return payload;
+}
+
+/* ── storage bootstrap ────────────────────────────────────────────────────── */
+
+function ss() {
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty('SS_ID');
+  var book;
+  if (id) {
+    // Never create a replacement here. openById also throws on a passing
+    // Drive/Sheets hiccup, and creating a fresh book would silently orphan
+    // the team's real data and show everyone the first-run setup screen.
+    book = SpreadsheetApp.openById(id);
+  } else {
+    book = SpreadsheetApp.create('5C Pulse — Team Data');
+    props.setProperty('SS_ID', book.getId());
+  }
+  ensureSheets(book);
+  return book;
+}
+
+function ensureSheets(book) {
+  var wanted = [
+    [SHEETS.META,     ['key', 'value']],
+    [SHEETS.PEOPLE,   PEOPLE_COLS],
+    [SHEETS.TASKS,    TASKS_COLS],
+    [SHEETS.MESSAGES, MESSAGES_COLS],
+    [SHEETS.CONTENT,  CONTENT_COLS],
+    [SHEETS.LEADS,    LEADS_COLS],
+    [SHEETS.CLOSES,   CLOSES_COLS]
+  ];
+  for (var i = 0; i < wanted.length; i++) {
+    var name = wanted[i][0], cols = wanted[i][1];
+    var sh = book.getSheetByName(name);
+    if (!sh) {
+      sh = book.insertSheet(name);
+      // Plain-text columns: stops Sheets turning "2026-08-19" into a Date,
+      // "true" into a checkbox value, or a name starting with "=" into a formula.
+      try {
+        var lastCol = String.fromCharCode(64 + cols.length);
+        sh.getRange('A:' + lastCol).setNumberFormat('@');
+      } catch (e) {}
+      sh.getRange(1, 1, 1, cols.length).setValues([cols]);
+    }
+  }
+  var def = book.getSheetByName('Sheet1');
+  if (def && book.getSheets().length > wanted.length) book.deleteSheet(def);
+}
+
+function sheet(name) { return ss().getSheetByName(name); }
+
+/** All rows of a sheet as objects, with their 1-based row numbers. */
+function readAll(name, cols) {
+  var sh = sheet(name);
+  var last = sh.getLastRow();
+  if (last < 2) return [];
+  var values = sh.getRange(2, 1, last - 1, cols.length).getValues();
+  var out = [];
+  for (var i = 0; i < values.length; i++) {
+    var obj = { _row: i + 2 };
+    for (var c = 0; c < cols.length; c++) {
+      var v = values[i][c];
+      if (v instanceof Date) {
+        // Safety net for rows written before the text format existed
+        v = cols[c] === 'due'
+          ? v.getFullYear() + '-' + ('0' + (v.getMonth() + 1)).slice(-2) + '-' + ('0' + v.getDate()).slice(-2)
+          : v.toISOString();
+      }
+      obj[cols[c]] = v;
+    }
+    out.push(obj);
+  }
+  return out;
+}
+
+function appendRowFor(name, cols, obj) {
+  var row = [];
+  for (var c = 0; c < cols.length; c++) row.push(obj[cols[c]] === undefined ? '' : obj[cols[c]]);
+  sheet(name).appendRow(row);
+}
+
+function updateRow(name, cols, obj) {
+  var row = [];
+  for (var c = 0; c < cols.length; c++) row.push(obj[cols[c]] === undefined ? '' : obj[cols[c]]);
+  sheet(name).getRange(obj._row, 1, 1, cols.length).setValues([row]);
+}
+
+/** One cell only — for writes that must not carry a stale snapshot of the rest
+ *  of the row back to the sheet (see pull's presence touch). */
+function updateCell(name, cols, obj, col, value) {
+  var idx = cols.indexOf(col);
+  if (idx < 0) throw new Error('Unknown column: ' + col);
+  sheet(name).getRange(obj._row, idx + 1).setValue(value);
+  obj[col] = value;
+}
+
+/* ── meta / version (cheap polling) ───────────────────────────────────────── */
+
+function metaGet(key) {
+  var rows = readAll(SHEETS.META, ['key', 'value']);
+  for (var i = 0; i < rows.length; i++) if (rows[i].key === key) return rows[i].value;
+  return '';
+}
+
+function metaSet(key, value) {
+  var rows = readAll(SHEETS.META, ['key', 'value']);
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i].key === key) {
+      sheet(SHEETS.META).getRange(rows[i]._row, 2).setValue(value);
+      return;
+    }
+  }
+  sheet(SHEETS.META).appendRow([key, value]);
+}
+
+function bumpVersion() {
+  var v = Number(metaGet('version') || 0) + 1;
+  metaSet('version', v);
+  try {
+    CacheService.getScriptCache().put('v', String(v), 21600);
+  } catch (e) {
+    // A cache that kept the OLD number would tell every client "nothing new"
+    // for hours. Drop the key instead so reads fall back to the sheet.
+    try { CacheService.getScriptCache().remove('v'); } catch (e2) {}
+  }
+  return v;
+}
+
+function currentVersion() {
+  try {
+    var cached = CacheService.getScriptCache().get('v');
+    if (cached !== null && cached !== undefined && cached !== '') return Number(cached);
+  } catch (e) {}
+  var v = Number(metaGet('version') || 0);
+  try { CacheService.getScriptCache().put('v', String(v), 21600); } catch (e) {}
+  return v;
+}
+
+function withLock(fn) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try { return fn(); }
+  finally { lock.releaseLock(); }
+}
+
+/* ── auth ─────────────────────────────────────────────────────────────────── */
+
+function hashPin(pin, salt) {
+  var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, salt + '|' + pin);
+  var hex = '';
+  for (var i = 0; i < bytes.length; i++) {
+    var b = (bytes[i] + 256) % 256;
+    hex += (b < 16 ? '0' : '') + b.toString(16);
+  }
+  return hex;
+}
+
+function makePin() {
+  // 4 digits, never starting with 0 so it reads naturally aloud
+  return String(1000 + Math.floor(Math.random() * 9000));
+}
+
+function personByToken(token) {
+  if (!token) return null;
+  var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
+  for (var i = 0; i < people.length; i++) {
+    if (people[i].token && people[i].token === token && String(people[i].active) !== 'false') {
+      return people[i];
+    }
+  }
+  return null;
+}
+
+function publicPerson(p) {
+  return { id: p.id, name: p.name, dept: p.dept, role: p.role, active: String(p.active) !== 'false' };
+}
+
+/** What the login screen may know: company + names, and nothing else — not who
+ *  the admins are, which would tell a stranger exactly which PIN to guess at. */
+function publicState() {
+  var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS).filter(function (p) { return String(p.active) !== 'false'; });
+  if (people.length === 0) return { setupNeeded: true };
+  return {
+    setupNeeded: false,
+    company: metaGet('company') || '5 Circles',
+    people: people.map(function (p) { return { id: p.id, name: p.name }; })
+  };
+}
+
+/** First run only: whoever opens the empty app becomes the admin. */
+function setupTeam(data) {
+  return withLock(function () {
+    var existing = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
+    if (existing.length > 0) throw new Error('Already set up. Sign in instead.');
+    var name = String(data.name || '').trim();
+    if (!name) throw new Error('Tell us your name first.');
+
+    metaSet('company', String(data.company || '5 Circles').trim() || '5 Circles');
+    metaSet('created', new Date().toISOString());
+
+    var pin = makePin();
+    var salt = Utilities.getUuid();
+    var admin = {
+      id: Utilities.getUuid(),
+      name: name,
+      dept: String(data.dept || 'Management').trim() || 'Management',
+      role: 'Admin',
+      pin_hash: hashPin(pin, salt),
+      salt: salt,
+      token: Utilities.getUuid(),
+      active: 'true',
+      created: new Date().toISOString(),
+      last_seen: new Date().toISOString(),
+      failed_tries: 0,
+      locked_until: ''
+    };
+    appendRowFor(SHEETS.PEOPLE, PEOPLE_COLS, admin);
+    bumpVersion();
+    return { token: admin.token, pin: pin, me: publicPerson(admin) };
+  });
+}
+
+function login(data) {
+  return withLock(function () {
+    var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
+    var p = null;
+    for (var i = 0; i < people.length; i++) {
+      if (people[i].id === data.personId && String(people[i].active) !== 'false') { p = people[i]; break; }
+    }
+    if (!p) throw new Error('That person is not on the team.');
+
+    var now = Date.now();
+    if (p.locked_until && now < Number(p.locked_until)) {
+      var mins = Math.ceil((Number(p.locked_until) - now) / 60000);
+      throw new Error('Too many wrong tries. Wait ' + mins + ' minute' + (mins === 1 ? '' : 's') + '.');
+    }
+
+    if (hashPin(String(data.pin || ''), p.salt) !== p.pin_hash) {
+      p.failed_tries = Number(p.failed_tries || 0) + 1;
+      if (p.failed_tries >= PIN_TRIES) {
+        p.locked_until = String(now + PIN_LOCK_MS);
+        p.failed_tries = 0;
+      }
+      updateRow(SHEETS.PEOPLE, PEOPLE_COLS, p);
+      throw new Error('Wrong PIN. Ask your admin if you forgot it.');
+    }
+
+    p.failed_tries = 0;
+    p.locked_until = '';
+    p.token = Utilities.getUuid();   // one active device per person keeps it simple
+    p.last_seen = new Date().toISOString();
+    updateRow(SHEETS.PEOPLE, PEOPLE_COLS, p);
+    return { token: p.token, me: publicPerson(p) };
+  });
+}
+
+function logout(me) {
+  updateCell(SHEETS.PEOPLE, PEOPLE_COLS, me, 'token', '');
+  return {};
+}
+
+/* ── presence ─────────────────────────────────────────────────────────────
+   Who is around right now. Kept in the cache so an idle poll costs no sheet
+   reads, and written to the sheet at most once a minute per person. */
+
+function presenceMap() {
+  try {
+    var raw = CacheService.getScriptCache().get('seen');
+    if (raw) return JSON.parse(raw) || {};
+  } catch (e) {}
+  return {};
+}
+
+function touchPresence(me) {
+  var now = new Date().toISOString();
+  var last = new Date(me.last_seen || 0).getTime();
+  if (isNaN(last) || Date.now() - last > 60000) {
+    // ONE cell. Writing the whole row here would carry this request's
+    // pre-lock snapshot back over a PIN reset or sign-out that landed in
+    // between, undoing it.
+    updateCell(SHEETS.PEOPLE, PEOPLE_COLS, me, 'last_seen', now);
+  }
+  try {
+    var cache = CacheService.getScriptCache();
+    var map = presenceMap();
+    map[me.id] = now;
+    cache.put('seen', JSON.stringify(map), 3600);
+  } catch (e) {}
+  return now;
+}
+
+/* ── the one read the app lives on ────────────────────────────────────────── */
+
+function pull(me, data) {
+  var v = currentVersion();
+  touchPresence(me);
+  var seen = presenceMap();
+
+  // Nothing new to send, but presence still travels — otherwise everyone
+  // "goes offline" the moment the team stops typing.
+  if (data && Number(data.since) === v) return { v: v, unchanged: true, seen: seen };
+
+  var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
+  var tasks = readAll(SHEETS.TASKS, TASKS_COLS);
+  var messages = readAll(SHEETS.MESSAGES, MESSAGES_COLS);
+  if (messages.length > MSG_PULL_LIMIT) messages = messages.slice(messages.length - MSG_PULL_LIMIT);
+  var content = readAll(SHEETS.CONTENT, CONTENT_COLS);
+  var leads   = readAll(SHEETS.LEADS, LEADS_COLS);
+  var closes  = readAll(SHEETS.CLOSES, CLOSES_COLS);
+  if (closes.length > CLOSE_PULL_LIMIT) closes = closes.slice(closes.length - CLOSE_PULL_LIMIT);
+
+  var appUrl = '';
+  try { appUrl = ScriptApp.getService().getUrl() || ''; } catch (e) {}
+
+  return {
+    v: v,
+    company: metaGet('company') || '5 Circles',
+    me: publicPerson(me),
+    appUrl: appUrl,
+    sheetUrl: me.role === 'Admin' ? ss().getUrl() : '',
+    people: people.map(function (p) {
+      var pub = publicPerson(p);
+      var cached = seen[p.id] || '';
+      pub.last_seen = cached > (p.last_seen || '') ? cached : (p.last_seen || '');
+      return pub;
+    }),
+    tasks: tasks.map(function (t) {
+      return {
+        id: t.id, title: t.title, note: t.note, owner_id: t.owner_id, by_id: t.by_id,
+        due: t.due, status: t.status, stuck: String(t.stuck) === 'true',
+        created: t.created, updated: t.updated, done_at: t.done_at
+      };
+    }),
+    content: content.map(function (c) {
+      return { id: c.id, date: c.date, account: c.account, format: c.format, topic: c.topic,
+               stage: c.stage, owner_id: c.owner_id, link: c.link, notes: c.notes };
+    }),
+    leads: leads.map(function (l) {
+      return { id: l.id, added: l.added, name: l.name, phone: l.phone, source: l.source,
+               program: l.program, status: l.status, next: l.next, owner_id: l.owner_id, notes: l.notes };
+    }),
+    closes: closes.map(function (c) {
+      return { id: c.id, date: c.date, person_id: c.person_id, done: c.done,
+               stuck: c.stuck, tomorrow: c.tomorrow };
+    }),
+    messages: messages.map(function (m) {
+      var acks = [];
+      try { acks = m.acks ? JSON.parse(m.acks) : []; } catch (e) { acks = []; }
+      return {
+        id: m.id, from_id: m.from_id, to_id: m.to_id, text: m.text,
+        kind: m.kind, task_id: m.task_id, created: m.created, acks: acks
+      };
+    })
+  };
+}
+
+/* ── tasks ────────────────────────────────────────────────────────────────── */
+
+function taskById(id) {
+  var tasks = readAll(SHEETS.TASKS, TASKS_COLS);
+  for (var i = 0; i < tasks.length; i++) if (tasks[i].id === id) return tasks[i];
+  return null;
+}
+
+function activePersonById(id) {
+  var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
+  for (var i = 0; i < people.length; i++) {
+    if (people[i].id === id && String(people[i].active) !== 'false') return people[i];
+  }
+  return null;
+}
+
+function createTask(me, data) {
+  var title = String(data.title || '').trim();
+  if (!title) throw new Error('Say what needs doing.');
+  var owner = activePersonById(data.ownerId || me.id);
+  if (!owner) throw new Error('Pick who is doing it.');
+
+  var task = {
+    id: Utilities.getUuid(),
+    title: title.slice(0, 300),
+    note: String(data.note || '').trim().slice(0, 2000),
+    owner_id: owner.id,
+    by_id: me.id,
+    due: /^\d{4}-\d{2}-\d{2}$/.test(String(data.due || '')) ? data.due : '',
+    status: 'To do',
+    stuck: 'false',
+    created: new Date().toISOString(),
+    updated: new Date().toISOString(),
+    done_at: ''
+  };
+  appendRowFor(SHEETS.TASKS, TASKS_COLS, task);
+
+  // The record + the doorbell in one place: a message with the task attached
+  if (owner.id !== me.id) {
+    postMessage(me.id, owner.id,
+      'New task for you: ' + task.title + (task.due ? ' (due ' + task.due + ')' : ''),
+      data.ring ? 'ring' : 'notice', task.id);
+  }
+  bumpVersion();
+  return { taskId: task.id };
+}
+
+function assertTaskParty(me, task) {
+  if (me.role === 'Admin') return;
+  if (task.owner_id !== me.id && task.by_id !== me.id) {
+    throw new Error('Only the person doing it, the person who asked, or an admin can change this task.');
+  }
+}
+
+function setStatus(me, data) {
+  var task = taskById(data.taskId);
+  if (!task) throw new Error('Task not found.');
+  assertTaskParty(me, task);
+  var status = String(data.status || '');
+  if (['To do', 'Doing', 'Done'].indexOf(status) < 0) throw new Error('Unknown status.');
+
+  task.status = status;
+  task.updated = new Date().toISOString();
+  task.done_at = status === 'Done' ? new Date().toISOString() : '';
+  if (status === 'Done') task.stuck = 'false';
+  updateRow(SHEETS.TASKS, TASKS_COLS, task);
+
+  if (status === 'Done' && task.by_id !== me.id) {
+    postMessage(me.id, task.by_id, 'Done: ' + task.title, 'notice', task.id);
+  }
+  bumpVersion();
+  return {};
+}
+
+function toggleStuck(me, data) {
+  var task = taskById(data.taskId);
+  if (!task) throw new Error('Task not found.');
+  assertTaskParty(me, task);
+  var nowStuck = String(task.stuck) !== 'true';
+  task.stuck = nowStuck ? 'true' : 'false';
+  task.updated = new Date().toISOString();
+  updateRow(SHEETS.TASKS, TASKS_COLS, task);
+
+  if (nowStuck && task.by_id !== me.id) {
+    // Being stuck should never be silent: the giver's screen rings. If the
+    // giver has left the team, the whole team hears it instead.
+    var to = activePersonById(task.by_id) ? task.by_id : 'ALL';
+    postMessage(me.id, to, 'STUCK on: ' + task.title, 'ring', task.id);
+  }
+  bumpVersion();
+  return {};
+}
+
+function editTask(me, data) {
+  var task = taskById(data.taskId);
+  if (!task) throw new Error('Task not found.');
+  assertTaskParty(me, task);
+  if (data.title !== undefined) {
+    var title = String(data.title).trim();
+    if (!title) throw new Error('A task needs a title.');
+    task.title = title.slice(0, 300);
+  }
+  if (data.note !== undefined) task.note = String(data.note).trim().slice(0, 2000);
+  if (data.due !== undefined) task.due = /^\d{4}-\d{2}-\d{2}$/.test(String(data.due)) ? data.due : '';
+  // An unchanged owner needs no check — otherwise a task whose owner has since
+  // left the team could never be edited again, not even to fix a typo.
+  if (data.ownerId !== undefined && data.ownerId !== task.owner_id) {
+    var owner = activePersonById(data.ownerId);
+    if (!owner) throw new Error('Pick who is doing it.');
+    task.owner_id = owner.id;
+    if (owner.id !== me.id) {
+      postMessage(me.id, owner.id, 'This task is now with you: ' + task.title, 'ring', task.id);
+    }
+  }
+  task.updated = new Date().toISOString();
+  updateRow(SHEETS.TASKS, TASKS_COLS, task);
+  bumpVersion();
+  return {};
+}
+
+/* ── messages: team chat, task comments, and pings — one record ──────────── */
+
+function postMessage(fromId, toId, text, kind, taskId) {
+  var msg = {
+    id: Utilities.getUuid(),
+    from_id: fromId,
+    to_id: toId || 'ALL',
+    text: String(text || '').trim().slice(0, 2000),
+    kind: kind || 'chat',           // chat | notice | ring
+    task_id: taskId || '',
+    created: new Date().toISOString(),
+    acks: '[]'
+  };
+  appendRowFor(SHEETS.MESSAGES, MESSAGES_COLS, msg);
+  return msg;
+}
+
+function sendMessage(me, data) {
+  var text = String(data.text || '').trim();
+  if (!text) throw new Error('Write something first.');
+  var to = data.toId || 'ALL';
+  if (to !== 'ALL' && !activePersonById(to)) {
+    // The other party has left. A comment on the task still belongs on record,
+    // so it goes to the team rather than failing in the person's face.
+    if (data.taskId) to = 'ALL';
+    else throw new Error('That person is not on the team.');
+  }
+  var kind = data.kind === 'ring' ? 'ring' : 'chat';
+  if (kind === 'ring' && to === 'ALL' && me.role !== 'Admin') {
+    throw new Error('Only an admin can ring the whole team at once.');
+  }
+  if (data.taskId) {
+    // Comments live under the same rule as the rest of the task
+    var t = taskById(data.taskId);
+    if (!t) throw new Error('Task not found.');
+    assertTaskParty(me, t);
+  }
+  var msg = postMessage(me.id, to, text, kind, data.taskId || '');
+  bumpVersion();
+  return { messageId: msg.id };
+}
+
+function ackMessage(me, data) {
+  var messages = readAll(SHEETS.MESSAGES, MESSAGES_COLS);
+  var msg = null;
+  for (var i = 0; i < messages.length; i++) if (messages[i].id === data.messageId) { msg = messages[i]; break; }
+  if (!msg) throw new Error('Message not found.');
+  if (msg.to_id !== 'ALL' && msg.to_id !== me.id) throw new Error('This was not sent to you.');
+
+  var acks = [];
+  try { acks = msg.acks ? JSON.parse(msg.acks) : []; } catch (e) { acks = []; }
+  for (var a = 0; a < acks.length; a++) if (acks[a].who === me.id) return {};
+  acks.push({ who: me.id, answer: String(data.answer || 'Seen').slice(0, 300), at: new Date().toISOString() });
+  msg.acks = JSON.stringify(acks);
+  updateRow(SHEETS.MESSAGES, MESSAGES_COLS, msg);
+  bumpVersion();
+  return {};
+}
+
+/* ── people (admin) ───────────────────────────────────────────────────────── */
+
+/** The caller as the sheet sees them RIGHT NOW, inside the lock. The copy the
+ *  request arrived with was read before waiting for the lock, so another admin
+ *  may have changed this person's role — or removed them — in between. */
+function admin(me) {
+  var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
+  var fresh = null;
+  for (var i = 0; i < people.length; i++) if (people[i].id === me.id) { fresh = people[i]; break; }
+  if (!fresh || String(fresh.active) === 'false') throw new Error('Your access has changed. Please sign in again.');
+  if (fresh.role !== 'Admin') throw new Error('Only an admin can do that.');
+  return fresh;
+}
+
+function activeAdminCount() {
+  var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS), n = 0;
+  for (var i = 0; i < people.length; i++) {
+    if (String(people[i].active) !== 'false' && people[i].role === 'Admin') n++;
+  }
+  return n;
+}
+
+function addPerson(me, data) {
+  me = admin(me);
+  var name = String(data.name || '').trim();
+  if (!name) throw new Error('Type their name.');
+  var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
+  for (var i = 0; i < people.length; i++) {
+    if (String(people[i].active) !== 'false' &&
+        String(people[i].name).toLowerCase() === name.toLowerCase()) {
+      throw new Error(name + ' is already on the team.');
+    }
+  }
+  var pin = makePin();
+  var salt = Utilities.getUuid();
+  var person = {
+    id: Utilities.getUuid(),
+    name: name,
+    dept: String(data.dept || 'Sales').trim() || 'Sales',
+    role: data.role === 'Admin' ? 'Admin' : 'Member',
+    pin_hash: hashPin(pin, salt),
+    salt: salt,
+    token: '',
+    active: 'true',
+    created: new Date().toISOString(),
+    last_seen: '',
+    failed_tries: 0,
+    locked_until: ''
+  };
+  appendRowFor(SHEETS.PEOPLE, PEOPLE_COLS, person);
+  bumpVersion();
+  // The PIN comes back exactly once, to the admin, to hand to that person.
+  return { person: publicPerson(person), pin: pin };
+}
+
+function editPerson(me, data) {
+  me = admin(me);
+  var p = activePersonById(data.personId);
+  if (!p) throw new Error('Person not found.');
+  if (data.name !== undefined) {
+    var name = String(data.name).trim();
+    if (!name) throw new Error('A person needs a name.');
+    p.name = name;
+  }
+  if (data.dept !== undefined) p.dept = String(data.dept).trim() || p.dept;
+  if (data.role !== undefined && (data.role === 'Admin' || data.role === 'Member')) {
+    if (p.id === me.id && data.role !== 'Admin') throw new Error('You cannot remove your own admin access.');
+    if (p.role === 'Admin' && data.role !== 'Admin' && activeAdminCount() <= 1) {
+      throw new Error('Someone has to stay admin. Make another person an admin first.');
+    }
+    p.role = data.role;
+  }
+  updateRow(SHEETS.PEOPLE, PEOPLE_COLS, p);
+  bumpVersion();
+  return {};
+}
+
+function resetPin(me, data) {
+  me = admin(me);
+  var p = activePersonById(data.personId);
+  if (!p) throw new Error('Person not found.');
+  var pin = makePin();
+  p.salt = Utilities.getUuid();
+  p.pin_hash = hashPin(pin, p.salt);
+  p.token = '';            // their old device signs out
+  p.failed_tries = 0;
+  p.locked_until = '';
+  updateRow(SHEETS.PEOPLE, PEOPLE_COLS, p);
+  bumpVersion();
+  return { pin: pin };
+}
+
+function removePerson(me, data) {
+  me = admin(me);
+  var p = activePersonById(data.personId);
+  if (!p) throw new Error('Person not found.');
+  if (p.id === me.id) throw new Error('You cannot remove yourself.');
+  if (p.role === 'Admin' && activeAdminCount() <= 1) {
+    throw new Error('Someone has to stay admin. Make another person an admin first.');
+  }
+
+  // Zero orphaned work: their open tasks move to the admin doing the removal
+  var tasks = readAll(SHEETS.TASKS, TASKS_COLS);
+  var moved = 0;
+  for (var i = 0; i < tasks.length; i++) {
+    var t = tasks[i];
+    if (t.owner_id === p.id && t.status !== 'Done') {
+      t.owner_id = me.id;
+      t.updated = new Date().toISOString();
+      updateRow(SHEETS.TASKS, TASKS_COLS, t);
+      moved++;
+    }
+  }
+  p.active = 'false';
+  p.token = '';
+  updateRow(SHEETS.PEOPLE, PEOPLE_COLS, p);
+  if (moved > 0) {
+    postMessage(me.id, 'ALL', p.name + ' has left the team. ' + moved +
+      ' open task' + (moved === 1 ? '' : 's') + ' moved to ' + me.name + ' to be re-given.', 'notice', '');
+  }
+  bumpVersion();
+  return { movedTasks: moved };
+}
+
+function setCompany(me, data) {
+  me = admin(me);
+  var name = String(data.company || '').trim();
+  if (!name) throw new Error('Type the company name.');
+  metaSet('company', name);
+  bumpVersion();
+  return {};
+}
+
+/* ── dates ────────────────────────────────────────────────────────────────── */
+
+/** Today in the company's timezone (IST), independent of where the script runs.
+ *  Server time is the only truth here — a phone with a wrong clock must not be
+ *  able to file yesterday's day close or make a task look on time. */
+function todayISO() {
+  var now = new Date();
+  var ist = new Date(now.getTime() + (330 + now.getTimezoneOffset()) * 60000);
+  var m = ist.getMonth() + 1, d = ist.getDate();
+  return ist.getFullYear() + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
+}
+
+function cleanDate(v, label) {
+  var s = String(v || '').trim();
+  if (!s) return '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) throw new Error('Give ' + label + ' as a date.');
+  return s;
+}
+
+function oneOf(v, list, label) {
+  var s = String(v || '').trim();
+  for (var i = 0; i < list.length; i++) if (list[i] === s) return s;
+  throw new Error('Pick a valid ' + label + '.');
+}
+
+function rowById(name, cols, id) {
+  var rows = readAll(name, cols);
+  for (var i = 0; i < rows.length; i++) if (rows[i].id === id) return rows[i];
+  return null;
+}
+
+/* ── content ──────────────────────────────────────────────────────────────── */
+
+function addContent(me, data) {
+  var topic = String(data.topic || '').trim();
+  if (!topic) throw new Error('What is the post about?');
+  if (topic.length > 300) throw new Error('Keep the topic under 300 characters.');
+  var owner = String(data.ownerId || '').trim();
+  if (owner && !activePersonById(owner)) throw new Error('That person is not on the team.');
+
+  var now = new Date().toISOString();
+  var row = {
+    id: Utilities.getUuid(),
+    date: cleanDate(data.date, 'the post date'),
+    account: oneOf(data.account, ['5 Circles', 'Rahul', 'Traders Club'], 'account'),
+    format: oneOf(data.format, ['Reel', 'Carousel', 'Story', 'Post', 'Live'], 'format'),
+    topic: topic,
+    stage: 'Idea',
+    owner_id: owner || me.id,
+    link: String(data.link || '').trim(),
+    notes: String(data.notes || '').trim(),
+    created: now,
+    updated: now
+  };
+  appendRowFor(SHEETS.CONTENT, CONTENT_COLS, row);
+  bumpVersion();
+  return { id: row.id };
+}
+
+function setStage(me, data) {
+  var c = rowById(SHEETS.CONTENT, CONTENT_COLS, data.id);
+  if (!c) throw new Error('That post is no longer here.');
+  c.stage = oneOf(data.stage, STAGES, 'stage');
+  c.updated = new Date().toISOString();
+  updateRow(SHEETS.CONTENT, CONTENT_COLS, c);
+  bumpVersion();
+  return {};
+}
+
+function editContent(me, data) {
+  var c = rowById(SHEETS.CONTENT, CONTENT_COLS, data.id);
+  if (!c) throw new Error('That post is no longer here.');
+  if (data.topic !== undefined) {
+    var t = String(data.topic).trim();
+    if (!t) throw new Error('The post needs a topic.');
+    c.topic = t;
+  }
+  if (data.date !== undefined) c.date = cleanDate(data.date, 'the post date');
+  if (data.link !== undefined) c.link = String(data.link).trim();
+  if (data.notes !== undefined) c.notes = String(data.notes).trim();
+  if (data.ownerId !== undefined) {
+    var o = String(data.ownerId).trim();
+    if (o && !activePersonById(o)) throw new Error('That person is not on the team.');
+    c.owner_id = o;
+  }
+  c.updated = new Date().toISOString();
+  updateRow(SHEETS.CONTENT, CONTENT_COLS, c);
+  bumpVersion();
+  return {};
+}
+
+/* ── leads ────────────────────────────────────────────────────────────────── */
+
+function addLead(me, data) {
+  var name = String(data.name || '').trim();
+  if (!name) throw new Error('The lead needs a name.');
+  if (name.length > 120) throw new Error('Keep the name under 120 characters.');
+  var owner = String(data.ownerId || '').trim();
+  if (owner && !activePersonById(owner)) throw new Error('That person is not on the team.');
+
+  var now = new Date().toISOString();
+  var row = {
+    id: Utilities.getUuid(),
+    added: todayISO(),
+    name: name,
+    phone: String(data.phone || '').trim(),
+    source: oneOf(data.source, ['Instagram', 'Ad', 'Webinar', 'Referral', 'Walk-in', 'Other'], 'source'),
+    program: oneOf(data.program, ['Options Lab', 'Traders Club', 'Workshop', 'Other'], 'program'),
+    status: 'New',
+    next: cleanDate(data.next, 'the follow-up date') || todayISO(),
+    owner_id: owner || me.id,
+    notes: String(data.notes || '').trim(),
+    created: now,
+    updated: now
+  };
+  appendRowFor(SHEETS.LEADS, LEADS_COLS, row);
+  bumpVersion();
+  return { id: row.id };
+}
+
+function setLeadStatus(me, data) {
+  var l = rowById(SHEETS.LEADS, LEADS_COLS, data.id);
+  if (!l) throw new Error('That lead is no longer here.');
+  l.status = oneOf(data.status, LEAD_STATE, 'status');
+  // A lead still in play always carries a next date, so it cannot fall silent.
+  if (l.status === 'Joined' || l.status === 'Not now') l.next = '';
+  else if (data.next !== undefined) l.next = cleanDate(data.next, 'the follow-up date');
+  else if (!l.next) l.next = todayISO();
+  l.updated = new Date().toISOString();
+  updateRow(SHEETS.LEADS, LEADS_COLS, l);
+  bumpVersion();
+  return {};
+}
+
+function editLead(me, data) {
+  var l = rowById(SHEETS.LEADS, LEADS_COLS, data.id);
+  if (!l) throw new Error('That lead is no longer here.');
+  if (data.name !== undefined) {
+    var n = String(data.name).trim();
+    if (!n) throw new Error('The lead needs a name.');
+    l.name = n;
+  }
+  if (data.phone !== undefined) l.phone = String(data.phone).trim();
+  if (data.notes !== undefined) l.notes = String(data.notes).trim();
+  if (data.next !== undefined) l.next = cleanDate(data.next, 'the follow-up date');
+  if (data.ownerId !== undefined) {
+    var o = String(data.ownerId).trim();
+    if (o && !activePersonById(o)) throw new Error('That person is not on the team.');
+    l.owner_id = o;
+  }
+  l.updated = new Date().toISOString();
+  updateRow(SHEETS.LEADS, LEADS_COLS, l);
+  bumpVersion();
+  return {};
+}
+
+/* ── day close ────────────────────────────────────────────────────────────── */
+
+/** One close per person per day. Filing again the same day edits today's entry
+ *  rather than adding a second — the tab stays a clean daily record. */
+function addClose(me, data) {
+  var done = String(data.done || '').trim();
+  if (!done) throw new Error('Write what you finished today.');
+  if (done.length > 2000) throw new Error('Keep it under 2000 characters.');
+
+  var today = todayISO();
+  var rows = readAll(SHEETS.CLOSES, CLOSES_COLS);
+  var mine = null;
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i].person_id === me.id && rows[i].date === today) { mine = rows[i]; break; }
+  }
+  var body = {
+    done: done,
+    stuck: String(data.stuck || '').trim(),
+    tomorrow: String(data.tomorrow || '').trim()
+  };
+  if (mine) {
+    var hadStuck = String(mine.stuck || '').trim();
+    mine.done = body.done; mine.stuck = body.stuck; mine.tomorrow = body.tomorrow;
+    updateRow(SHEETS.CLOSES, CLOSES_COLS, mine);
+    // Re-filing to ADD or CHANGE a blocker must still flare, or a blocker
+    // declared on the second save of the day would never reach anyone.
+    if (body.stuck && body.stuck !== hadStuck) {
+      postMessage(me.id, '', me.name + ' is stuck: ' + body.stuck, 'notice', '');
+    }
+    bumpVersion();
+    return { id: mine.id, replaced: true };
+  }
+  var row = {
+    id: Utilities.getUuid(),
+    date: today,
+    person_id: me.id,
+    done: body.done,
+    stuck: body.stuck,
+    tomorrow: body.tomorrow,
+    created: new Date().toISOString()
+  };
+  appendRowFor(SHEETS.CLOSES, CLOSES_COLS, row);
+  // A blocker written into a day close is also raised as a stuck flare, so it
+  // reaches the founder's Today instead of sitting unread in a diary entry.
+  if (body.stuck) postMessage(me.id, '', me.name + ' is stuck: ' + body.stuck, 'notice', '');
+  bumpVersion();
+  return { id: row.id, replaced: false };
+}
+
+;window.FAKE_API = function (token, action, data) { return api(token, action, data); };
+
+/* google.script.run, faked: routes the real client at the real server. */
+window.google = { script: { run: (function () {
+  function make(h) {
+    return {
+      withSuccessHandler: function (f) { return make(Object.assign({}, h, { ok: f })); },
+      withFailureHandler: function (f) { return make(Object.assign({}, h, { err: f })); },
+      api: function (token, action, data) {
+        setTimeout(function () {
+          var res, threw = false, err;
+          try { res = window.FAKE_API(token, action, data); }
+          catch (e) { threw = true; err = e; }
+          // The handler runs OUTSIDE the try: real google.script.run does not
+          // swallow exceptions thrown by your own callback, and neither must this.
+          if (threw) (h.err || function () {})(err);
+          else (h.ok || function () {})(res);
+        }, 25);
+      }
+    };
+  }
+  return make({});
+})() } };
+</script>
+<script>
+/* Wrapped so the client's names (pull, render, start, esc …) never leak to the
+   page's global scope — in the merged demo build the server code shares that
+   scope, and a client `pull` there would shadow the server's own. */
+(function () {
+/* ── transport ──────────────────────────────────────────────────────────── */
+var TOKEN = null, S = null, VER = -1, TIMER = null, RINGING = null, ANSWERED = {};
+try { TOKEN = sessionStorage.getItem('5chq_token'); } catch (e) {}
+
+function rpc(action, data) {
+  return new Promise(function (res, rej) {
+    google.script.run
+      .withSuccessHandler(function (r) {
+        if (r && r.auth === false) { forget(); showGate('Your session ended. Sign in again.'); return rej(new Error('signed out')); }
+        if (!r || !r.ok) return rej(new Error((r && r.error) || 'Something went wrong.'));
+        res(r);
+      })
+      .withFailureHandler(function (e) { rej(new Error(e && e.message ? e.message : 'No connection.')); })
+      .api(TOKEN, action, data || {});
+  });
+}
+function remember(t){ TOKEN=t; try{sessionStorage.setItem('5chq_token',t)}catch(e){} }
+function forget(){ TOKEN=null; try{sessionStorage.removeItem('5chq_token')}catch(e){} if(TIMER)clearInterval(TIMER); }
+
+/* ── helpers ────────────────────────────────────────────────────────────── */
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function el(id){return document.getElementById(id)}
+function todayISO(){var n=new Date(),i=new Date(n.getTime()+(330+n.getTimezoneOffset())*6e4);
+  var m=i.getMonth()+1,d=i.getDate();return i.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(d<10?'0':'')+d}
+function shiftISO(k){var n=new Date(),i=new Date(n.getTime()+(330+n.getTimezoneOffset())*6e4);
+  i.setDate(i.getDate()+k);var m=i.getMonth()+1,d=i.getDate();
+  return i.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(d<10?'0':'')+d}
+function nice(s){return s?new Date(s+'T00:00').toLocaleDateString(undefined,{day:'numeric',month:'short'}):''}
+function whenTime(iso){try{return new Date(iso).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}catch(e){return''}}
+function nameOf(id){for(var i=0;i<S.people.length;i++)if(S.people[i].id===id)return S.people[i].name;return '—'}
+function banner(msg,bad){var b=el('banner');if(!msg){b.hidden=true;return}
+  b.hidden=false;b.className='note'+(bad?' err':'');b.textContent=msg;
+  if(!bad&&!/PIN/.test(msg))setTimeout(function(){b.hidden=true},4000)}
+
+/* ── login ──────────────────────────────────────────────────────────────── */
+function showGate(msg){
+  el('app').hidden = true; var g = el('gate'); g.hidden = false;
+  google.script.run.withSuccessHandler(function (st) {
+    if (st.setupNeeded) {
+      g.innerHTML = '<h1>5 CIRCLES HQ</h1><p>Nobody is set up yet. Whoever does this becomes the admin.</p>'
+        + '<form id="f-setup"><input name="company" placeholder="Company name" value="5 Circles" style="margin-bottom:7px">'
+        + '<input name="name" placeholder="Your name" required style="margin-bottom:9px">'
+        + '<button class="go" style="width:100%">Set up the team</button></form>';
+      el('f-setup').onsubmit = function (e) { e.preventDefault();
+        var f = Object.fromEntries(new FormData(e.target));
+        google.script.run.withSuccessHandler(function (r) {
+          if (!r.ok) return alert(r.error);
+          remember(r.token);
+          alert('Your PIN is ' + r.pin + '\n\nWrite it down — it is shown only once.');
+          start();
+        }).api(null, 'setup', f);
+      };
+      return;
+    }
+    var list = st.people.map(function (p) {
+      return '<button type="button" data-id="' + p.id + '">' + esc(p.name) + '</button>'; }).join('');
+    g.innerHTML = '<h1>' + esc(st.company).toUpperCase() + '</h1>'
+      + '<p>' + (msg ? esc(msg) : 'Tap your name, then type your 4-digit PIN.') + '</p>'
+      + '<div class="who" id="wholist">' + list + '</div>'
+      + '<input class="pinbox" id="pin" inputmode="numeric" maxlength="4" placeholder="••••" disabled>'
+      + '<button class="go" id="signin" style="width:100%;margin-top:9px" disabled>Sign in</button>'
+      + '<p id="gerr" style="color:var(--clay);margin-top:10px"></p>';
+    var picked = null;
+    el('wholist').onclick = function (e) {
+      var b = e.target.closest('button[data-id]'); if (!b) return;
+      picked = b.dataset.id;
+      [].forEach.call(g.querySelectorAll('.who button'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      el('pin').disabled = false; el('signin').disabled = false; el('pin').focus();
+    };
+    function tryIn() {
+      if (!picked) return;
+      el('signin').disabled = true;
+      google.script.run.withSuccessHandler(function (r) {
+        el('signin').disabled = false;
+        if (!r.ok) { el('gerr').textContent = r.error; el('pin').value = ''; return; }
+        remember(r.token); start();
+      }).api(null, 'login', { personId: picked, pin: el('pin').value });
+    }
+    el('signin').onclick = tryIn;
+    el('pin').onkeydown = function (e) { if (e.key === 'Enter') tryIn(); };
+  }).api(null, 'state', {});
+}
+
+/* ── render ─────────────────────────────────────────────────────────────── */
+var TODAY = todayISO(), YDAY = shiftISO(-1);
+var overdue = function(t){return t.due && t.due < TODAY && t.status !== 'Done'};
+var dueToday = function(t){return t.due === TODAY && t.status !== 'Done'};
+var needsFix = function(t){return t.stuck || overdue(t)};
+var latePost = function(c){return c.date && c.date < TODAY && c.stage !== 'Posted'};
+var toCall = function(l){return l.next && l.next <= TODAY && l.status !== 'Joined' && l.status !== 'Not now'};
+
+function taskRow(t, opts){
+  opts = opts || {};
+  var cls = t.status==='Done'?'done':(t.stuck||overdue(t))?'late':dueToday(t)?'today':'';
+  var chip = t.stuck ? 'stuck' : t.status.toLowerCase().replace(' ','');
+  var thread = (S.messages||[]).filter(function(m){return m.task_id===t.id});
+  return '<div class="row '+cls+'" data-task="'+t.id+'"><div class="t">'+esc(t.title)+'</div>'
+    + '<div class="meta">'
+    + '<button class="chip s-'+chip+'" data-cycle="'+t.id+'">'+(t.stuck?'Stuck':esc(t.status))+'</button>'
+    + '<span><b>'+esc(nameOf(t.owner_id))+'</b></span>'
+    + '<span>from '+esc(nameOf(t.by_id))+'</span>'
+    + (t.due?'<span class="'+(overdue(t)?'hot':'')+'">'+(overdue(t)?'was due ':'due ')+nice(t.due)+'</span>':'')
+    + '<button class="ghost" data-stuck="'+t.id+'">'+(t.stuck?'Un-stick':'I’m stuck')+'</button>'
+    + '<button class="ghost" data-talk="'+t.id+'">Comment'+(thread.length?' ('+thread.length+')':'')+'</button>'
+    + '</div>'
+    + (opts.open ? '<div class="thread">'
+        + (thread.length?thread.map(function(m){return '<div class="msg"><b>'+esc(nameOf(m.from_id))+'</b> '
+          + esc(m.text)+'<span class="when">'+whenTime(m.created)+'</span></div>'}).join('')
+          :'<div class="msg" style="color:var(--slate)">No comments yet.</div>')
+        + '<form data-comment="'+t.id+'" style="display:flex;gap:6px">'
+        + '<input name="text" placeholder="Add a comment" autocomplete="off"><button class="go" style="padding:8px 12px">Post</button></form>'
+        + '</div>' : '')
+    + '</div>';
+}
+function contentRow(c){
+  var cls = c.stage==='Posted'?'done':latePost(c)?'late':c.date===TODAY?'today':'';
+  return '<div class="row '+cls+'"><div class="t">'+esc(c.topic)+'</div><div class="meta">'
+    + '<button class="chip '+(c.stage==='Posted'?'s-done':c.stage==='Idea'?'':'s-doing')+'" data-stage="'+c.id+'">'+esc(c.stage)+'</button>'
+    + '<span><b>'+esc(c.account)+'</b> · '+esc(c.format)+'</span>'
+    + '<span><b>'+esc(nameOf(c.owner_id))+'</b></span>'
+    + '<span class="'+(latePost(c)?'hot':'')+'">'+nice(c.date)+'</span></div></div>';
+}
+function leadRow(l){
+  var cls = l.status==='Joined'?'done':toCall(l)?'late':'';
+  return '<div class="row '+cls+'"><div class="t">'+esc(l.name)+(l.phone?' <span style="font:11px var(--mono);color:var(--slate)">'+esc(l.phone)+'</span>':'')+'</div>'
+    + '<div class="meta">'
+    + '<button class="chip '+(l.status==='Joined'?'s-done':l.status==='Not now'?'':'s-doing')+'" data-lead="'+l.id+'">'+esc(l.status)+'</button>'
+    + '<span><b>'+esc(l.program)+'</b> · '+esc(l.source)+'</span>'
+    + '<span><b>'+esc(nameOf(l.owner_id))+'</b></span>'
+    + (l.next?'<span class="'+(toCall(l)?'hot':'')+'">'+(toCall(l)?'call now':'call '+nice(l.next))+'</span>':'')
+    + '</div></div>';
+}
+function closeRow(c){
+  return '<div class="row '+(c.stuck?'late':'done')+'"><div class="t">'+esc(c.done)+'</div>'
+    + (c.stuck?'<div class="meta"><span class="hot">Stuck: '+esc(c.stuck)+'</span></div>':'')
+    + (c.tomorrow?'<div class="meta"><span>Tomorrow: <b>'+esc(c.tomorrow)+'</b></span></div>':'')
+    + '<div class="meta"><span><b>'+esc(nameOf(c.person_id))+'</b></span><span>'+nice(c.date)+'</span></div></div>';
+}
+function fill(id, rows, msg){ el(id).innerHTML = rows.length ? rows.join('') : '<div class="empty">'+msg+'</div>' }
+function setK(id, n, dueStyle){ var e=el(id); e.textContent=n;
+  e.className='v '+(n===0?'ok':(dueStyle?'due':'hot')) }
+
+var OPEN_THREAD = null;
+function render(){
+  if(!S) return;
+  el('company').textContent = (S.company||'5 Circles').toUpperCase();
+  el('myname').textContent = S.me.name;
+  el('dateline').textContent = new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'}).toUpperCase();
+  var isAdmin = S.me.role === 'Admin';
+  el('teamlink').hidden = !isAdmin;
+  document.querySelector('.tab[data-v="team"]').hidden = !isAdmin;
+
+  var tasks=S.tasks, active=S.people.filter(function(p){return p.active});
+  var fixes=tasks.filter(needsFix), dues=tasks.filter(dueToday);
+  var calls=S.leads.filter(toCall), lates=S.content.filter(latePost);
+  var ydayCloses=S.closes.filter(function(c){return c.date===YDAY});
+
+  setK('k-over', tasks.filter(overdue).length);
+  setK('k-due', dues.length, true);
+  setK('k-stuck', tasks.filter(function(t){return t.stuck}).length);
+  setK('k-leads', calls.length, true);
+  setK('k-late', lates.length);
+  var kc=el('k-closed'); kc.textContent=ydayCloses.length+' / '+active.length;
+  kc.className='v mute'+(active.length&&ydayCloses.length>=active.length?' ok':'');
+  el('closedcount').textContent = ydayCloses.length+' of '+active.length+' filed';
+
+  var byDue=function(a,b){return (a.due||'').localeCompare(b.due||'')};
+  fill('l-fix', fixes.sort(byDue).map(function(t){return taskRow(t,{open:OPEN_THREAD===t.id})}), 'Nothing overdue, nothing stuck.');
+  // Anything already in Fix First does not repeat here — one row, one home.
+  fill('l-due', dues.filter(function(t){return !needsFix(t)}).map(function(t){return taskRow(t,{open:OPEN_THREAD===t.id})}),
+       dues.length?'All of today\u2019s work is in Fix first above.':'Nothing due today.');
+  fill('l-call', calls.map(leadRow), 'No follow-ups pending.');
+  fill('l-cont', lates.map(contentRow), 'Content is on schedule.');
+  fill('l-closes', ydayCloses.map(closeRow), 'Nobody has filed yet.');
+
+  var mineT=tasks.filter(function(t){return t.owner_id===S.me.id});
+  fill('m-fix', mineT.filter(needsFix).map(function(t){return taskRow(t,{open:OPEN_THREAD===t.id})}), 'You are clear.');
+  fill('m-due', mineT.filter(function(t){return t.status!=='Done'&&!needsFix(t)}).sort(byDue)
+       .map(function(t){return taskRow(t,{open:OPEN_THREAD===t.id})}), 'Nothing open.');
+  fill('m-leads', S.leads.filter(function(l){return l.owner_id===S.me.id&&toCall(l)}).map(leadRow), 'No calls waiting.');
+  fill('m-cont', S.content.filter(function(c){return c.owner_id===S.me.id&&c.stage!=='Posted'}).map(contentRow), 'Nothing in production.');
+  var mineBadge=mineT.filter(needsFix).length; var mb=el('b-mine'); mb.hidden=!mineBadge; mb.textContent=mineBadge;
+
+  fill('l-tasks', tasks.slice().sort(function(a,b){return (a.status==='Done')-(b.status==='Done')||byDue(a,b)})
+       .map(function(t){return taskRow(t,{open:OPEN_THREAD===t.id})}), 'No tasks yet.');
+  fill('l-content', S.content.slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'')}).map(contentRow), 'No posts planned.');
+  fill('l-leads', S.leads.slice().sort(function(a,b){return (a.next||'zz').localeCompare(b.next||'zz')}).map(leadRow), 'No leads yet.');
+  var myClose=S.closes.filter(function(c){return c.person_id===S.me.id&&c.date===TODAY});
+  fill('l-myclose', myClose.map(closeRow), 'You have not filed today.');
+  el('closebtn').textContent = myClose.length ? 'Update my day close' : 'File my day close';
+  if(myClose.length){ var f=el('f-close');
+    if(document.activeElement!==f.done&&!f.done.value){ f.done.value=myClose[0].done; f.stuck.value=myClose[0].stuck||''; f.tomorrow.value=myClose[0].tomorrow||''; } }
+
+  var opts=active.map(function(p){return '<option value="'+p.id+'"'+(p.id===S.me.id?' selected':'')+'>'+esc(p.name)+'</option>'}).join('');
+  ['task-owner','content-owner'].forEach(function(id){ var s=el(id); if(s.innerHTML!==opts){var v=s.value;s.innerHTML=opts;if(v)s.value=v;} });
+
+  fill('l-team', S.people.map(function(p){
+    var open=tasks.filter(function(t){return t.owner_id===p.id&&t.status!=='Done'}).length;
+    var closed=S.closes.some(function(c){return c.person_id===p.id&&c.date===YDAY});
+    return '<div class="row'+(p.active?'':' done')+'"><div class="t">'+esc(p.name)+(p.role==='Admin'?' <span class="lede">admin</span>':'')+'</div>'
+      + '<div class="meta"><span>'+esc(p.dept||'—')+'</span><span>'+open+' open</span>'
+      + '<span class="'+(closed?'':'hot')+'">'+(closed?'closed yesterday':'no close yesterday')+'</span>'
+      + (isAdmin&&p.active?'<button class="ghost" data-pin="'+p.id+'">Reset PIN</button>':'')
+      + (isAdmin&&p.active&&p.id!==S.me.id?'<button class="ghost" data-rm="'+p.id+'">Remove</button>':'')
+      + '</div></div>';
+  }), 'Nobody yet.');
+
+  el('foot').textContent = active.length+' people · everything here is visible to everyone';
+  checkRing();
+}
+
+/* ── ring ───────────────────────────────────────────────────────────────── */
+function checkRing(){
+  var mine=(S.messages||[]).filter(function(m){
+    return m.kind==='ring' && m.to_id===S.me.id && !ANSWERED[m.id]
+      && !(m.acks||[]).some(function(a){return a.by===S.me.id}) });
+  var m=mine[mine.length-1];
+  if(!m){ el('ring').hidden=true; RINGING=null; return; }
+  if(RINGING===m.id) return;
+  RINGING=m.id; el('ringfrom').textContent=nameOf(m.from_id)+' needs an answer';
+  el('ringtext').textContent=m.text; el('ring').hidden=false; el('ringreply').value='';
+  try{ var A=new (window.AudioContext||window.webkitAudioContext)(); var o=A.createOscillator(),g=A.createGain();
+    o.connect(g);g.connect(A.destination);o.frequency.value=660;g.gain.value=.09;o.start();
+    setTimeout(function(){o.stop();A.close()},700);}catch(e){}
+}
+el('ringok').onclick=function(){
+  var id=RINGING; if(!id) return; ANSWERED[id]=true; el('ring').hidden=true; RINGING=null;
+  rpc('ack',{messageId:id,text:el('ringreply').value||'Seen'}).then(pull)
+    .catch(function(e){ delete ANSWERED[id]; banner(e.message,true); });
+};
+
+/* ── actions ────────────────────────────────────────────────────────────── */
+var CYCLE=['To do','Doing','Done'], STAGES=['Idea','Script','Shoot','Edit','Ready','Posted'],
+    LEADST=['New','Contacted','Interested','Joined','Not now'];
+function next(list,cur){var i=list.indexOf(cur);return list[(i<0?0:i+1)%list.length]}
+
+document.addEventListener('click',function(e){
+  var t=e.target;
+  if(t.dataset && t.dataset.cycle){ var task=S.tasks.filter(function(x){return x.id===t.dataset.cycle})[0]; if(!task)return;
+    t.disabled=true; rpc('setStatus',{taskId:task.id,status:next(CYCLE,task.status)}).then(pull).catch(function(err){banner(err.message,true);pull()}); }
+  else if(t.dataset && t.dataset.stuck){ var tk=S.tasks.filter(function(x){return x.id===t.dataset.stuck})[0]; if(!tk)return;
+    var note=tk.stuck?'':prompt('What is blocking you?'); if(tk.stuck===false&&note===null)return;
+    rpc('toggleStuck',{taskId:tk.id,stuck:!tk.stuck,note:note||''}).then(pull).catch(function(err){banner(err.message,true)}); }
+  else if(t.dataset && t.dataset.talk){ OPEN_THREAD = OPEN_THREAD===t.dataset.talk?null:t.dataset.talk; render(); }
+  else if(t.dataset && t.dataset.stage){ var c=S.content.filter(function(x){return x.id===t.dataset.stage})[0]; if(!c)return;
+    rpc('setStage',{id:c.id,stage:next(STAGES,c.stage)}).then(pull).catch(function(err){banner(err.message,true)}); }
+  else if(t.dataset && t.dataset.lead){ var l=S.leads.filter(function(x){return x.id===t.dataset.lead})[0]; if(!l)return;
+    var ns=next(LEADST,l.status), d={id:l.id,status:ns};
+    if(ns!=='Joined'&&ns!=='Not now') d.next=l.next||todayISO();
+    rpc('setLeadStatus',d).then(pull).catch(function(err){banner(err.message,true)}); }
+  else if(t.dataset && t.dataset.pin){ if(!confirm('Reset this PIN? The old one stops working.'))return;
+    rpc('resetPin',{personId:t.dataset.pin}).then(function(r){alert('New PIN: '+r.pin+'\n\nShown only once.');pull()}).catch(function(err){banner(err.message,true)}); }
+  else if(t.dataset && t.dataset.rm){ if(!confirm('Remove them? Their open work moves to you.'))return;
+    rpc('removePerson',{personId:t.dataset.rm}).then(function(r){banner('Removed. '+(r.movedTasks||0)+' open task(s) moved to you.');pull()}).catch(function(err){banner(err.message,true)}); }
+});
+
+document.addEventListener('submit',function(e){
+  var f=e.target;
+  if(f.dataset && f.dataset.comment){ e.preventDefault();
+    var txt=f.text.value.trim(); if(!txt)return; f.text.value='';
+    rpc('send',{toId:'',text:txt,kind:'chat',taskId:f.dataset.comment}).then(pull).catch(function(err){banner(err.message,true)}); }
+});
+
+function wire(id,action,build,okMsg){
+  el(id).onsubmit=function(e){ e.preventDefault();
+    var btn=e.target.querySelector('button'); btn.disabled=true;
+    var f=Object.fromEntries(new FormData(e.target));
+    rpc(action,build(f,e.target)).then(function(){ e.target.reset(); if(okMsg)banner(okMsg); return pull(); })
+      .catch(function(err){ banner(err.message,true) })
+      .then(function(){ btn.disabled=false });
+  };
+}
+wire('f-task','createTask',function(f,form){return {title:f.title,ownerId:f.ownerId,due:f.due,ring:form.ring.checked}},'Task given.');
+wire('f-content','addContent',function(f){return {topic:f.topic,account:f.account,format:f.format,date:f.date,ownerId:f.ownerId}},'Post added.');
+wire('f-lead','addLead',function(f){return {name:f.name,phone:f.phone,source:f.source,program:f.program,next:f.next}},'Lead logged.');
+wire('f-close','addClose',function(f){return {done:f.done,stuck:f.stuck,tomorrow:f.tomorrow}},'Day close filed.');
+// Adding someone must hand their PIN back — without it they can never sign in.
+el('f-person').onsubmit=function(e){ e.preventDefault();
+  var btn=e.target.querySelector('button'); btn.disabled=true;
+  var f=Object.fromEntries(new FormData(e.target));
+  rpc('addPerson',{name:f.name,dept:f.dept,role:f.role}).then(function(r){
+    e.target.reset();
+    alert(r.person.name + '\u2019s PIN is ' + r.pin + '\n\nGive it to them now \u2014 it is shown only once.');
+    banner('Added ' + r.person.name + '. PIN ' + r.pin + ' \u2014 write it down, it will not be shown again.');
+    return pull();
+  }).catch(function(err){ banner(err.message,true) }).then(function(){ btn.disabled=false });
+};
+
+el('tabs').onclick=function(e){ var b=e.target.closest('.tab'); if(!b)return;
+  [].forEach.call(document.querySelectorAll('.tab'),function(t){t.setAttribute('aria-selected',String(t===b))});
+  [].forEach.call(document.querySelectorAll('.view'),function(v){v.hidden = v.id!=='v-'+b.dataset.v});
+  window.scrollTo(0,0); };
+el('teamlink').onclick=function(){ document.querySelector('.tab[data-v="team"]').click() };
+el('signout').onclick=function(){ rpc('logout',{}).catch(function(){}).then(function(){forget();showGate('Signed out.')}) };
+
+/* ── polling ────────────────────────────────────────────────────────────── */
+function pull(){
+  return rpc('pull',{since:VER}).then(function(r){
+    if(r.unchanged){ return; }
+    VER=r.v; S=r; render();
+  }).catch(function(e){ if(e.message!=='signed out') banner(e.message,true) });
+}
+function start(){
+  el('gate').hidden=true; el('app').hidden=false;
+  el('f-task').due.value=todayISO(); el('f-content').date.value=todayISO(); el('f-lead').next.value=todayISO();
+  VER=-1;
+  pull().then(function(){
+    if(TIMER)clearInterval(TIMER);
+    TIMER=setInterval(function(){ if(!document.hidden) pull() }, 12000);
+    document.addEventListener('visibilitychange',function(){ if(!document.hidden) pull() });
+  });
+}
+if(TOKEN) start(); else showGate();
+})();
+</script></body></html>
