@@ -1186,7 +1186,7 @@ function resetPin(me, data) {
   p.locked_until = '';
   updateRow(SHEETS.PEOPLE, PEOPLE_COLS, p);
   bumpVersion();
-  return { pin: pin };
+  return { pin: pin, name: p.name };
 }
 
 function removePerson(me, data) {
@@ -1435,6 +1435,37 @@ function addClose(me, data) {
   return { id: row.id, replaced: false };
 }
 
+
+/* ── owner recovery ───────────────────────────────────────────────────────
+   If someone is locked out and there is no other admin to reset them — including
+   YOU, the founder — open this project at script.google.com, put the name below,
+   press Run, and read the new PIN under "Execution log". Only the owner of this
+   script can run this, so it is not a way in for anyone else.                */
+
+function recoverPin() {
+  var NAME = 'Rahul';                       // ← the person who is locked out
+
+  var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
+  for (var i = 0; i < people.length; i++) {
+    var p = people[i];
+    if (String(p.name).trim().toLowerCase() !== String(NAME).trim().toLowerCase()) continue;
+    if (String(p.active) === 'false') { Logger.log(p.name + ' is not on the team any more.'); return; }
+    var pin = makePin(), salt = Utilities.getUuid();
+    p.pin_hash = hashPin(pin, salt);
+    p.salt = salt;
+    p.token = '';                            // signs them out of any old device
+    p.failed_tries = 0;
+    p.locked_until = '';                     // and clears a lockout
+    updateRow(SHEETS.PEOPLE, PEOPLE_COLS, p);
+    bumpVersion();
+    Logger.log('New PIN for ' + p.name + ': ' + pin);
+    return pin;
+  }
+  Logger.log('Nobody active is called "' + NAME + '". Names on the team: '
+    + people.filter(function (x) { return String(x.active) !== 'false'; })
+            .map(function (x) { return x.name; }).join(', '));
+}
+
 ;window.FAKE_API = function (token, action, data) { return api(token, action, data); };
 
 /* google.script.run, faked: routes the real client at the real server. */
@@ -1494,7 +1525,15 @@ function shiftISO(k){var n=new Date(),i=new Date(n.getTime()+(330+n.getTimezoneO
 function nice(s){return s?new Date(s+'T00:00').toLocaleDateString(undefined,{day:'numeric',month:'short'}):''}
 function whenTime(iso){try{return new Date(iso).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}catch(e){return''}}
 function nameOf(id){for(var i=0;i<S.people.length;i++)if(S.people[i].id===id)return S.people[i].name;return '—'}
+function pinNotice(msg){
+  var b=el('banner'); b.hidden=false; b.className='note';
+  b.innerHTML='<div style="display:flex;gap:10px;align-items:flex-start">'
+    + '<b style="flex:1;color:var(--ink);font-weight:600">'+esc(msg)+'</b>'
+    + '<button class="ghost" id="pinok">Got it</button></div>';
+  el('pinok').onclick=function(){ b.hidden=true; b.innerHTML=''; };
+}
 function banner(msg,bad){var b=el('banner');if(!msg){b.hidden=true;return}
+  b.innerHTML='';
   b.hidden=false;b.className='note'+(bad?' err':'');b.textContent=msg;
   if(!bad&&!/PIN/.test(msg))setTimeout(function(){b.hidden=true},4000)}
 
@@ -1514,6 +1553,10 @@ function showGate(msg){
           remember(r.token);
           alert('Your PIN is ' + r.pin + '\n\nWrite it down — it is shown only once.');
           start();
+          // The alert is easy to dismiss without reading. Leave the PIN on
+          // screen too, until it is deliberately closed.
+          setTimeout(function () { pinNotice('Your PIN is ' + r.pin
+            + ' — write it down now. You will not be shown it again.'); }, 400);
         }).api(null, 'setup', f);
       };
       return;
@@ -1525,7 +1568,9 @@ function showGate(msg){
       + '<div class="who" id="wholist">' + list + '</div>'
       + '<input class="pinbox" id="pin" inputmode="numeric" maxlength="4" placeholder="••••" disabled>'
       + '<button class="go" id="signin" style="width:100%;margin-top:9px" disabled>Sign in</button>'
-      + '<p id="gerr" style="color:var(--clay);margin-top:10px"></p>';
+      + '<p id="gerr" style="color:var(--clay);margin-top:10px"></p>'
+      + (window.FAKE_API ? '<p style="margin-top:18px;font-size:12.5px">This is the practice copy. '
+          + '<button class="mlink" id="demoreset" style="font-size:12.5px">Wipe it and start over</button></p>' : '');
     var picked = null;
     el('wholist').onclick = function (e) {
       var b = e.target.closest('button[data-id]'); if (!b) return;
@@ -1542,6 +1587,11 @@ function showGate(msg){
         remember(r.token); start();
       }).api(null, 'login', { personId: picked, pin: el('pin').value });
     }
+    if (el('demoreset')) el('demoreset').onclick = function () {
+      if (confirm('Erase this practice copy and start from the setup screen?')) {
+        window.FAKE_RESET(); location.reload();
+      }
+    };
     el('signin').onclick = tryIn;
     el('pin').onkeydown = function (e) { if (e.key === 'Enter') tryIn(); };
   }).api(null, 'state', {});
@@ -1715,7 +1765,10 @@ document.addEventListener('click',function(e){
     if(ns!=='Joined'&&ns!=='Not now') d.next=l.next||todayISO();
     rpc('setLeadStatus',d).then(pull).catch(function(err){banner(err.message,true)}); }
   else if(t.dataset && t.dataset.pin){ if(!confirm('Reset this PIN? The old one stops working.'))return;
-    rpc('resetPin',{personId:t.dataset.pin}).then(function(r){alert('New PIN: '+r.pin+'\n\nShown only once.');pull()}).catch(function(err){banner(err.message,true)}); }
+    rpc('resetPin',{personId:t.dataset.pin}).then(function(r){
+      alert('New PIN: '+r.pin+'\n\nShown only once.');
+      pinNotice((r.name || 'Their') + '\u2019s new PIN is ' + r.pin + ' \u2014 send it to them now.');
+      pull(); }).catch(function(err){banner(err.message,true)}); }
   else if(t.dataset && t.dataset.rm){ if(!confirm('Remove them? Their open work moves to you.'))return;
     rpc('removePerson',{personId:t.dataset.rm}).then(function(r){banner('Removed. '+(r.movedTasks||0)+' open task(s) moved to you.');pull()}).catch(function(err){banner(err.message,true)}); }
 });
@@ -1747,7 +1800,7 @@ el('f-person').onsubmit=function(e){ e.preventDefault();
   rpc('addPerson',{name:f.name,dept:f.dept,role:f.role}).then(function(r){
     e.target.reset();
     alert(r.person.name + '\u2019s PIN is ' + r.pin + '\n\nGive it to them now \u2014 it is shown only once.');
-    banner('Added ' + r.person.name + '. PIN ' + r.pin + ' \u2014 write it down, it will not be shown again.');
+    pinNotice(r.person.name + '\u2019s PIN is ' + r.pin + ' \u2014 send it to them now. It will not be shown again.');
     return pull();
   }).catch(function(err){ banner(err.message,true) }).then(function(){ btn.disabled=false });
 };

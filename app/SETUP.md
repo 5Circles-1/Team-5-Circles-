@@ -45,6 +45,13 @@ you become the admin. Write down the PIN it shows you — it appears once.
 - **Changing the app later:** paste the new code, then **Deploy → Manage
   deployments → edit (pencil) → Version: New version → Deploy.** Keeping the same
   deployment keeps the same URL, so nobody has to re-bookmark anything.
-- **Someone forgets a PIN:** Team tab → Reset PIN. A new one is shown once.
+- **Someone forgets a PIN:** Team tab → Reset PIN. The new one stays on screen
+  until you tap *Got it*, so you can pass it on before it disappears.
+- **You forget YOUR OWN PIN,** and there is no second admin to reset you: open
+  the project at script.google.com, pick `recoverPin` from the function list at
+  the top, change the name inside it to yours, press **Run**, and read the new
+  PIN under *Execution log*. Only the owner of the script can do this, so it is
+  not a way in for anyone else. (Worth adding a second Admin on day one so you
+  never need it.)
 - **Someone leaves:** Team tab → Remove. Their open work moves to you, and their
   day closes stay on the record.

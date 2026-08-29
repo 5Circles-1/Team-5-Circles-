@@ -722,7 +722,7 @@ function resetPin(me, data) {
   p.locked_until = '';
   updateRow(SHEETS.PEOPLE, PEOPLE_COLS, p);
   bumpVersion();
-  return { pin: pin };
+  return { pin: pin, name: p.name };
 }
 
 function removePerson(me, data) {
@@ -969,4 +969,35 @@ function addClose(me, data) {
   if (body.stuck) postMessage(me.id, '', me.name + ' is stuck: ' + body.stuck, 'notice', '');
   bumpVersion();
   return { id: row.id, replaced: false };
+}
+
+
+/* ── owner recovery ───────────────────────────────────────────────────────
+   If someone is locked out and there is no other admin to reset them — including
+   YOU, the founder — open this project at script.google.com, put the name below,
+   press Run, and read the new PIN under "Execution log". Only the owner of this
+   script can run this, so it is not a way in for anyone else.                */
+
+function recoverPin() {
+  var NAME = 'Rahul';                       // ← the person who is locked out
+
+  var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
+  for (var i = 0; i < people.length; i++) {
+    var p = people[i];
+    if (String(p.name).trim().toLowerCase() !== String(NAME).trim().toLowerCase()) continue;
+    if (String(p.active) === 'false') { Logger.log(p.name + ' is not on the team any more.'); return; }
+    var pin = makePin(), salt = Utilities.getUuid();
+    p.pin_hash = hashPin(pin, salt);
+    p.salt = salt;
+    p.token = '';                            // signs them out of any old device
+    p.failed_tries = 0;
+    p.locked_until = '';                     // and clears a lockout
+    updateRow(SHEETS.PEOPLE, PEOPLE_COLS, p);
+    bumpVersion();
+    Logger.log('New PIN for ' + p.name + ': ' + pin);
+    return pin;
+  }
+  Logger.log('Nobody active is called "' + NAME + '". Names on the team: '
+    + people.filter(function (x) { return String(x.active) !== 'false'; })
+            .map(function (x) { return x.name; }).join(', '));
 }
