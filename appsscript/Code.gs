@@ -6,7 +6,12 @@
    The whole backend for the 5 Circles team tool, running on Google's servers
    through Apps Script. On first use it creates a Google Sheet called
    "5C Pulse — Team Data" in the owner's Drive and stores everything there:
-   people, tasks, and every message, on record.
+   people, tasks, every message, and everyone's daily updates, on record.
+
+   The daily update is the heart of it: each person answers the few
+   questions that fit THEIR kind of work — question sets an admin can
+   reword or invent freely, so no role is hard-coded — plus how the day
+   felt. Numbers roll up weekly per person; the bell chases missing updates.
 
    Login is a name + 4-digit PIN. PINs are salted-and-hashed; a signed-in
    device holds a random token. Five wrong PIN tries locks that person's
@@ -25,16 +30,67 @@ var SHEETS = {
   META:     'Meta',
   PEOPLE:   'People',
   TASKS:    'Tasks',
-  MESSAGES: 'Messages'
+  MESSAGES: 'Messages',
+  PROFILES: 'Profiles',
+  UPDATES:  'Updates'
 };
 
-var PEOPLE_COLS   = ['id','name','dept','role','pin_hash','salt','token','active','created','last_seen','failed_tries','locked_until'];
+var PEOPLE_COLS   = ['id','name','dept','role','pin_hash','salt','token','active','created','last_seen','failed_tries','locked_until','profile_id'];
 var TASKS_COLS    = ['id','title','note','owner_id','by_id','due','status','stuck','created','updated','done_at'];
 var MESSAGES_COLS = ['id','from_id','to_id','text','kind','task_id','created','acks'];
+var PROFILES_COLS = ['id','name','emoji','questions','archived','created'];
+var UPDATES_COLS  = ['id','person_id','date','mood','answers','note','created','updated'];
 
 var MSG_PULL_LIMIT = 400;   // the sheet keeps everything; a pull sends the recent slice
+var UPD_PULL_LIMIT = 600;   // ~2 months of daily updates for a 10-person team
 var PIN_TRIES = 5;
 var PIN_LOCK_MS = 5 * 60 * 1000;
+var SCHEMA_VERSION = '2';
+
+/* Starter question sets — one per kind of work 5 Circles runs on today, and a
+   General one for everyone else. They are ROWS, not rules: admins can reword
+   any question, add their own sets (a chef, a driver, a designer…), and
+   archive what they don't use. 'general' is the fallback and cannot go. */
+var Q = function (id, label, type, unit) { return { id: id, label: label, type: type, unit: unit || '' }; };
+var PRESET_PROFILES = [
+  { id: 'general', name: 'General', emoji: '📝', questions: [
+    Q('g1', 'What did you get done today?', 'text'),
+    Q('g2', 'What’s the plan for tomorrow?', 'text'),
+    Q('g3', 'Anything in your way?', 'text')
+  ]},
+  { id: 'video', name: 'Video Editor', emoji: '🎬', questions: [
+    Q('v1', 'Videos delivered today', 'count', 'videos'),
+    Q('v2', 'Still on the edit table', 'count', 'videos'),
+    Q('v3', 'Waiting on footage or approval from someone?', 'yesno'),
+    Q('v4', 'Best thing you cut today', 'text')
+  ]},
+  { id: 'marketing', name: 'Performance Marketer', emoji: '📣', questions: [
+    Q('m1', 'Leads that came in', 'count', 'leads'),
+    Q('m2', 'Spent on ads today', 'count', '₹'),
+    Q('m3', 'Best-performing ad right now', 'text'),
+    Q('m4', 'Anything to pause or scale?', 'text')
+  ]},
+  { id: 'sales', name: 'Sales', emoji: '☎️', questions: [
+    Q('s1', 'Calls made', 'count', 'calls'),
+    Q('s2', 'Follow-ups done', 'count'),
+    Q('s3', 'Closures today', 'count'),
+    Q('s4', 'Hot leads for tomorrow', 'text')
+  ]},
+  { id: 'mentor', name: 'Mentor / Trainer', emoji: '🎓', questions: [
+    Q('t1', 'Sessions taken', 'count'),
+    Q('t2', 'Students showed up', 'count'),
+    Q('t3', 'Doubts still open', 'count'),
+    Q('t4', 'A student who needs attention', 'text')
+  ]},
+  { id: 'frontdesk', name: 'Front Desk', emoji: '🛎️', questions: [
+    Q('f1', 'Walk-ins today', 'count'),
+    Q('f2', 'Enquiries taken', 'count'),
+    Q('f3', 'Fees collected', 'count', '₹'),
+    Q('f4', 'Anything promised to a visitor?', 'text')
+  ]}
+];
+
+var NUDGE_TEXT = 'Your daily update is waiting — open the Updates tab, it takes a minute.';
 
 /* ── entry points ─────────────────────────────────────────────────────────── */
 
@@ -48,6 +104,8 @@ function doGet() {
 function api(token, action, data) {
   data = data || {};
   try {
+    ensureSchema();
+
     // Reads that must work before anyone is signed in
     if (action === 'state')  return jok(publicState());
     if (action === 'setup')  return jok(setupTeam(data));
@@ -64,6 +122,10 @@ function api(token, action, data) {
       case 'editTask':    return jok(withLock(function () { return editTask(me, data); }));
       case 'send':        return jok(withLock(function () { return sendMessage(me, data); }));
       case 'ack':         return jok(withLock(function () { return ackMessage(me, data); }));
+      case 'saveUpdate':  return jok(withLock(function () { return saveUpdate(me, data); }));
+      case 'nudgeUpdates':return jok(withLock(function () { return nudgeUpdates(me, data); }));
+      case 'saveProfile': return jok(withLock(function () { return saveProfile(me, data); }));
+      case 'archiveProfile': return jok(withLock(function () { return archiveProfile(me, data); }));
       case 'addPerson':   return jok(withLock(function () { return addPerson(me, data); }));
       case 'editPerson':  return jok(withLock(function () { return editPerson(me, data); }));
       case 'resetPin':    return jok(withLock(function () { return resetPin(me, data); }));
@@ -102,13 +164,19 @@ function ss() {
   return book;
 }
 
-function ensureSheets(book) {
-  var wanted = [
+function allSheetDefs() {
+  return [
     [SHEETS.META,     ['key', 'value']],
     [SHEETS.PEOPLE,   PEOPLE_COLS],
     [SHEETS.TASKS,    TASKS_COLS],
-    [SHEETS.MESSAGES, MESSAGES_COLS]
+    [SHEETS.MESSAGES, MESSAGES_COLS],
+    [SHEETS.PROFILES, PROFILES_COLS],
+    [SHEETS.UPDATES,  UPDATES_COLS]
   ];
+}
+
+function ensureSheets(book) {
+  var wanted = allSheetDefs();
   for (var i = 0; i < wanted.length; i++) {
     var name = wanted[i][0], cols = wanted[i][1];
     var sh = book.getSheetByName(name);
@@ -124,7 +192,49 @@ function ensureSheets(book) {
     }
   }
   var def = book.getSheetByName('Sheet1');
-  if (def && book.getSheets().length > 4) book.deleteSheet(def);
+  if (def && book.getSheets().length > wanted.length) book.deleteSheet(def);
+}
+
+/** One-time upgrade of a spreadsheet created by an older Code.gs: new sheets
+ *  appear via ensureSheets, headers stretch to the new columns, and the
+ *  starter question sets are seeded. Guarded by a script property so every
+ *  other request costs one property read and nothing else. */
+function ensureSchema() {
+  var props = PropertiesService.getScriptProperties();
+  if (props.getProperty('SCHEMA') === SCHEMA_VERSION) return;
+  var lock = LockService.getScriptLock();
+  // Another request migrating right now is fine — skip and serve; the guard
+  // property is only written once the whole upgrade is done.
+  var got = false;
+  try { got = lock.tryLock(5000); } catch (e) {}
+  if (!got) return;
+  try {
+    if (props.getProperty('SCHEMA') === SCHEMA_VERSION) return;
+    var book = ss();
+    var wanted = allSheetDefs();
+    for (var i = 0; i < wanted.length; i++) {
+      var name = wanted[i][0], cols = wanted[i][1];
+      var sh = book.getSheetByName(name);
+      try {
+        var lastCol = String.fromCharCode(64 + cols.length);
+        sh.getRange('A:' + lastCol).setNumberFormat('@');
+      } catch (e) {}
+      sh.getRange(1, 1, 1, cols.length).setValues([cols]);
+    }
+    if (readAll(SHEETS.PROFILES, PROFILES_COLS).length === 0) {
+      for (var p = 0; p < PRESET_PROFILES.length; p++) {
+        var pre = PRESET_PROFILES[p];
+        appendRowFor(SHEETS.PROFILES, PROFILES_COLS, {
+          id: pre.id, name: pre.name, emoji: pre.emoji,
+          questions: JSON.stringify(pre.questions),
+          archived: 'false', created: new Date().toISOString()
+        });
+      }
+    }
+    props.setProperty('SCHEMA', SCHEMA_VERSION);
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function sheet(name) { return ss().getSheetByName(name); }
@@ -252,7 +362,11 @@ function personByToken(token) {
 }
 
 function publicPerson(p) {
-  return { id: p.id, name: p.name, dept: p.dept, role: p.role, active: String(p.active) !== 'false' };
+  return {
+    id: p.id, name: p.name, dept: p.dept, role: p.role,
+    active: String(p.active) !== 'false',
+    profile_id: p.profile_id || 'general'   // people from before question sets existed
+  };
 }
 
 /** What the login screen may know: company + names, and nothing else — not who
@@ -292,7 +406,8 @@ function setupTeam(data) {
       created: new Date().toISOString(),
       last_seen: new Date().toISOString(),
       failed_tries: 0,
-      locked_until: ''
+      locked_until: '',
+      profile_id: 'general'
     };
     appendRowFor(SHEETS.PEOPLE, PEOPLE_COLS, admin);
     bumpVersion();
@@ -384,6 +499,8 @@ function pull(me, data) {
   var tasks = readAll(SHEETS.TASKS, TASKS_COLS);
   var messages = readAll(SHEETS.MESSAGES, MESSAGES_COLS);
   if (messages.length > MSG_PULL_LIMIT) messages = messages.slice(messages.length - MSG_PULL_LIMIT);
+  var updates = readAll(SHEETS.UPDATES, UPDATES_COLS);
+  if (updates.length > UPD_PULL_LIMIT) updates = updates.slice(updates.length - UPD_PULL_LIMIT);
 
   var appUrl = '';
   try { appUrl = ScriptApp.getService().getUrl() || ''; } catch (e) {}
@@ -413,6 +530,22 @@ function pull(me, data) {
       return {
         id: m.id, from_id: m.from_id, to_id: m.to_id, text: m.text,
         kind: m.kind, task_id: m.task_id, created: m.created, acks: acks
+      };
+    }),
+    profiles: readAll(SHEETS.PROFILES, PROFILES_COLS).map(function (pr) {
+      var qs = [];
+      try { qs = pr.questions ? JSON.parse(pr.questions) : []; } catch (e) { qs = []; }
+      return {
+        id: pr.id, name: pr.name, emoji: pr.emoji,
+        questions: qs, archived: String(pr.archived) === 'true'
+      };
+    }),
+    updates: updates.map(function (u) {
+      var answers = [];
+      try { answers = u.answers ? JSON.parse(u.answers) : []; } catch (e) { answers = []; }
+      return {
+        id: u.id, person_id: u.person_id, date: u.date, mood: u.mood,
+        answers: answers, note: u.note, created: u.created, updated: u.updated
       };
     })
   };
@@ -597,6 +730,216 @@ function ackMessage(me, data) {
   return {};
 }
 
+/* ── daily updates: everyone's minute-long word on their day ──────────────
+   Each person answers the questions of their QUESTION SET (their kind of
+   work: editor, sales, front desk, or one the admin invents), picks how the
+   day felt, and that's the update — one row per person per day, editable
+   until midnight, kept forever like everything else. */
+
+function profileRows() { return readAll(SHEETS.PROFILES, PROFILES_COLS); }
+
+function profileRowById(id) {
+  var rows = profileRows();
+  for (var i = 0; i < rows.length; i++) if (rows[i].id === id) return rows[i];
+  return null;
+}
+
+/** The questions a person answers today. A missing or archived set falls back
+ *  to General, so nobody is ever left without an update form. */
+function questionsFor(person) {
+  var row = profileRowById(person.profile_id || 'general');
+  if (!row || String(row.archived) === 'true') row = profileRowById('general');
+  var qs = [];
+  try { qs = row && row.questions ? JSON.parse(row.questions) : []; } catch (e) { qs = []; }
+  return qs;
+}
+
+function validDateStr(s) { return /^\d{4}-\d{2}-\d{2}$/.test(String(s || '')); }
+
+function saveUpdate(me, data) {
+  var date = String(data.date || '');
+  if (!validDateStr(date)) throw new Error('That date doesn’t look right.');
+  // The client's own calendar day decides where the update lands (clocks on
+  // Google's side may sit in another timezone); anything far from now is junk.
+  var drift = Math.abs(new Date(date + 'T12:00:00Z').getTime() - Date.now());
+  if (isNaN(drift) || drift > 3 * 86400000) throw new Error('That date doesn’t look right.');
+
+  var mood = String(data.mood || '');
+  if (['great', 'ok', 'heavy'].indexOf(mood) < 0) throw new Error('Pick how the day felt first.');
+
+  var vals = data.vals || {};
+  var qs = questionsFor(me);
+  var answers = [];
+  for (var i = 0; i < qs.length; i++) {
+    var q = qs[i];
+    var v = vals[q.id];
+    if (v === undefined || v === null || String(v).trim() === '') continue;
+    v = String(v).trim();
+    if (q.type === 'count') {
+      v = v.replace(/[,\s]/g, '');
+      if (!/^\d{1,9}(\.\d{1,2})?$/.test(v)) {
+        throw new Error('“' + q.label + '” needs a number.');
+      }
+    } else if (q.type === 'yesno') {
+      if (v !== 'yes' && v !== 'no') continue;
+    } else {
+      v = v.slice(0, 300);
+    }
+    answers.push({ l: q.label, t: q.type, u: q.unit || '', v: v });
+  }
+  var note = String(data.note || '').trim().slice(0, 1000);
+
+  var rows = readAll(SHEETS.UPDATES, UPDATES_COLS);
+  var existing = null;
+  for (var r = 0; r < rows.length; r++) {
+    if (rows[r].person_id === me.id && rows[r].date === date) { existing = rows[r]; break; }
+  }
+  if (existing) {
+    existing.mood = mood;
+    existing.answers = JSON.stringify(answers);
+    existing.note = note;
+    existing.updated = new Date().toISOString();
+    updateRow(SHEETS.UPDATES, UPDATES_COLS, existing);
+    bumpVersion();
+    return { updateId: existing.id };
+  }
+  var upd = {
+    id: Utilities.getUuid(),
+    person_id: me.id,
+    date: date,
+    mood: mood,
+    // Labels are copied INTO the row, so an update stays readable years later
+    // even after the admin has reworded or replaced every question.
+    answers: JSON.stringify(answers),
+    note: note,
+    created: new Date().toISOString(),
+    updated: ''
+  };
+  appendRowFor(SHEETS.UPDATES, UPDATES_COLS, upd);
+  bumpVersion();
+  return { updateId: upd.id };
+}
+
+/** Ring everyone whose update for the day hasn't come in (or one person).
+ *  An unanswered earlier nudge still ringing on their screen means a new one
+ *  would add nothing, so those people are skipped. */
+function nudgeUpdates(me, data) {
+  me = admin(me);
+  var date = String(data.date || '');
+  if (!validDateStr(date)) throw new Error('That date doesn’t look right.');
+
+  var updates = readAll(SHEETS.UPDATES, UPDATES_COLS);
+  var filed = {};
+  for (var i = 0; i < updates.length; i++) {
+    if (updates[i].date === date) filed[updates[i].person_id] = true;
+  }
+  var ringing = {};
+  var msgs = readAll(SHEETS.MESSAGES, MESSAGES_COLS);
+  for (var m = 0; m < msgs.length; m++) {
+    if (msgs[m].kind !== 'ring' || msgs[m].text !== NUDGE_TEXT) continue;
+    var acks = [];
+    try { acks = msgs[m].acks ? JSON.parse(msgs[m].acks) : []; } catch (e) {}
+    var answered = false;
+    for (var a = 0; a < acks.length; a++) if (acks[a].who === msgs[m].to_id) answered = true;
+    if (!answered) ringing[msgs[m].to_id] = true;
+  }
+
+  var targets = readAll(SHEETS.PEOPLE, PEOPLE_COLS).filter(function (p) {
+    if (String(p.active) === 'false' || p.id === me.id) return false;
+    if (data.personId && p.id !== data.personId) return false;
+    return true;
+  });
+  if (data.personId && !targets.length) throw new Error('Person not found.');
+  if (data.personId && filed[data.personId]) throw new Error('Their update is already in.');
+
+  var nudged = 0;
+  for (var t = 0; t < targets.length; t++) {
+    var p = targets[t];
+    if (filed[p.id] || ringing[p.id]) continue;
+    postMessage(me.id, p.id, NUDGE_TEXT, 'ring', '');
+    nudged++;
+  }
+  if (nudged) bumpVersion();
+  return { nudged: nudged };
+}
+
+/* ── question sets (admin) ────────────────────────────────────────────────── */
+
+function cleanQuestions(raw) {
+  if (!raw || !raw.length) throw new Error('A question set needs at least one question.');
+  if (raw.length > 8) throw new Error('Eight questions is the most — a daily update has to stay quick.');
+  var out = [];
+  for (var i = 0; i < raw.length; i++) {
+    var q = raw[i] || {};
+    var label = String(q.label || '').trim().slice(0, 80);
+    if (!label) throw new Error('Every question needs its words.');
+    var type = ['count', 'text', 'yesno'].indexOf(q.type) >= 0 ? q.type : 'text';
+    out.push({
+      id: String(q.id || '').trim() || Utilities.getUuid().slice(0, 8),
+      label: label,
+      type: type,
+      unit: type === 'count' ? String(q.unit || '').trim().slice(0, 12) : ''
+    });
+  }
+  return out;
+}
+
+function saveProfile(me, data) {
+  me = admin(me);
+  var name = String(data.name || '').trim().slice(0, 40);
+  if (!name) throw new Error('Name the kind of work first.');
+  var emoji = String(data.emoji || '').trim().slice(0, 8) || '📝';
+  var questions = cleanQuestions(data.questions);
+
+  var rows = profileRows();
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i].id !== data.profileId && String(rows[i].archived) !== 'true' &&
+        String(rows[i].name).toLowerCase() === name.toLowerCase()) {
+      throw new Error('There’s already a set called ' + rows[i].name + '.');
+    }
+  }
+
+  if (data.profileId) {
+    var row = profileRowById(data.profileId);
+    if (!row) throw new Error('That question set is gone.');
+    row.name = name;
+    row.emoji = emoji;
+    row.questions = JSON.stringify(questions);
+    updateRow(SHEETS.PROFILES, PROFILES_COLS, row);
+    bumpVersion();
+    return { profileId: row.id };
+  }
+  var fresh = {
+    id: Utilities.getUuid(),
+    name: name,
+    emoji: emoji,
+    questions: JSON.stringify(questions),
+    archived: 'false',
+    created: new Date().toISOString()
+  };
+  appendRowFor(SHEETS.PROFILES, PROFILES_COLS, fresh);
+  bumpVersion();
+  return { profileId: fresh.id };
+}
+
+function archiveProfile(me, data) {
+  me = admin(me);
+  var row = profileRowById(data.profileId);
+  if (!row) throw new Error('That question set is gone.');
+  if (row.id === 'general') throw new Error('General stays — it’s the fallback for everyone new.');
+  var users = readAll(SHEETS.PEOPLE, PEOPLE_COLS).filter(function (p) {
+    return String(p.active) !== 'false' && (p.profile_id || 'general') === row.id;
+  });
+  if (users.length) {
+    throw new Error(users[0].name + (users.length > 1 ? ' and others are' : ' is') +
+      ' still on this set. Move them to another set first.');
+  }
+  row.archived = 'true';
+  updateRow(SHEETS.PROFILES, PROFILES_COLS, row);
+  bumpVersion();
+  return {};
+}
+
 /* ── people (admin) ───────────────────────────────────────────────────────── */
 
 /** The caller as the sheet sees them RIGHT NOW, inside the lock. The copy the
@@ -630,12 +973,16 @@ function addPerson(me, data) {
       throw new Error(name + ' is already on the team.');
     }
   }
+  var profile = profileRowById(String(data.profileId || 'general'));
+  if (!profile || String(profile.archived) === 'true') profile = profileRowById('general');
   var pin = makePin();
   var salt = Utilities.getUuid();
   var person = {
     id: Utilities.getUuid(),
     name: name,
-    dept: String(data.dept || 'Sales').trim() || 'Sales',
+    // "What they do" is a free label; left blank it borrows the set's name,
+    // so a Video Editor never reads as blank — or as somebody's department.
+    dept: String(data.dept || '').trim() || (profile ? profile.name : 'Team'),
     role: data.role === 'Admin' ? 'Admin' : 'Member',
     pin_hash: hashPin(pin, salt),
     salt: salt,
@@ -644,7 +991,8 @@ function addPerson(me, data) {
     created: new Date().toISOString(),
     last_seen: '',
     failed_tries: 0,
-    locked_until: ''
+    locked_until: '',
+    profile_id: profile ? profile.id : 'general'
   };
   appendRowFor(SHEETS.PEOPLE, PEOPLE_COLS, person);
   bumpVersion();
@@ -662,6 +1010,11 @@ function editPerson(me, data) {
     p.name = name;
   }
   if (data.dept !== undefined) p.dept = String(data.dept).trim() || p.dept;
+  if (data.profileId !== undefined) {
+    var prof = profileRowById(String(data.profileId));
+    if (!prof || String(prof.archived) === 'true') throw new Error('Pick a question set from the list.');
+    p.profile_id = prof.id;
+  }
   if (data.role !== undefined && (data.role === 'Admin' || data.role === 'Member')) {
     if (p.id === me.id && data.role !== 'Admin') throw new Error('You cannot remove your own admin access.');
     if (p.role === 'Admin' && data.role !== 'Admin' && activeAdminCount() <= 1) {

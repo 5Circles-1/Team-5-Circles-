@@ -12,7 +12,8 @@ like a web page, and it contains:
 
     1.  A LIVE DEMO of the tool, right on the page. Play with it:
         set yourself up as the admin, add a teammate, give a task,
-        ring the bell. Nothing you do there is saved anywhere.
+        file your daily update, ring the bell. Nothing you do
+        there is saved anywhere.
 
     2.  THE SETUP GUIDE — six short steps that put the real tool on
         the internet using your own Google account
@@ -30,6 +31,15 @@ can never do.
 WHAT THE TOOL DOES  (once it's online)
 --------------------------------------------------------------------
 
+    - Daily updates: every person's one-minute word on their day,
+      with questions that fit THEIR work - the video editor gets
+      "videos delivered", sales gets "calls and closures", the
+      front desk gets "walk-ins and fees". Six starter question
+      sets are built in; reword any question or invent a set for
+      any new kind of work in the Team tab. Your CRM knows the
+      customers - this knows the team. One scroll shows the whole
+      company's day, streaks, and weekly totals per person, and
+      the bell chases whoever's update is missing.
     - Tasks: give anyone a job in one line, with a date. They see it
       the moment they open the tool. To do -> Doing -> Done.
     - "I'm stuck" flag: rings the person who gave the task, so
@@ -39,8 +49,9 @@ WHAT THE TOOL DOES  (once it's online)
     - The bell: a message that takes over the screen and keeps
       ringing until the person answers - and you see their answer.
     - Team tab (admins): add people, hand out PINs, reset PINs,
-      remove people. When someone leaves, their open tasks move to
-      you so nothing is lost.
+      remove people, and shape each person's daily update questions.
+      When someone leaves, their open tasks move to you so nothing
+      is lost.
 
 Logins are a face + a 4-digit PIN. You hand out the PINs; the tool
 shows each one to you exactly once. Five wrong guesses locks a

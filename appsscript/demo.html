@@ -213,6 +213,57 @@
   .addrow input:focus{border-color:var(--brand)}
   .addrow .grow{flex:1; min-width:150px}
 
+  /* daily updates */
+  .updme{padding:16px; margin-bottom:22px}
+  .updme h3{font-size:17px}
+  .updme .day{font-size:13px; color:var(--mut); font-weight:600}
+  .moods{display:flex; gap:8px; margin:12px 0 2px}
+  .moods button{flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:10px 4px;
+    border:1.5px solid var(--line); border-radius:14px; background:var(--bg); font-weight:700; font-size:12.5px; color:var(--mut)}
+  .moods button .e{font-size:25px}
+  .moods button.on{border-color:var(--brand); background:var(--brand-soft); color:var(--brand-dark)}
+  .uq{margin-top:13px}
+  .uq > label{display:block; font-size:14px; font-weight:600; margin-bottom:5px}
+  .uq input{padding:10px 12px; border:1.5px solid var(--line); border-radius:12px; outline:none; background:#fff; width:100%}
+  .uq input:focus{border-color:var(--brand)}
+  .uq .cnt{display:flex; align-items:center; gap:8px}
+  .uq .cnt input{width:118px; text-align:center; font-weight:700}
+  .uq .cnt .unit{color:var(--mut); font-weight:600; font-size:14px}
+  .upd{background:var(--card); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow);
+    padding:13px 14px; margin-bottom:10px}
+  .upd .hd{display:flex; align-items:center; gap:10px}
+  .upd .hd[data-pid]{cursor:pointer}
+  .upd .hd .who{flex:1; min-width:0}
+  .upd .hd .nm{font-weight:700}
+  .upd .hd .what{font-size:12.5px; color:var(--mut)}
+  .upd .hd .mood{font-size:23px}
+  .updb .nums{display:flex; flex-wrap:wrap; gap:7px; margin-top:10px}
+  .updb .qa2{margin-top:9px; font-size:14.5px; white-space:pre-wrap}
+  .updb .qa2 .ql{color:var(--mut); font-size:12.5px; font-weight:700}
+  .updb .note{margin-top:9px; font-size:14.5px; background:var(--bg); border-radius:10px; padding:8px 11px; white-space:pre-wrap}
+  .chip.streak{background:var(--warn-soft); color:var(--warn)}
+  .pendbar{display:flex; align-items:center; flex-wrap:wrap; gap:8px; background:var(--card); border:1.5px dashed var(--line);
+    border-radius:var(--r); padding:10px 12px; margin-bottom:10px; font-size:14px; color:var(--mut)}
+  .pendbar .grow{flex:1}
+  .pendchip{display:inline-flex; align-items:center; gap:6px; font-weight:600; color:var(--ink)}
+  .pendchip .ringbtn{width:30px; height:30px; font-size:14px}
+
+  /* question set editor */
+  .profcard{background:var(--card); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow);
+    padding:12px 14px; margin-bottom:10px; display:flex; align-items:center; gap:11px; flex-wrap:wrap}
+  .profcard .em{font-size:24px}
+  .profcard .in{flex:1; min-width:140px}
+  .profcard .nm{font-weight:700}
+  .profcard .sub{font-size:13px; color:var(--mut)}
+  .qedit{display:flex; gap:6px; margin-bottom:8px; align-items:center; flex-wrap:wrap}
+  .qedit input,.qedit select{width:auto; padding:9px 10px; border:1.5px solid var(--line); border-radius:10px;
+    background:#fff; outline:none; font-size:14px}
+  .qedit input:focus{border-color:var(--brand)}
+  .qedit .ql{flex:1; min-width:130px}
+  .qedit .qu{width:76px}
+  .qedit .x{color:var(--bad); font-size:17px; font-weight:800; padding:4px 8px}
+  .psel{padding:8px 10px; border:1.5px solid var(--line); border-radius:10px; background:#fff; font-size:13.5px; font-weight:600; max-width:100%}
+
   /* modals / sheets */
   .veil{position:fixed; inset:0; background:rgba(15,34,48,.45); z-index:60;
     display:flex; align-items:flex-end; justify-content:center; padding:0}
@@ -320,6 +371,7 @@
 
   <nav class="tabs" id="tabs">
     <button data-tab="tasks" class="on">Tasks <span class="bdg hide" id="bdgTasks"></span></button>
+    <button data-tab="updates">Updates <span class="bdg hide" id="bdgUpd"></span></button>
     <button data-tab="chat">Chat <span class="bdg hide" id="bdgChat"></span></button>
     <button data-tab="team">Team</button>
   </nav>
@@ -328,6 +380,19 @@
     <!-- TASKS -->
     <div id="tabTasks">
       <div id="taskSections"></div>
+    </div>
+
+    <!-- UPDATES: everyone's minute on their day -->
+    <div id="tabUpdates" class="hide">
+      <div id="myUpdate"></div>
+      <div class="sect">
+        <h2>The team’s day</h2>
+        <div class="chips" id="updDays"></div>
+        <div id="updPending"></div>
+        <div id="updFeed"></div>
+      </div>
+      <p class="small mut" style="text-align:center">
+        Every kind of work gets its own questions — admins shape them in the Team tab.</p>
     </div>
 
     <!-- CHAT -->
@@ -350,16 +415,25 @@
         <div class="card" style="padding:14px">
           <div class="addrow">
             <input type="text" id="npName" class="grow" placeholder="Their name" maxlength="60">
-            <input type="text" id="npDept" placeholder="Department" value="Sales" maxlength="40" list="deptList" style="width:140px">
+            <select id="npProf" title="Their daily update questions"></select>
+            <input type="text" id="npDept" placeholder="What they do" maxlength="40" list="deptList" style="width:150px">
             <datalist id="deptList"></datalist>
             <select id="npRole"><option value="Member">Member</option><option value="Admin">Admin</option></select>
             <button class="btn primary" id="npAdd">Add</button>
           </div>
           <p class="small mut" style="margin-top:8px">They get a PIN — you’ll see it once, send it to them
-            with this page’s address.</p>
+            with this page’s address. The question set decides what their daily update asks;
+            change it any time from their card.</p>
         </div>
       </div>
       <div class="sect"><h2>The team</h2><div id="teamList"></div></div>
+      <div id="profSect" class="sect hide">
+        <h2>Daily update questions</h2>
+        <p class="small mut" style="margin-bottom:9px">One set per kind of work — the starter sets below are
+          yours to reword, and any work you hire for tomorrow gets its own.</p>
+        <div id="profList"></div>
+        <button class="btn ghost sm" id="profNew">+ New question set</button>
+      </div>
       <div id="adminFoot" class="adminfoot hide">
         <div class="row">
           <b>Share the app:</b>
@@ -368,7 +442,7 @@
         <div class="row">
           <b>Your data:</b>
           <a class="btn ghost sm" id="openSheet" href="#" target="_blank" rel="noopener">Open the Google Sheet ↗</a>
-          <span class="small mut">every person, task and message lives there, in your Drive</span>
+          <span class="small mut">every person, task, update and message lives there, in your Drive</span>
         </div>
         <div class="row">
           <b>Company name:</b>
@@ -417,6 +491,34 @@
       <button class="btn primary block" id="pvOk" style="flex:1">Done — I’ve got it</button>
     </div>
   </div>
+</div>
+
+<!-- question set editor (admins) -->
+<div id="veilProfile" class="veil hide">
+  <div class="sheet">
+    <h3 id="prHead">Question set</h3>
+    <div style="display:flex; gap:8px">
+      <div class="field" style="width:78px"><label>Emoji</label>
+        <input type="text" id="prEmoji" maxlength="8" style="text-align:center; font-size:19px"></div>
+      <div class="field" style="flex:1"><label>Kind of work</label>
+        <input type="text" id="prName" maxlength="40" placeholder="e.g. Video Editor, Chef, Driver…"></div>
+    </div>
+    <div class="field"><label>What their daily update asks</label>
+      <div id="prQs"></div>
+      <button class="btn ghost sm" id="prAddQ">+ Add a question</button>
+    </div>
+    <p class="small mut" style="margin-bottom:14px">Numbers make weekly totals by themselves.
+      Keep it under a minute to answer — that’s the whole trick.</p>
+    <div style="display:flex; gap:10px">
+      <button class="btn ghost" id="prCancel">Cancel</button>
+      <button class="btn primary block" id="prSave" style="flex:1">Save the set</button>
+    </div>
+  </div>
+</div>
+
+<!-- one person's update history -->
+<div id="veilPerson" class="veil hide">
+  <div class="sheet" id="vpBody"></div>
 </div>
 
 <!-- confirm -->
@@ -576,7 +678,13 @@
     }
   };
   window.LockService = {
-    getScriptLock: function () { return { waitLock: function () {}, releaseLock: function () {} }; }
+    getScriptLock: function () {
+      return {
+        waitLock: function () {},
+        tryLock: function () { return true; },   // single-threaded here
+        releaseLock: function () {}
+      };
+    }
   };
   window.ScriptApp = {
     getService: function () {
@@ -691,7 +799,12 @@
    The whole backend for the 5 Circles team tool, running on Google's servers
    through Apps Script. On first use it creates a Google Sheet called
    "5C Pulse — Team Data" in the owner's Drive and stores everything there:
-   people, tasks, and every message, on record.
+   people, tasks, every message, and everyone's daily updates, on record.
+
+   The daily update is the heart of it: each person answers the few
+   questions that fit THEIR kind of work — question sets an admin can
+   reword or invent freely, so no role is hard-coded — plus how the day
+   felt. Numbers roll up weekly per person; the bell chases missing updates.
 
    Login is a name + 4-digit PIN. PINs are salted-and-hashed; a signed-in
    device holds a random token. Five wrong PIN tries locks that person's
@@ -710,16 +823,67 @@ var SHEETS = {
   META:     'Meta',
   PEOPLE:   'People',
   TASKS:    'Tasks',
-  MESSAGES: 'Messages'
+  MESSAGES: 'Messages',
+  PROFILES: 'Profiles',
+  UPDATES:  'Updates'
 };
 
-var PEOPLE_COLS   = ['id','name','dept','role','pin_hash','salt','token','active','created','last_seen','failed_tries','locked_until'];
+var PEOPLE_COLS   = ['id','name','dept','role','pin_hash','salt','token','active','created','last_seen','failed_tries','locked_until','profile_id'];
 var TASKS_COLS    = ['id','title','note','owner_id','by_id','due','status','stuck','created','updated','done_at'];
 var MESSAGES_COLS = ['id','from_id','to_id','text','kind','task_id','created','acks'];
+var PROFILES_COLS = ['id','name','emoji','questions','archived','created'];
+var UPDATES_COLS  = ['id','person_id','date','mood','answers','note','created','updated'];
 
 var MSG_PULL_LIMIT = 400;   // the sheet keeps everything; a pull sends the recent slice
+var UPD_PULL_LIMIT = 600;   // ~2 months of daily updates for a 10-person team
 var PIN_TRIES = 5;
 var PIN_LOCK_MS = 5 * 60 * 1000;
+var SCHEMA_VERSION = '2';
+
+/* Starter question sets — one per kind of work 5 Circles runs on today, and a
+   General one for everyone else. They are ROWS, not rules: admins can reword
+   any question, add their own sets (a chef, a driver, a designer…), and
+   archive what they don't use. 'general' is the fallback and cannot go. */
+var Q = function (id, label, type, unit) { return { id: id, label: label, type: type, unit: unit || '' }; };
+var PRESET_PROFILES = [
+  { id: 'general', name: 'General', emoji: '📝', questions: [
+    Q('g1', 'What did you get done today?', 'text'),
+    Q('g2', 'What’s the plan for tomorrow?', 'text'),
+    Q('g3', 'Anything in your way?', 'text')
+  ]},
+  { id: 'video', name: 'Video Editor', emoji: '🎬', questions: [
+    Q('v1', 'Videos delivered today', 'count', 'videos'),
+    Q('v2', 'Still on the edit table', 'count', 'videos'),
+    Q('v3', 'Waiting on footage or approval from someone?', 'yesno'),
+    Q('v4', 'Best thing you cut today', 'text')
+  ]},
+  { id: 'marketing', name: 'Performance Marketer', emoji: '📣', questions: [
+    Q('m1', 'Leads that came in', 'count', 'leads'),
+    Q('m2', 'Spent on ads today', 'count', '₹'),
+    Q('m3', 'Best-performing ad right now', 'text'),
+    Q('m4', 'Anything to pause or scale?', 'text')
+  ]},
+  { id: 'sales', name: 'Sales', emoji: '☎️', questions: [
+    Q('s1', 'Calls made', 'count', 'calls'),
+    Q('s2', 'Follow-ups done', 'count'),
+    Q('s3', 'Closures today', 'count'),
+    Q('s4', 'Hot leads for tomorrow', 'text')
+  ]},
+  { id: 'mentor', name: 'Mentor / Trainer', emoji: '🎓', questions: [
+    Q('t1', 'Sessions taken', 'count'),
+    Q('t2', 'Students showed up', 'count'),
+    Q('t3', 'Doubts still open', 'count'),
+    Q('t4', 'A student who needs attention', 'text')
+  ]},
+  { id: 'frontdesk', name: 'Front Desk', emoji: '🛎️', questions: [
+    Q('f1', 'Walk-ins today', 'count'),
+    Q('f2', 'Enquiries taken', 'count'),
+    Q('f3', 'Fees collected', 'count', '₹'),
+    Q('f4', 'Anything promised to a visitor?', 'text')
+  ]}
+];
+
+var NUDGE_TEXT = 'Your daily update is waiting — open the Updates tab, it takes a minute.';
 
 /* ── entry points ─────────────────────────────────────────────────────────── */
 
@@ -733,6 +897,8 @@ function doGet() {
 function api(token, action, data) {
   data = data || {};
   try {
+    ensureSchema();
+
     // Reads that must work before anyone is signed in
     if (action === 'state')  return jok(publicState());
     if (action === 'setup')  return jok(setupTeam(data));
@@ -749,6 +915,10 @@ function api(token, action, data) {
       case 'editTask':    return jok(withLock(function () { return editTask(me, data); }));
       case 'send':        return jok(withLock(function () { return sendMessage(me, data); }));
       case 'ack':         return jok(withLock(function () { return ackMessage(me, data); }));
+      case 'saveUpdate':  return jok(withLock(function () { return saveUpdate(me, data); }));
+      case 'nudgeUpdates':return jok(withLock(function () { return nudgeUpdates(me, data); }));
+      case 'saveProfile': return jok(withLock(function () { return saveProfile(me, data); }));
+      case 'archiveProfile': return jok(withLock(function () { return archiveProfile(me, data); }));
       case 'addPerson':   return jok(withLock(function () { return addPerson(me, data); }));
       case 'editPerson':  return jok(withLock(function () { return editPerson(me, data); }));
       case 'resetPin':    return jok(withLock(function () { return resetPin(me, data); }));
@@ -787,13 +957,19 @@ function ss() {
   return book;
 }
 
-function ensureSheets(book) {
-  var wanted = [
+function allSheetDefs() {
+  return [
     [SHEETS.META,     ['key', 'value']],
     [SHEETS.PEOPLE,   PEOPLE_COLS],
     [SHEETS.TASKS,    TASKS_COLS],
-    [SHEETS.MESSAGES, MESSAGES_COLS]
+    [SHEETS.MESSAGES, MESSAGES_COLS],
+    [SHEETS.PROFILES, PROFILES_COLS],
+    [SHEETS.UPDATES,  UPDATES_COLS]
   ];
+}
+
+function ensureSheets(book) {
+  var wanted = allSheetDefs();
   for (var i = 0; i < wanted.length; i++) {
     var name = wanted[i][0], cols = wanted[i][1];
     var sh = book.getSheetByName(name);
@@ -809,7 +985,49 @@ function ensureSheets(book) {
     }
   }
   var def = book.getSheetByName('Sheet1');
-  if (def && book.getSheets().length > 4) book.deleteSheet(def);
+  if (def && book.getSheets().length > wanted.length) book.deleteSheet(def);
+}
+
+/** One-time upgrade of a spreadsheet created by an older Code.gs: new sheets
+ *  appear via ensureSheets, headers stretch to the new columns, and the
+ *  starter question sets are seeded. Guarded by a script property so every
+ *  other request costs one property read and nothing else. */
+function ensureSchema() {
+  var props = PropertiesService.getScriptProperties();
+  if (props.getProperty('SCHEMA') === SCHEMA_VERSION) return;
+  var lock = LockService.getScriptLock();
+  // Another request migrating right now is fine — skip and serve; the guard
+  // property is only written once the whole upgrade is done.
+  var got = false;
+  try { got = lock.tryLock(5000); } catch (e) {}
+  if (!got) return;
+  try {
+    if (props.getProperty('SCHEMA') === SCHEMA_VERSION) return;
+    var book = ss();
+    var wanted = allSheetDefs();
+    for (var i = 0; i < wanted.length; i++) {
+      var name = wanted[i][0], cols = wanted[i][1];
+      var sh = book.getSheetByName(name);
+      try {
+        var lastCol = String.fromCharCode(64 + cols.length);
+        sh.getRange('A:' + lastCol).setNumberFormat('@');
+      } catch (e) {}
+      sh.getRange(1, 1, 1, cols.length).setValues([cols]);
+    }
+    if (readAll(SHEETS.PROFILES, PROFILES_COLS).length === 0) {
+      for (var p = 0; p < PRESET_PROFILES.length; p++) {
+        var pre = PRESET_PROFILES[p];
+        appendRowFor(SHEETS.PROFILES, PROFILES_COLS, {
+          id: pre.id, name: pre.name, emoji: pre.emoji,
+          questions: JSON.stringify(pre.questions),
+          archived: 'false', created: new Date().toISOString()
+        });
+      }
+    }
+    props.setProperty('SCHEMA', SCHEMA_VERSION);
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function sheet(name) { return ss().getSheetByName(name); }
@@ -937,7 +1155,11 @@ function personByToken(token) {
 }
 
 function publicPerson(p) {
-  return { id: p.id, name: p.name, dept: p.dept, role: p.role, active: String(p.active) !== 'false' };
+  return {
+    id: p.id, name: p.name, dept: p.dept, role: p.role,
+    active: String(p.active) !== 'false',
+    profile_id: p.profile_id || 'general'   // people from before question sets existed
+  };
 }
 
 /** What the login screen may know: company + names, and nothing else — not who
@@ -977,7 +1199,8 @@ function setupTeam(data) {
       created: new Date().toISOString(),
       last_seen: new Date().toISOString(),
       failed_tries: 0,
-      locked_until: ''
+      locked_until: '',
+      profile_id: 'general'
     };
     appendRowFor(SHEETS.PEOPLE, PEOPLE_COLS, admin);
     bumpVersion();
@@ -1069,6 +1292,8 @@ function pull(me, data) {
   var tasks = readAll(SHEETS.TASKS, TASKS_COLS);
   var messages = readAll(SHEETS.MESSAGES, MESSAGES_COLS);
   if (messages.length > MSG_PULL_LIMIT) messages = messages.slice(messages.length - MSG_PULL_LIMIT);
+  var updates = readAll(SHEETS.UPDATES, UPDATES_COLS);
+  if (updates.length > UPD_PULL_LIMIT) updates = updates.slice(updates.length - UPD_PULL_LIMIT);
 
   var appUrl = '';
   try { appUrl = ScriptApp.getService().getUrl() || ''; } catch (e) {}
@@ -1098,6 +1323,22 @@ function pull(me, data) {
       return {
         id: m.id, from_id: m.from_id, to_id: m.to_id, text: m.text,
         kind: m.kind, task_id: m.task_id, created: m.created, acks: acks
+      };
+    }),
+    profiles: readAll(SHEETS.PROFILES, PROFILES_COLS).map(function (pr) {
+      var qs = [];
+      try { qs = pr.questions ? JSON.parse(pr.questions) : []; } catch (e) { qs = []; }
+      return {
+        id: pr.id, name: pr.name, emoji: pr.emoji,
+        questions: qs, archived: String(pr.archived) === 'true'
+      };
+    }),
+    updates: updates.map(function (u) {
+      var answers = [];
+      try { answers = u.answers ? JSON.parse(u.answers) : []; } catch (e) { answers = []; }
+      return {
+        id: u.id, person_id: u.person_id, date: u.date, mood: u.mood,
+        answers: answers, note: u.note, created: u.created, updated: u.updated
       };
     })
   };
@@ -1282,6 +1523,216 @@ function ackMessage(me, data) {
   return {};
 }
 
+/* ── daily updates: everyone's minute-long word on their day ──────────────
+   Each person answers the questions of their QUESTION SET (their kind of
+   work: editor, sales, front desk, or one the admin invents), picks how the
+   day felt, and that's the update — one row per person per day, editable
+   until midnight, kept forever like everything else. */
+
+function profileRows() { return readAll(SHEETS.PROFILES, PROFILES_COLS); }
+
+function profileRowById(id) {
+  var rows = profileRows();
+  for (var i = 0; i < rows.length; i++) if (rows[i].id === id) return rows[i];
+  return null;
+}
+
+/** The questions a person answers today. A missing or archived set falls back
+ *  to General, so nobody is ever left without an update form. */
+function questionsFor(person) {
+  var row = profileRowById(person.profile_id || 'general');
+  if (!row || String(row.archived) === 'true') row = profileRowById('general');
+  var qs = [];
+  try { qs = row && row.questions ? JSON.parse(row.questions) : []; } catch (e) { qs = []; }
+  return qs;
+}
+
+function validDateStr(s) { return /^\d{4}-\d{2}-\d{2}$/.test(String(s || '')); }
+
+function saveUpdate(me, data) {
+  var date = String(data.date || '');
+  if (!validDateStr(date)) throw new Error('That date doesn’t look right.');
+  // The client's own calendar day decides where the update lands (clocks on
+  // Google's side may sit in another timezone); anything far from now is junk.
+  var drift = Math.abs(new Date(date + 'T12:00:00Z').getTime() - Date.now());
+  if (isNaN(drift) || drift > 3 * 86400000) throw new Error('That date doesn’t look right.');
+
+  var mood = String(data.mood || '');
+  if (['great', 'ok', 'heavy'].indexOf(mood) < 0) throw new Error('Pick how the day felt first.');
+
+  var vals = data.vals || {};
+  var qs = questionsFor(me);
+  var answers = [];
+  for (var i = 0; i < qs.length; i++) {
+    var q = qs[i];
+    var v = vals[q.id];
+    if (v === undefined || v === null || String(v).trim() === '') continue;
+    v = String(v).trim();
+    if (q.type === 'count') {
+      v = v.replace(/[,\s]/g, '');
+      if (!/^\d{1,9}(\.\d{1,2})?$/.test(v)) {
+        throw new Error('“' + q.label + '” needs a number.');
+      }
+    } else if (q.type === 'yesno') {
+      if (v !== 'yes' && v !== 'no') continue;
+    } else {
+      v = v.slice(0, 300);
+    }
+    answers.push({ l: q.label, t: q.type, u: q.unit || '', v: v });
+  }
+  var note = String(data.note || '').trim().slice(0, 1000);
+
+  var rows = readAll(SHEETS.UPDATES, UPDATES_COLS);
+  var existing = null;
+  for (var r = 0; r < rows.length; r++) {
+    if (rows[r].person_id === me.id && rows[r].date === date) { existing = rows[r]; break; }
+  }
+  if (existing) {
+    existing.mood = mood;
+    existing.answers = JSON.stringify(answers);
+    existing.note = note;
+    existing.updated = new Date().toISOString();
+    updateRow(SHEETS.UPDATES, UPDATES_COLS, existing);
+    bumpVersion();
+    return { updateId: existing.id };
+  }
+  var upd = {
+    id: Utilities.getUuid(),
+    person_id: me.id,
+    date: date,
+    mood: mood,
+    // Labels are copied INTO the row, so an update stays readable years later
+    // even after the admin has reworded or replaced every question.
+    answers: JSON.stringify(answers),
+    note: note,
+    created: new Date().toISOString(),
+    updated: ''
+  };
+  appendRowFor(SHEETS.UPDATES, UPDATES_COLS, upd);
+  bumpVersion();
+  return { updateId: upd.id };
+}
+
+/** Ring everyone whose update for the day hasn't come in (or one person).
+ *  An unanswered earlier nudge still ringing on their screen means a new one
+ *  would add nothing, so those people are skipped. */
+function nudgeUpdates(me, data) {
+  me = admin(me);
+  var date = String(data.date || '');
+  if (!validDateStr(date)) throw new Error('That date doesn’t look right.');
+
+  var updates = readAll(SHEETS.UPDATES, UPDATES_COLS);
+  var filed = {};
+  for (var i = 0; i < updates.length; i++) {
+    if (updates[i].date === date) filed[updates[i].person_id] = true;
+  }
+  var ringing = {};
+  var msgs = readAll(SHEETS.MESSAGES, MESSAGES_COLS);
+  for (var m = 0; m < msgs.length; m++) {
+    if (msgs[m].kind !== 'ring' || msgs[m].text !== NUDGE_TEXT) continue;
+    var acks = [];
+    try { acks = msgs[m].acks ? JSON.parse(msgs[m].acks) : []; } catch (e) {}
+    var answered = false;
+    for (var a = 0; a < acks.length; a++) if (acks[a].who === msgs[m].to_id) answered = true;
+    if (!answered) ringing[msgs[m].to_id] = true;
+  }
+
+  var targets = readAll(SHEETS.PEOPLE, PEOPLE_COLS).filter(function (p) {
+    if (String(p.active) === 'false' || p.id === me.id) return false;
+    if (data.personId && p.id !== data.personId) return false;
+    return true;
+  });
+  if (data.personId && !targets.length) throw new Error('Person not found.');
+  if (data.personId && filed[data.personId]) throw new Error('Their update is already in.');
+
+  var nudged = 0;
+  for (var t = 0; t < targets.length; t++) {
+    var p = targets[t];
+    if (filed[p.id] || ringing[p.id]) continue;
+    postMessage(me.id, p.id, NUDGE_TEXT, 'ring', '');
+    nudged++;
+  }
+  if (nudged) bumpVersion();
+  return { nudged: nudged };
+}
+
+/* ── question sets (admin) ────────────────────────────────────────────────── */
+
+function cleanQuestions(raw) {
+  if (!raw || !raw.length) throw new Error('A question set needs at least one question.');
+  if (raw.length > 8) throw new Error('Eight questions is the most — a daily update has to stay quick.');
+  var out = [];
+  for (var i = 0; i < raw.length; i++) {
+    var q = raw[i] || {};
+    var label = String(q.label || '').trim().slice(0, 80);
+    if (!label) throw new Error('Every question needs its words.');
+    var type = ['count', 'text', 'yesno'].indexOf(q.type) >= 0 ? q.type : 'text';
+    out.push({
+      id: String(q.id || '').trim() || Utilities.getUuid().slice(0, 8),
+      label: label,
+      type: type,
+      unit: type === 'count' ? String(q.unit || '').trim().slice(0, 12) : ''
+    });
+  }
+  return out;
+}
+
+function saveProfile(me, data) {
+  me = admin(me);
+  var name = String(data.name || '').trim().slice(0, 40);
+  if (!name) throw new Error('Name the kind of work first.');
+  var emoji = String(data.emoji || '').trim().slice(0, 8) || '📝';
+  var questions = cleanQuestions(data.questions);
+
+  var rows = profileRows();
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i].id !== data.profileId && String(rows[i].archived) !== 'true' &&
+        String(rows[i].name).toLowerCase() === name.toLowerCase()) {
+      throw new Error('There’s already a set called ' + rows[i].name + '.');
+    }
+  }
+
+  if (data.profileId) {
+    var row = profileRowById(data.profileId);
+    if (!row) throw new Error('That question set is gone.');
+    row.name = name;
+    row.emoji = emoji;
+    row.questions = JSON.stringify(questions);
+    updateRow(SHEETS.PROFILES, PROFILES_COLS, row);
+    bumpVersion();
+    return { profileId: row.id };
+  }
+  var fresh = {
+    id: Utilities.getUuid(),
+    name: name,
+    emoji: emoji,
+    questions: JSON.stringify(questions),
+    archived: 'false',
+    created: new Date().toISOString()
+  };
+  appendRowFor(SHEETS.PROFILES, PROFILES_COLS, fresh);
+  bumpVersion();
+  return { profileId: fresh.id };
+}
+
+function archiveProfile(me, data) {
+  me = admin(me);
+  var row = profileRowById(data.profileId);
+  if (!row) throw new Error('That question set is gone.');
+  if (row.id === 'general') throw new Error('General stays — it’s the fallback for everyone new.');
+  var users = readAll(SHEETS.PEOPLE, PEOPLE_COLS).filter(function (p) {
+    return String(p.active) !== 'false' && (p.profile_id || 'general') === row.id;
+  });
+  if (users.length) {
+    throw new Error(users[0].name + (users.length > 1 ? ' and others are' : ' is') +
+      ' still on this set. Move them to another set first.');
+  }
+  row.archived = 'true';
+  updateRow(SHEETS.PROFILES, PROFILES_COLS, row);
+  bumpVersion();
+  return {};
+}
+
 /* ── people (admin) ───────────────────────────────────────────────────────── */
 
 /** The caller as the sheet sees them RIGHT NOW, inside the lock. The copy the
@@ -1315,12 +1766,16 @@ function addPerson(me, data) {
       throw new Error(name + ' is already on the team.');
     }
   }
+  var profile = profileRowById(String(data.profileId || 'general'));
+  if (!profile || String(profile.archived) === 'true') profile = profileRowById('general');
   var pin = makePin();
   var salt = Utilities.getUuid();
   var person = {
     id: Utilities.getUuid(),
     name: name,
-    dept: String(data.dept || 'Sales').trim() || 'Sales',
+    // "What they do" is a free label; left blank it borrows the set's name,
+    // so a Video Editor never reads as blank — or as somebody's department.
+    dept: String(data.dept || '').trim() || (profile ? profile.name : 'Team'),
     role: data.role === 'Admin' ? 'Admin' : 'Member',
     pin_hash: hashPin(pin, salt),
     salt: salt,
@@ -1329,7 +1784,8 @@ function addPerson(me, data) {
     created: new Date().toISOString(),
     last_seen: '',
     failed_tries: 0,
-    locked_until: ''
+    locked_until: '',
+    profile_id: profile ? profile.id : 'general'
   };
   appendRowFor(SHEETS.PEOPLE, PEOPLE_COLS, person);
   bumpVersion();
@@ -1347,6 +1803,11 @@ function editPerson(me, data) {
     p.name = name;
   }
   if (data.dept !== undefined) p.dept = String(data.dept).trim() || p.dept;
+  if (data.profileId !== undefined) {
+    var prof = profileRowById(String(data.profileId));
+    if (!prof || String(prof.archived) === 'true') throw new Error('Pick a question set from the list.');
+    p.profile_id = prof.id;
+  }
   if (data.role !== undefined && (data.role === 'Admin' || data.role === 'Member')) {
     if (p.id === me.id && data.role !== 'Admin') throw new Error('You cannot remove your own admin access.');
     if (p.role === 'Admin' && data.role !== 'Admin' && activeAdminCount() <= 1) {
@@ -1457,9 +1918,18 @@ function avaHtml(name, sm, online) {
     esc(initials(name)) + (online ? '<span class="dot"></span>' : '') + '</span>';
 }
 
-function todayStr() {
-  var d = new Date();
+function dkey(d) {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function todayStr() { return dkey(new Date()); }
+function localDateOf(iso) {
+  if (!iso) return '';
+  var d = new Date(iso);
+  return isNaN(d) ? '' : dkey(d);
+}
+function fmtNum(n) {
+  var v = Math.round(Number(n) * 100) / 100;
+  return isNaN(v) ? '0' : String(v);
 }
 function fmtWhen(iso) {
   if (!iso) return '';
@@ -1553,6 +2023,10 @@ function loadChatSeen() {
 }
 var openComments = {};        // taskId -> true
 var commentDrafts = {};       // taskId -> half-typed comment, kept across renders
+var updDraft = null;          // half-filled daily update, kept across renders
+var updEditing = false;       // re-opening today's update to change it
+var updSelDay = '';           // '' = today (stays "today" across midnight)
+var profDraft = null;         // question set being edited in its sheet
 var pollAgain = false;
 var sessionEpoch = 0;         // bumped on every sign-in/out; stale replies bail
 var FAST = /[?&]fast/.test(location.search);
@@ -1975,12 +2449,13 @@ function resetSessionState() {
   sessionEpoch++;
   S = null; lastV = -1; lastMsgHigh = '';
   chatChannel = 'ALL'; openComments = {}; commentDrafts = {};
+  updDraft = null; updEditing = false; updSelDay = ''; profDraft = null;
   chatSeen = {}; pollAgain = false;
   Alarm.answered = {};
   Alarm.clear();
   clearInterval(clockTimer);
   // Nothing from the last person may be left hanging over the login screen
-  ['veilTask', 'veilPin', 'veilAsk'].forEach(function (id) { $(id).classList.add('hide'); });
+  ['veilTask', 'veilPin', 'veilAsk', 'veilProfile', 'veilPerson'].forEach(function (id) { $(id).classList.add('hide'); });
   if (askResolve) { askResolve(false); askResolve = null; }
   pinRevealDone = null;
 }
@@ -1997,6 +2472,8 @@ function signedOutElsewhere() {
 
 function applyPull(res) {
   var firstLoad = !S;
+  res.updates = res.updates || [];    // an older Code.gs mid-upgrade sends neither
+  res.profiles = res.profiles || [];
   S = res;
   lastV = res.v;
   Auth.me = res.me;
@@ -2041,9 +2518,10 @@ Array.prototype.forEach.call(document.querySelectorAll('#tabs button'), function
       x.classList.toggle('on', x === b);
     });
     $('tabTasks').classList.toggle('hide', activeTab !== 'tasks');
+    $('tabUpdates').classList.toggle('hide', activeTab !== 'updates');
     $('tabChat').classList.toggle('hide', activeTab !== 'chat');
     $('tabTeam').classList.toggle('hide', activeTab !== 'team');
-    $('fabTask').classList.toggle('hide', activeTab === 'chat');
+    $('fabTask').classList.toggle('hide', activeTab === 'chat' || activeTab === 'updates');
     if (activeTab === 'chat') { markChatSeen(); renderChat(); scrollChat(); }
     renderAll();
   });
@@ -2055,6 +2533,7 @@ function renderAll() {
   $('hdCo').textContent = S.company;
   $('meChip').innerHTML = avaHtml(Auth.me.name, true) + '<span>' + esc(Auth.me.name.split(/\s+/)[0]) + '</span>';
   renderTasks();
+  renderUpdates();
   renderChat();
   renderTeam();
   renderBadges();
@@ -2064,6 +2543,10 @@ function renderBadges() {
   var mine = S.tasks.filter(function (t) { return t.owner_id === Auth.me.id && t.status !== 'Done'; }).length;
   $('bdgTasks').textContent = mine;
   $('bdgTasks').classList.toggle('hide', mine === 0);
+  // A quiet "!" until your own update for today is in
+  var filedToday = !!updateFor(Auth.me.id, todayStr());
+  $('bdgUpd').textContent = '!';
+  $('bdgUpd').classList.toggle('hide', filedToday);
   var unread = countUnreadChat();
   $('bdgChat').textContent = unread > 99 ? '99+' : unread;
   $('bdgChat').classList.toggle('hide', unread === 0);
@@ -2431,6 +2914,462 @@ $('chatRing').addEventListener('click', function () {
     .then(function (yes) { if (yes) sendChat('ring'); });
 });
 
+/* ── updates tab: everyone's minute on their day ───────────────
+   Not another CRM: the CRM knows the customers, this knows the team.
+   Each person answers the few questions that fit THEIR work (their
+   question set), says how the day felt, and the whole team's day is
+   one scroll — with the bell to chase whoever's word is missing.   */
+
+var MOODS = {
+  great: { e: '🔥', label: 'Great day' },
+  ok:    { e: '🙂', label: 'Okay day' },
+  heavy: { e: '😓', label: 'Heavy day' }
+};
+
+function profileById(id) {
+  var list = (S && S.profiles) || [];
+  for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+  return null;
+}
+function activeProfiles() {
+  return ((S && S.profiles) || []).filter(function (p) { return !p.archived; });
+}
+/** The set a person answers — archived or missing falls back to General. */
+function effectiveProfile(p) {
+  var pr = profileById((p && p.profile_id) || 'general');
+  if (!pr || pr.archived) pr = profileById('general');
+  return pr || { id: 'general', name: 'General', emoji: '📝', questions: [] };
+}
+function updateFor(pid, date) {
+  var us = (S && S.updates) || [];
+  for (var i = us.length - 1; i >= 0; i--) {
+    if (us[i].person_id === pid && us[i].date === date) return us[i];
+  }
+  return null;
+}
+function updatesOn(date) {
+  return ((S && S.updates) || []).filter(function (u) { return u.date === date; })
+    .sort(function (a, b) { return a.created < b.created ? 1 : -1; });
+}
+/** Days in a row with an update, counting back from the latest one.
+ *  A missing Sunday is forgiven — the week off shouldn't cost the run. */
+function streakFor(pid) {
+  var have = {};
+  ((S && S.updates) || []).forEach(function (u) { if (u.person_id === pid) have[u.date] = true; });
+  var dates = Object.keys(have).sort();
+  if (!dates.length) return 0;
+  var d = new Date(dates[dates.length - 1] + 'T12:00:00');
+  if (isNaN(d)) return 0;
+  var n = 0;
+  for (var guard = 0; guard < 400; guard++) {
+    if (have[dkey(d)]) n++;
+    else if (d.getDay() !== 0) break;
+    d.setDate(d.getDate() - 1);
+  }
+  return n;
+}
+function tasksDoneOn(pid, date) {
+  return S.tasks.filter(function (t) {
+    return t.owner_id === pid && t.status === 'Done' && localDateOf(t.done_at) === date;
+  }).length;
+}
+function selDay() { return updSelDay || todayStr(); }
+function fmtDayLabel(ds) {
+  if (ds === todayStr()) return 'Today';
+  var y = new Date(); y.setDate(y.getDate() - 1);
+  if (ds === dkey(y)) return 'Yesterday';
+  var d = new Date(ds + 'T12:00:00');
+  return isNaN(d) ? ds : d.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+function ensureUpdDraft() {
+  if (updDraft) return updDraft;
+  updDraft = { mood: '', vals: {}, note: '' };
+  var mine = updateFor(Auth.me.id, todayStr());
+  if (mine) {                       // changing today's — start from what's in
+    updDraft.mood = mine.mood;
+    updDraft.note = mine.note || '';
+    var qs = effectiveProfile(Auth.me).questions || [];
+    (mine.answers || []).forEach(function (a) {
+      for (var i = 0; i < qs.length; i++) {
+        if (qs[i].label === a.l && !(qs[i].id in updDraft.vals)) { updDraft.vals[qs[i].id] = a.v; break; }
+      }
+    });
+  }
+  return updDraft;
+}
+
+/** "3 videos" and "₹1500" read naturally; a unit already inside the question's
+ *  own words ("Videos delivered") isn't said twice. */
+function numChipHtml(v, unit, label) {
+  var val = unit === '₹' ? '₹' + v : v;
+  var showUnit = unit && unit !== '₹' &&
+    String(label).toLowerCase().indexOf(String(unit).toLowerCase()) < 0;
+  return '<span class="chip"><b>' + esc(val) + (showUnit ? ' ' + esc(unit) : '') + '</b>&nbsp;' + esc(label) + '</span>';
+}
+
+/** The chips + lines of one update — shared by the feed and the history sheet. */
+function updBodyHtml(u) {
+  var html = '';
+  var nums = '';
+  (u.answers || []).forEach(function (a) {
+    if (a.t === 'count') {
+      nums += numChipHtml(a.v, a.u, a.l);
+    } else if (a.t === 'yesno') {
+      nums += '<span class="chip">' + esc(String(a.l).replace(/\?\s*$/, '')) +
+        ' — <b>' + (a.v === 'yes' ? 'yes' : 'no') + '</b></span>';
+    }
+  });
+  var done = tasksDoneOn(u.person_id, u.date);
+  if (done) nums += '<span class="chip" style="background:var(--ok-soft);color:var(--ok)">✅ ' + done + ' task' + (done === 1 ? '' : 's') + ' finished</span>';
+  if (nums) html += '<div class="nums">' + nums + '</div>';
+  (u.answers || []).forEach(function (a) {
+    if (a.t === 'count' || a.t === 'yesno') return;
+    html += '<div class="qa2"><div class="ql">' + esc(a.l) + '</div>' + esc(a.v) + '</div>';
+  });
+  if (u.note) html += '<div class="note">' + esc(u.note) + '</div>';
+  return html ? '<div class="updb">' + html + '</div>' : '';
+}
+
+/** "Sales · ☎️ Sales" would be saying it twice — one label is enough. */
+function whoDoesWhat(p, prof) {
+  if (!p) return '';
+  if (!prof) return p.dept;
+  if (String(p.dept || '').toLowerCase() === String(prof.name).toLowerCase()) return prof.emoji + ' ' + prof.name;
+  return (p.dept ? p.dept + ' · ' : '') + prof.emoji + ' ' + prof.name;
+}
+
+function updCard(u) {
+  var p = personById(u.person_id);
+  var name = nameOf(u.person_id);
+  var prof = p ? effectiveProfile(p) : null;
+  var mood = MOODS[u.mood] || null;
+  var st = streakFor(u.person_id);
+  var html = '<div class="upd"><div class="hd" data-pid="' + esc(u.person_id) + '">' + avaHtml(name, false) +
+    '<div class="who"><div class="nm">' + esc(u.person_id === Auth.me.id ? 'Me' : name) + '</div>' +
+    '<div class="what">' + esc(whoDoesWhat(p, prof)) +
+    ' · ' + esc(fmtWhen(u.updated || u.created)) + '</div></div>';
+  if (selDay() === todayStr() && st >= 2) html += '<span class="chip streak">🔥 ' + st + ' days</span>';
+  if (mood) html += '<span class="mood" title="' + esc(mood.label) + '">' + mood.e + '</span>';
+  html += '</div>' + updBodyHtml(u) + '</div>';
+  return html;
+}
+
+function myUpdateHtml() {
+  var today = todayStr();
+  var mine = updateFor(Auth.me.id, today);
+  var d = new Date();
+  var dayWords = d.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' });
+
+  if (mine && !updEditing) {
+    var mood = MOODS[mine.mood];
+    return '<div class="card updme"><div style="display:flex; align-items:center; gap:10px">' +
+      '<div style="flex:1"><h3>Your update is in ✓</h3><div class="day">' + esc(dayWords) +
+      (mood ? ' · ' + mood.e + ' ' + esc(mood.label) : '') + '</div></div>' +
+      '<button class="btn ghost sm" id="updChange">Change it</button></div>' +
+      updBodyHtml(mine) + '</div>';
+  }
+
+  var draft = ensureUpdDraft();
+  var qs = effectiveProfile(Auth.me).questions || [];
+  var html = '<div class="card updme"><h3>' + (mine ? 'Change today’s update' : 'Your day, in a minute') + '</h3>' +
+    '<div class="day">' + esc(dayWords) + '</div>';
+  html += '<div class="uq" style="margin-top:10px"><label>How was the day?</label><div class="moods">';
+  ['great', 'ok', 'heavy'].forEach(function (m) {
+    html += '<button data-mood="' + m + '" class="' + (draft.mood === m ? 'on' : '') + '">' +
+      '<span class="e">' + MOODS[m].e + '</span>' + MOODS[m].label + '</button>';
+  });
+  html += '</div></div>';
+  qs.forEach(function (q) {
+    var v = draft.vals[q.id] !== undefined ? String(draft.vals[q.id]) : '';
+    html += '<div class="uq"><label>' + esc(q.label) + '</label>';
+    if (q.type === 'count') {
+      html += '<div class="cnt"><input data-uq="' + esc(q.id) + '" inputmode="decimal" placeholder="0" maxlength="12" value="' + esc(v) + '">' +
+        (q.unit ? '<span class="unit">' + esc(q.unit) + '</span>' : '') + '</div>';
+    } else if (q.type === 'yesno') {
+      html += '<span class="seg">' +
+        '<button data-uq="' + esc(q.id) + '" data-v="yes" class="' + (v === 'yes' ? 'on' : '') + '">Yes</button>' +
+        '<button data-uq="' + esc(q.id) + '" data-v="no" class="' + (v === 'no' ? 'on' : '') + '">No</button></span>';
+    } else {
+      html += '<input data-uq="' + esc(q.id) + '" placeholder="A line is enough" maxlength="300" value="' + esc(v) + '">';
+    }
+    html += '</div>';
+  });
+  html += '<div class="uq"><label>Anything else? <span class="mut" style="font-weight:400">(optional)</span></label>' +
+    '<input data-uq="_note" placeholder="A win, a worry, a shout-out…" maxlength="1000" value="' + esc(draft.note) + '"></div>';
+  html += '<div style="display:flex; gap:10px; margin-top:16px">' +
+    (mine ? '<button class="btn ghost" id="updCancel">Cancel</button>' : '') +
+    '<button class="btn primary block" id="updShare" style="flex:1">' +
+    (mine ? 'Save the change' : 'Share my update') + '</button></div></div>';
+  return html;
+}
+
+function renderUpdates() {
+  if (!S || !inApp) return;
+  // Keep half-typed answers alive across the poll's re-render, caret and all
+  var ae = document.activeElement;
+  var focusedQ = (ae && ae.getAttribute && ae.getAttribute('data-uq')) || null;
+  var caret = focusedQ && ae.selectionStart != null ? ae.selectionStart : 0;
+
+  $('myUpdate').innerHTML = myUpdateHtml();
+
+  var today = todayStr();
+  var chips = '';
+  for (var i = 0; i < 7; i++) {
+    var dd = new Date(); dd.setDate(dd.getDate() - i);
+    var key = dkey(dd);
+    var lbl = i === 0 ? 'Today' : i === 1 ? 'Yesterday'
+      : dd.toLocaleDateString([], { weekday: 'short', day: 'numeric' });
+    chips += '<button data-day="' + key + '" class="' + (selDay() === key ? 'on' : '') + '">' + esc(lbl) + '</button>';
+  }
+  $('updDays').innerHTML = chips;
+
+  var day = selDay();
+  var list = updatesOn(day);
+
+  var pend = '';
+  if (day === today) {
+    var waiting = S.people.filter(function (p) { return p.active && !updateFor(p.id, today); });
+    if (waiting.length) {
+      var isAdmin = Auth.me.role === 'Admin';
+      pend = '<div class="pendbar"><span>Still to come:</span>';
+      waiting.forEach(function (p) {
+        pend += '<span class="pendchip">' + avaHtml(p.name, true) + esc(p.id === Auth.me.id ? 'Me' : p.name.split(/\s+/)[0]) +
+          (isAdmin && p.id !== Auth.me.id ? '<button class="ringbtn" data-nud="' + esc(p.id) + '" title="Ring them about it">🔔</button>' : '') +
+          '</span>';
+      });
+      var others = waiting.filter(function (p) { return p.id !== Auth.me.id; });
+      if (isAdmin && others.length > 1) {
+        pend += '<span class="grow"></span><button class="btn ghost sm" id="nudAll">🔔 Ring them all</button>';
+      }
+      pend += '</div>';
+    }
+  }
+  $('updPending').innerHTML = pend;
+
+  var feed = '';
+  if (!list.length) {
+    feed = '<div class="empty">' + (day === today
+      ? 'No updates yet today. Yours takes a minute — the card above is waiting.'
+      : 'No updates came in on this day.') + '</div>';
+  } else {
+    list.forEach(function (u) { feed += updCard(u); });
+  }
+  $('updFeed').innerHTML = feed;
+
+  bindUpdateEvents();
+
+  if (focusedQ) {
+    try {
+      var inp = document.querySelector('#myUpdate [data-uq="' + CSS.escape(focusedQ) + '"]');
+      if (inp && inp.tagName === 'INPUT') {
+        inp.focus();
+        inp.setSelectionRange(caret, caret);
+      }
+    } catch (e) {}
+  }
+}
+
+function bindUpdateEvents() {
+  var box = $('myUpdate');
+  Array.prototype.forEach.call(box.querySelectorAll('[data-mood]'), function (b) {
+    b.addEventListener('click', function () {
+      ensureUpdDraft().mood = b.getAttribute('data-mood');
+      renderUpdates();
+    });
+  });
+  Array.prototype.forEach.call(box.querySelectorAll('input[data-uq]'), function (inp) {
+    inp.addEventListener('input', function () {
+      var d = ensureUpdDraft();
+      var k = inp.getAttribute('data-uq');
+      if (k === '_note') d.note = inp.value; else d.vals[k] = inp.value;
+    });
+  });
+  Array.prototype.forEach.call(box.querySelectorAll('button[data-uq]'), function (b) {
+    b.addEventListener('click', function () {
+      var d = ensureUpdDraft();
+      var k = b.getAttribute('data-uq'), v = b.getAttribute('data-v');
+      d.vals[k] = d.vals[k] === v ? '' : v;    // tap again to un-answer
+      renderUpdates();
+    });
+  });
+  var change = $('updChange');
+  if (change) change.addEventListener('click', function () { updEditing = true; updDraft = null; renderUpdates(); });
+  var cancel = $('updCancel');
+  if (cancel) cancel.addEventListener('click', function () { updEditing = false; updDraft = null; renderUpdates(); });
+  var share = $('updShare');
+  if (share) share.addEventListener('click', function () {
+    var d = ensureUpdDraft();
+    if (!d.mood) { toast('How was the day? Tap one.', true); return; }
+    once(share, function () {
+      return rpc('saveUpdate', { date: todayStr(), mood: d.mood, vals: d.vals, note: d.note })
+        .then(function (res) {
+          if (!res.ok) { toast(res.error || 'That didn’t go through.', true); return; }
+          updDraft = null;
+          updEditing = false;
+          toast('Shared with the team. 👏');
+          pollNow();
+        }, writeFailed);
+    });
+  });
+
+  Array.prototype.forEach.call($('updDays').querySelectorAll('button'), function (b) {
+    b.addEventListener('click', function () {
+      var day = b.getAttribute('data-day');
+      updSelDay = day === todayStr() ? '' : day;
+      renderUpdates();
+    });
+  });
+
+  Array.prototype.forEach.call($('updPending').querySelectorAll('[data-nud]'), function (b) {
+    b.addEventListener('click', function () {
+      var pid = b.getAttribute('data-nud');
+      ask('Ring ' + nameOf(pid) + '’s screen about today’s update?', 'Ring')
+        .then(function (yes) { if (yes) sendNudge(pid); });
+    });
+  });
+  var all = $('nudAll');
+  if (all) all.addEventListener('click', function () {
+    ask('Ring everyone whose update hasn’t come in? Their screens take over until they answer.', 'Ring them all')
+      .then(function (yes) { if (yes) sendNudge(''); });
+  });
+
+  Array.prototype.forEach.call($('updFeed').querySelectorAll('.hd[data-pid]'), function (h) {
+    h.addEventListener('click', function () { openPersonSheet(h.getAttribute('data-pid')); });
+  });
+}
+
+function sendNudge(pid) {
+  var data = { date: todayStr() };
+  if (pid) data.personId = pid;
+  rpc('nudgeUpdates', data).then(function (res) {
+    if (!res.ok) { toast(res.error || 'Could not ring.', true); return; }
+    toast(res.nudged ? 'Ringing ' + res.nudged + (res.nudged === 1 ? ' phone…' : ' phones…')
+      : 'Nothing to ring — already in, or already ringing.');
+    pollNow();
+  }, writeFailed);
+}
+
+/* ── one person's story: streak, week totals, recent updates ── */
+function weekTotals(pid) {
+  var start = new Date(); start.setDate(start.getDate() - 6);
+  var startKey = dkey(start), endKey = todayStr();
+  var totals = {}, order = [];
+  ((S && S.updates) || []).forEach(function (u) {
+    if (u.person_id !== pid || u.date < startKey || u.date > endKey) return;
+    (u.answers || []).forEach(function (a) {
+      if (a.t !== 'count') return;
+      var k = JSON.stringify([a.l, a.u || '']);
+      if (!(k in totals)) { totals[k] = 0; order.push(k); }
+      totals[k] += parseFloat(a.v) || 0;
+    });
+  });
+  return order.map(function (k) {
+    var bits = JSON.parse(k);
+    return { label: bits[0], unit: bits[1], total: totals[k] };
+  });
+}
+
+function openPersonSheet(pid) {
+  var p = personById(pid);
+  if (!p) return;
+  var prof = effectiveProfile(p);
+  var st = streakFor(pid);
+  var ups = ((S && S.updates) || []).filter(function (u) { return u.person_id === pid; })
+    .sort(function (a, b) { return a.date < b.date ? 1 : -1; }).slice(0, 14);
+  var tot = weekTotals(pid);
+
+  var html = '<div style="display:flex; align-items:center; gap:12px; margin-bottom:6px">' + avaHtml(p.name) +
+    '<div><h3 style="margin:0">' + esc(p.name) + '</h3><div class="small mut">' +
+    esc(whoDoesWhat(p, prof)) + '</div></div></div>';
+  html += '<div style="display:flex; flex-wrap:wrap; gap:7px; margin:10px 0 4px">';
+  if (st >= 2) html += '<span class="chip streak">🔥 ' + st + ' days running</span>';
+  tot.forEach(function (t) {
+    html += numChipHtml(fmtNum(t.total), t.unit, t.label + ' · 7 days');
+  });
+  html += '</div>';
+  if (!ups.length) {
+    html += '<div class="empty" style="margin-top:8px">No updates yet.</div>';
+  }
+  ups.forEach(function (u) {
+    var mood = MOODS[u.mood];
+    html += '<div class="upd"><div class="hd"><div class="who"><div class="nm" style="font-size:14px">' +
+      esc(fmtDayLabel(u.date)) + '</div></div>' +
+      (mood ? '<span class="mood">' + mood.e + '</span>' : '') + '</div>' + updBodyHtml(u) + '</div>';
+  });
+  html += '<button class="btn ghost block" id="vpClose" style="margin-top:8px">Close</button>';
+  $('vpBody').innerHTML = html;
+  $('vpClose').addEventListener('click', function () { $('veilPerson').classList.add('hide'); });
+  $('veilPerson').classList.remove('hide');
+}
+
+/* ── question set editor (admins) ──────────────────────────── */
+function openProfileSheet(pr) {
+  profDraft = pr
+    ? { profileId: pr.id, name: pr.name, emoji: pr.emoji,
+        questions: (pr.questions || []).map(function (q) { return { id: q.id, label: q.label, type: q.type, unit: q.unit || '' }; }) }
+    : { profileId: '', name: '', emoji: '', questions: [{ id: '', label: '', type: 'count', unit: '' }] };
+  $('prHead').textContent = pr ? 'Edit — ' + pr.name : 'New question set';
+  $('prName').value = profDraft.name;
+  $('prEmoji').value = profDraft.emoji;
+  renderProfQs();
+  $('veilProfile').classList.remove('hide');
+  if (!pr) setTimeout(function () { $('prName').focus(); }, 60);
+}
+
+function renderProfQs() {
+  var html = '';
+  profDraft.questions.forEach(function (q, i) {
+    html += '<div class="qedit" data-i="' + i + '">' +
+      '<input class="ql" placeholder="The question, in their words" maxlength="80" value="' + esc(q.label) + '">' +
+      '<select class="qt">' +
+      '<option value="count"' + (q.type === 'count' ? ' selected' : '') + '>Number</option>' +
+      '<option value="text"' + (q.type === 'text' ? ' selected' : '') + '>Words</option>' +
+      '<option value="yesno"' + (q.type === 'yesno' ? ' selected' : '') + '>Yes / No</option>' +
+      '</select>' +
+      (q.type === 'count' ? '<input class="qu" placeholder="unit" maxlength="12" value="' + esc(q.unit || '') + '">' : '') +
+      (profDraft.questions.length > 1 ? '<button class="x" title="Remove this question">✕</button>' : '') +
+      '</div>';
+  });
+  $('prQs').innerHTML = html;
+  Array.prototype.forEach.call($('prQs').querySelectorAll('.qedit'), function (row) {
+    var q = profDraft.questions[Number(row.getAttribute('data-i'))];
+    row.querySelector('.ql').addEventListener('input', function (ev) { q.label = ev.target.value; });
+    row.querySelector('.qt').addEventListener('change', function (ev) { q.type = ev.target.value; renderProfQs(); });
+    var qu = row.querySelector('.qu');
+    if (qu) qu.addEventListener('input', function (ev) { q.unit = ev.target.value; });
+    var x = row.querySelector('.x');
+    if (x) x.addEventListener('click', function () {
+      profDraft.questions.splice(Number(row.getAttribute('data-i')), 1);
+      renderProfQs();
+    });
+  });
+}
+
+$('prAddQ').addEventListener('click', function () {
+  if (!profDraft) return;
+  if (profDraft.questions.length >= 8) { toast('Eight questions is the most — keep it quick.', true); return; }
+  profDraft.questions.push({ id: '', label: '', type: 'count', unit: '' });
+  renderProfQs();
+});
+$('prCancel').addEventListener('click', function () { profDraft = null; $('veilProfile').classList.add('hide'); });
+$('prSave').addEventListener('click', function () {
+  if (!profDraft) return;
+  profDraft.name = $('prName').value.trim();
+  profDraft.emoji = $('prEmoji').value.trim();
+  if (!profDraft.name) { $('prName').focus(); toast('Name the kind of work first.', true); return; }
+  var btn = $('prSave');
+  once(btn, function () {
+    return rpc('saveProfile', profDraft).then(function (res) {
+      if (!res.ok) { toast(res.error || 'That didn’t save.', true); return; }
+      profDraft = null;
+      $('veilProfile').classList.add('hide');
+      toast('Saved. It’s live for everyone on that set.');
+      pollNow();
+    }, writeFailed);
+  });
+});
+
 /* ── team tab ──────────────────────────────────────────────── */
 function renderTeam() {
   var admin = Auth.me.role === 'Admin';
@@ -2443,27 +3382,62 @@ function renderTeam() {
     var depts = {};
     S.people.forEach(function (p) { if (p.dept) depts[p.dept] = 1; });
     $('deptList').innerHTML = Object.keys(depts).map(function (d) { return '<option value="' + esc(d) + '">'; }).join('');
+    var keepProf = $('npProf').value;
+    $('npProf').innerHTML = activeProfiles().map(function (pr) {
+      return '<option value="' + esc(pr.id) + '">' + esc(pr.emoji + ' ' + pr.name) + '</option>';
+    }).join('');
+    var kept = keepProf && profileById(keepProf);
+    if (kept && !kept.archived) $('npProf').value = keepProf;
+    renderProfiles();
+  }
+  $('profSect').classList.toggle('hide', !admin);
+
+  function profOptions(selId) {
+    return activeProfiles().map(function (pr) {
+      return '<option value="' + esc(pr.id) + '"' + (pr.id === selId ? ' selected' : '') + '>' +
+        esc(pr.emoji + ' ' + pr.name) + '</option>';
+    }).join('');
   }
 
   var html = '';
   S.people.filter(function (p) { return p.active; }).forEach(function (p) {
     var open = S.tasks.filter(function (t) { return t.owner_id === p.id && t.status !== 'Done'; }).length;
     var here = p.last_seen && (Date.now() - new Date(p.last_seen).getTime() < 150000);
-    html += '<div class="pcard" data-id="' + esc(p.id) + '">' + avaHtml(p.name, false, here) +
+    var st = streakFor(p.id);
+    html += '<div class="pcard" data-id="' + esc(p.id) + '" style="cursor:pointer" title="See their updates">' +
+      avaHtml(p.name, false, here) +
       '<div class="in"><div class="nm">' + esc(p.name) +
       (p.role === 'Admin' ? ' <span class="rolechip">ADMIN</span>' : '') + '</div>' +
-      '<div class="sub">' + esc(p.dept) + ' · ' + open + ' open task' + (open === 1 ? '' : 's') + '</div>' +
-      (admin && p.id !== Auth.me.id ?
+      '<div class="sub">' + esc(p.dept) + ' · ' + open + ' open task' + (open === 1 ? '' : 's') +
+      (st >= 2 ? ' · 🔥 ' + st : '') + '</div>' +
+      (admin ?
         '<div class="padmin">' +
-        '<button class="btn ghost sm" data-act="pin">Reset PIN</button>' +
-        '<button class="btn ghost sm" data-act="role">' + (p.role === 'Admin' ? 'Make member' : 'Make admin') + '</button>' +
-        '<button class="btn danger sm" data-act="rm">Remove</button>' +
+        '<select class="psel" data-act="prof" title="Their daily update questions">' + profOptions(effectiveProfile(p).id) + '</select>' +
+        (p.id !== Auth.me.id ?
+          '<button class="btn ghost sm" data-act="pin">Reset PIN</button>' +
+          '<button class="btn ghost sm" data-act="role">' + (p.role === 'Admin' ? 'Make member' : 'Make admin') + '</button>' +
+          '<button class="btn danger sm" data-act="rm">Remove</button>' : '') +
         '</div>' : '') +
       '</div><div class="presence' + (here ? ' on' : '') + '">' + esc(fmtAgo(p.last_seen)) + '</div></div>';
   });
   $('teamList').innerHTML = html;
 
-  Array.prototype.forEach.call($('teamList').querySelectorAll('[data-act]'), function (b) {
+  // The card itself opens that person's updates; buttons and pickers stay theirs
+  Array.prototype.forEach.call($('teamList').querySelectorAll('.pcard'), function (card) {
+    card.addEventListener('click', function (ev) {
+      if (ev.target.closest('button') || ev.target.closest('select')) return;
+      openPersonSheet(card.getAttribute('data-id'));
+    });
+  });
+
+  Array.prototype.forEach.call($('teamList').querySelectorAll('select[data-act="prof"]'), function (sel) {
+    var pid = sel.closest('.pcard').getAttribute('data-id');
+    sel.addEventListener('change', function () {
+      rpc('editPerson', { personId: pid, profileId: sel.value }).then(afterWrite, writeFailed);
+    });
+  });
+
+  Array.prototype.forEach.call($('teamList').querySelectorAll('button[data-act]'), function (b) {
     var card = b.closest('.pcard');
     var pid = card.getAttribute('data-id');
     var p = personById(pid);
@@ -2501,11 +3475,49 @@ function renderTeam() {
   });
 }
 
+/** The question sets themselves — the admin's shelf of "kinds of work". */
+function renderProfiles() {
+  var counts = {};
+  S.people.forEach(function (p) {
+    if (p.active) {
+      var id = effectiveProfile(p).id;
+      counts[id] = (counts[id] || 0) + 1;
+    }
+  });
+  var html = '';
+  activeProfiles().forEach(function (pr) {
+    var used = counts[pr.id] || 0;
+    var n = (pr.questions || []).length;
+    html += '<div class="profcard" data-id="' + esc(pr.id) + '"><span class="em">' + esc(pr.emoji) + '</span>' +
+      '<div class="in"><div class="nm">' + esc(pr.name) + '</div><div class="sub">' +
+      n + ' question' + (n === 1 ? '' : 's') + ' · ' +
+      (used ? 'answered by ' + used + (used === 1 ? ' person' : ' people') : 'nobody on it yet') +
+      '</div></div>' +
+      '<button class="btn ghost sm" data-act="edit">Edit</button>' +
+      (pr.id !== 'general' && !used ? '<button class="btn ghost sm" data-act="arch">Archive</button>' : '') +
+      '</div>';
+  });
+  $('profList').innerHTML = html;
+  Array.prototype.forEach.call($('profList').querySelectorAll('[data-act]'), function (b) {
+    var id = b.closest('.profcard').getAttribute('data-id');
+    b.addEventListener('click', function () {
+      var pr = profileById(id);
+      if (!pr) return;
+      if (b.getAttribute('data-act') === 'edit') { openProfileSheet(pr); return; }
+      ask('Put the ' + pr.name + ' set away? Updates already made with it stay readable; you can’t bring the set back, only make a new one.', 'Archive')
+        .then(function (yes) {
+          if (yes) rpc('archiveProfile', { profileId: id }).then(afterWrite, writeFailed);
+        });
+    });
+  });
+}
+$('profNew').addEventListener('click', function () { openProfileSheet(null); });
+
 $('npAdd').addEventListener('click', function () {
   var name = $('npName').value.trim();
   if (!name) { $('npName').focus(); return; }
   $('npAdd').disabled = true;
-  rpc('addPerson', { name: name, dept: $('npDept').value.trim(), role: $('npRole').value })
+  rpc('addPerson', { name: name, dept: $('npDept').value.trim(), role: $('npRole').value, profileId: $('npProf').value })
     .then(function (res) {
       $('npAdd').disabled = false;
       if (!res.ok) { toast(res.error, true); return; }
@@ -2563,12 +3575,13 @@ $('askYes').addEventListener('click', function () { $('veilAsk').classList.add('
 $('askNo').addEventListener('click', function () { $('veilAsk').classList.add('hide'); if (askResolve) askResolve(false); askResolve = null; });
 
 /* veils close on backdrop tap */
-['veilTask', 'veilPin', 'veilAsk'].forEach(function (id) {
+['veilTask', 'veilPin', 'veilAsk', 'veilProfile', 'veilPerson'].forEach(function (id) {
   $(id).addEventListener('click', function (ev) {
     if (ev.target !== $(id)) return;
     if (id === 'veilPin') return;      // the PIN sheet closes only on "Done"
     $(id).classList.add('hide');
     if (id === 'veilAsk' && askResolve) { askResolve(false); askResolve = null; }
+    if (id === 'veilProfile') profDraft = null;
   });
 });
 

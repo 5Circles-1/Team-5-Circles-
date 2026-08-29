@@ -213,6 +213,57 @@
   .addrow input:focus{border-color:var(--brand)}
   .addrow .grow{flex:1; min-width:150px}
 
+  /* daily updates */
+  .updme{padding:16px; margin-bottom:22px}
+  .updme h3{font-size:17px}
+  .updme .day{font-size:13px; color:var(--mut); font-weight:600}
+  .moods{display:flex; gap:8px; margin:12px 0 2px}
+  .moods button{flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:10px 4px;
+    border:1.5px solid var(--line); border-radius:14px; background:var(--bg); font-weight:700; font-size:12.5px; color:var(--mut)}
+  .moods button .e{font-size:25px}
+  .moods button.on{border-color:var(--brand); background:var(--brand-soft); color:var(--brand-dark)}
+  .uq{margin-top:13px}
+  .uq > label{display:block; font-size:14px; font-weight:600; margin-bottom:5px}
+  .uq input{padding:10px 12px; border:1.5px solid var(--line); border-radius:12px; outline:none; background:#fff; width:100%}
+  .uq input:focus{border-color:var(--brand)}
+  .uq .cnt{display:flex; align-items:center; gap:8px}
+  .uq .cnt input{width:118px; text-align:center; font-weight:700}
+  .uq .cnt .unit{color:var(--mut); font-weight:600; font-size:14px}
+  .upd{background:var(--card); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow);
+    padding:13px 14px; margin-bottom:10px}
+  .upd .hd{display:flex; align-items:center; gap:10px}
+  .upd .hd[data-pid]{cursor:pointer}
+  .upd .hd .who{flex:1; min-width:0}
+  .upd .hd .nm{font-weight:700}
+  .upd .hd .what{font-size:12.5px; color:var(--mut)}
+  .upd .hd .mood{font-size:23px}
+  .updb .nums{display:flex; flex-wrap:wrap; gap:7px; margin-top:10px}
+  .updb .qa2{margin-top:9px; font-size:14.5px; white-space:pre-wrap}
+  .updb .qa2 .ql{color:var(--mut); font-size:12.5px; font-weight:700}
+  .updb .note{margin-top:9px; font-size:14.5px; background:var(--bg); border-radius:10px; padding:8px 11px; white-space:pre-wrap}
+  .chip.streak{background:var(--warn-soft); color:var(--warn)}
+  .pendbar{display:flex; align-items:center; flex-wrap:wrap; gap:8px; background:var(--card); border:1.5px dashed var(--line);
+    border-radius:var(--r); padding:10px 12px; margin-bottom:10px; font-size:14px; color:var(--mut)}
+  .pendbar .grow{flex:1}
+  .pendchip{display:inline-flex; align-items:center; gap:6px; font-weight:600; color:var(--ink)}
+  .pendchip .ringbtn{width:30px; height:30px; font-size:14px}
+
+  /* question set editor */
+  .profcard{background:var(--card); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow);
+    padding:12px 14px; margin-bottom:10px; display:flex; align-items:center; gap:11px; flex-wrap:wrap}
+  .profcard .em{font-size:24px}
+  .profcard .in{flex:1; min-width:140px}
+  .profcard .nm{font-weight:700}
+  .profcard .sub{font-size:13px; color:var(--mut)}
+  .qedit{display:flex; gap:6px; margin-bottom:8px; align-items:center; flex-wrap:wrap}
+  .qedit input,.qedit select{width:auto; padding:9px 10px; border:1.5px solid var(--line); border-radius:10px;
+    background:#fff; outline:none; font-size:14px}
+  .qedit input:focus{border-color:var(--brand)}
+  .qedit .ql{flex:1; min-width:130px}
+  .qedit .qu{width:76px}
+  .qedit .x{color:var(--bad); font-size:17px; font-weight:800; padding:4px 8px}
+  .psel{padding:8px 10px; border:1.5px solid var(--line); border-radius:10px; background:#fff; font-size:13.5px; font-weight:600; max-width:100%}
+
   /* modals / sheets */
   .veil{position:fixed; inset:0; background:rgba(15,34,48,.45); z-index:60;
     display:flex; align-items:flex-end; justify-content:center; padding:0}
@@ -320,6 +371,7 @@
 
   <nav class="tabs" id="tabs">
     <button data-tab="tasks" class="on">Tasks <span class="bdg hide" id="bdgTasks"></span></button>
+    <button data-tab="updates">Updates <span class="bdg hide" id="bdgUpd"></span></button>
     <button data-tab="chat">Chat <span class="bdg hide" id="bdgChat"></span></button>
     <button data-tab="team">Team</button>
   </nav>
@@ -328,6 +380,19 @@
     <!-- TASKS -->
     <div id="tabTasks">
       <div id="taskSections"></div>
+    </div>
+
+    <!-- UPDATES: everyone's minute on their day -->
+    <div id="tabUpdates" class="hide">
+      <div id="myUpdate"></div>
+      <div class="sect">
+        <h2>The team’s day</h2>
+        <div class="chips" id="updDays"></div>
+        <div id="updPending"></div>
+        <div id="updFeed"></div>
+      </div>
+      <p class="small mut" style="text-align:center">
+        Every kind of work gets its own questions — admins shape them in the Team tab.</p>
     </div>
 
     <!-- CHAT -->
@@ -350,16 +415,25 @@
         <div class="card" style="padding:14px">
           <div class="addrow">
             <input type="text" id="npName" class="grow" placeholder="Their name" maxlength="60">
-            <input type="text" id="npDept" placeholder="Department" value="Sales" maxlength="40" list="deptList" style="width:140px">
+            <select id="npProf" title="Their daily update questions"></select>
+            <input type="text" id="npDept" placeholder="What they do" maxlength="40" list="deptList" style="width:150px">
             <datalist id="deptList"></datalist>
             <select id="npRole"><option value="Member">Member</option><option value="Admin">Admin</option></select>
             <button class="btn primary" id="npAdd">Add</button>
           </div>
           <p class="small mut" style="margin-top:8px">They get a PIN — you’ll see it once, send it to them
-            with this page’s address.</p>
+            with this page’s address. The question set decides what their daily update asks;
+            change it any time from their card.</p>
         </div>
       </div>
       <div class="sect"><h2>The team</h2><div id="teamList"></div></div>
+      <div id="profSect" class="sect hide">
+        <h2>Daily update questions</h2>
+        <p class="small mut" style="margin-bottom:9px">One set per kind of work — the starter sets below are
+          yours to reword, and any work you hire for tomorrow gets its own.</p>
+        <div id="profList"></div>
+        <button class="btn ghost sm" id="profNew">+ New question set</button>
+      </div>
       <div id="adminFoot" class="adminfoot hide">
         <div class="row">
           <b>Share the app:</b>
@@ -368,7 +442,7 @@
         <div class="row">
           <b>Your data:</b>
           <a class="btn ghost sm" id="openSheet" href="#" target="_blank" rel="noopener">Open the Google Sheet ↗</a>
-          <span class="small mut">every person, task and message lives there, in your Drive</span>
+          <span class="small mut">every person, task, update and message lives there, in your Drive</span>
         </div>
         <div class="row">
           <b>Company name:</b>
@@ -417,6 +491,34 @@
       <button class="btn primary block" id="pvOk" style="flex:1">Done — I’ve got it</button>
     </div>
   </div>
+</div>
+
+<!-- question set editor (admins) -->
+<div id="veilProfile" class="veil hide">
+  <div class="sheet">
+    <h3 id="prHead">Question set</h3>
+    <div style="display:flex; gap:8px">
+      <div class="field" style="width:78px"><label>Emoji</label>
+        <input type="text" id="prEmoji" maxlength="8" style="text-align:center; font-size:19px"></div>
+      <div class="field" style="flex:1"><label>Kind of work</label>
+        <input type="text" id="prName" maxlength="40" placeholder="e.g. Video Editor, Chef, Driver…"></div>
+    </div>
+    <div class="field"><label>What their daily update asks</label>
+      <div id="prQs"></div>
+      <button class="btn ghost sm" id="prAddQ">+ Add a question</button>
+    </div>
+    <p class="small mut" style="margin-bottom:14px">Numbers make weekly totals by themselves.
+      Keep it under a minute to answer — that’s the whole trick.</p>
+    <div style="display:flex; gap:10px">
+      <button class="btn ghost" id="prCancel">Cancel</button>
+      <button class="btn primary block" id="prSave" style="flex:1">Save the set</button>
+    </div>
+  </div>
+</div>
+
+<!-- one person's update history -->
+<div id="veilPerson" class="veil hide">
+  <div class="sheet" id="vpBody"></div>
 </div>
 
 <!-- confirm -->
@@ -486,9 +588,18 @@ function avaHtml(name, sm, online) {
     esc(initials(name)) + (online ? '<span class="dot"></span>' : '') + '</span>';
 }
 
-function todayStr() {
-  var d = new Date();
+function dkey(d) {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function todayStr() { return dkey(new Date()); }
+function localDateOf(iso) {
+  if (!iso) return '';
+  var d = new Date(iso);
+  return isNaN(d) ? '' : dkey(d);
+}
+function fmtNum(n) {
+  var v = Math.round(Number(n) * 100) / 100;
+  return isNaN(v) ? '0' : String(v);
 }
 function fmtWhen(iso) {
   if (!iso) return '';
@@ -582,6 +693,10 @@ function loadChatSeen() {
 }
 var openComments = {};        // taskId -> true
 var commentDrafts = {};       // taskId -> half-typed comment, kept across renders
+var updDraft = null;          // half-filled daily update, kept across renders
+var updEditing = false;       // re-opening today's update to change it
+var updSelDay = '';           // '' = today (stays "today" across midnight)
+var profDraft = null;         // question set being edited in its sheet
 var pollAgain = false;
 var sessionEpoch = 0;         // bumped on every sign-in/out; stale replies bail
 var FAST = /[?&]fast/.test(location.search);
@@ -1004,12 +1119,13 @@ function resetSessionState() {
   sessionEpoch++;
   S = null; lastV = -1; lastMsgHigh = '';
   chatChannel = 'ALL'; openComments = {}; commentDrafts = {};
+  updDraft = null; updEditing = false; updSelDay = ''; profDraft = null;
   chatSeen = {}; pollAgain = false;
   Alarm.answered = {};
   Alarm.clear();
   clearInterval(clockTimer);
   // Nothing from the last person may be left hanging over the login screen
-  ['veilTask', 'veilPin', 'veilAsk'].forEach(function (id) { $(id).classList.add('hide'); });
+  ['veilTask', 'veilPin', 'veilAsk', 'veilProfile', 'veilPerson'].forEach(function (id) { $(id).classList.add('hide'); });
   if (askResolve) { askResolve(false); askResolve = null; }
   pinRevealDone = null;
 }
@@ -1026,6 +1142,8 @@ function signedOutElsewhere() {
 
 function applyPull(res) {
   var firstLoad = !S;
+  res.updates = res.updates || [];    // an older Code.gs mid-upgrade sends neither
+  res.profiles = res.profiles || [];
   S = res;
   lastV = res.v;
   Auth.me = res.me;
@@ -1070,9 +1188,10 @@ Array.prototype.forEach.call(document.querySelectorAll('#tabs button'), function
       x.classList.toggle('on', x === b);
     });
     $('tabTasks').classList.toggle('hide', activeTab !== 'tasks');
+    $('tabUpdates').classList.toggle('hide', activeTab !== 'updates');
     $('tabChat').classList.toggle('hide', activeTab !== 'chat');
     $('tabTeam').classList.toggle('hide', activeTab !== 'team');
-    $('fabTask').classList.toggle('hide', activeTab === 'chat');
+    $('fabTask').classList.toggle('hide', activeTab === 'chat' || activeTab === 'updates');
     if (activeTab === 'chat') { markChatSeen(); renderChat(); scrollChat(); }
     renderAll();
   });
@@ -1084,6 +1203,7 @@ function renderAll() {
   $('hdCo').textContent = S.company;
   $('meChip').innerHTML = avaHtml(Auth.me.name, true) + '<span>' + esc(Auth.me.name.split(/\s+/)[0]) + '</span>';
   renderTasks();
+  renderUpdates();
   renderChat();
   renderTeam();
   renderBadges();
@@ -1093,6 +1213,10 @@ function renderBadges() {
   var mine = S.tasks.filter(function (t) { return t.owner_id === Auth.me.id && t.status !== 'Done'; }).length;
   $('bdgTasks').textContent = mine;
   $('bdgTasks').classList.toggle('hide', mine === 0);
+  // A quiet "!" until your own update for today is in
+  var filedToday = !!updateFor(Auth.me.id, todayStr());
+  $('bdgUpd').textContent = '!';
+  $('bdgUpd').classList.toggle('hide', filedToday);
   var unread = countUnreadChat();
   $('bdgChat').textContent = unread > 99 ? '99+' : unread;
   $('bdgChat').classList.toggle('hide', unread === 0);
@@ -1460,6 +1584,462 @@ $('chatRing').addEventListener('click', function () {
     .then(function (yes) { if (yes) sendChat('ring'); });
 });
 
+/* ── updates tab: everyone's minute on their day ───────────────
+   Not another CRM: the CRM knows the customers, this knows the team.
+   Each person answers the few questions that fit THEIR work (their
+   question set), says how the day felt, and the whole team's day is
+   one scroll — with the bell to chase whoever's word is missing.   */
+
+var MOODS = {
+  great: { e: '🔥', label: 'Great day' },
+  ok:    { e: '🙂', label: 'Okay day' },
+  heavy: { e: '😓', label: 'Heavy day' }
+};
+
+function profileById(id) {
+  var list = (S && S.profiles) || [];
+  for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+  return null;
+}
+function activeProfiles() {
+  return ((S && S.profiles) || []).filter(function (p) { return !p.archived; });
+}
+/** The set a person answers — archived or missing falls back to General. */
+function effectiveProfile(p) {
+  var pr = profileById((p && p.profile_id) || 'general');
+  if (!pr || pr.archived) pr = profileById('general');
+  return pr || { id: 'general', name: 'General', emoji: '📝', questions: [] };
+}
+function updateFor(pid, date) {
+  var us = (S && S.updates) || [];
+  for (var i = us.length - 1; i >= 0; i--) {
+    if (us[i].person_id === pid && us[i].date === date) return us[i];
+  }
+  return null;
+}
+function updatesOn(date) {
+  return ((S && S.updates) || []).filter(function (u) { return u.date === date; })
+    .sort(function (a, b) { return a.created < b.created ? 1 : -1; });
+}
+/** Days in a row with an update, counting back from the latest one.
+ *  A missing Sunday is forgiven — the week off shouldn't cost the run. */
+function streakFor(pid) {
+  var have = {};
+  ((S && S.updates) || []).forEach(function (u) { if (u.person_id === pid) have[u.date] = true; });
+  var dates = Object.keys(have).sort();
+  if (!dates.length) return 0;
+  var d = new Date(dates[dates.length - 1] + 'T12:00:00');
+  if (isNaN(d)) return 0;
+  var n = 0;
+  for (var guard = 0; guard < 400; guard++) {
+    if (have[dkey(d)]) n++;
+    else if (d.getDay() !== 0) break;
+    d.setDate(d.getDate() - 1);
+  }
+  return n;
+}
+function tasksDoneOn(pid, date) {
+  return S.tasks.filter(function (t) {
+    return t.owner_id === pid && t.status === 'Done' && localDateOf(t.done_at) === date;
+  }).length;
+}
+function selDay() { return updSelDay || todayStr(); }
+function fmtDayLabel(ds) {
+  if (ds === todayStr()) return 'Today';
+  var y = new Date(); y.setDate(y.getDate() - 1);
+  if (ds === dkey(y)) return 'Yesterday';
+  var d = new Date(ds + 'T12:00:00');
+  return isNaN(d) ? ds : d.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+function ensureUpdDraft() {
+  if (updDraft) return updDraft;
+  updDraft = { mood: '', vals: {}, note: '' };
+  var mine = updateFor(Auth.me.id, todayStr());
+  if (mine) {                       // changing today's — start from what's in
+    updDraft.mood = mine.mood;
+    updDraft.note = mine.note || '';
+    var qs = effectiveProfile(Auth.me).questions || [];
+    (mine.answers || []).forEach(function (a) {
+      for (var i = 0; i < qs.length; i++) {
+        if (qs[i].label === a.l && !(qs[i].id in updDraft.vals)) { updDraft.vals[qs[i].id] = a.v; break; }
+      }
+    });
+  }
+  return updDraft;
+}
+
+/** "3 videos" and "₹1500" read naturally; a unit already inside the question's
+ *  own words ("Videos delivered") isn't said twice. */
+function numChipHtml(v, unit, label) {
+  var val = unit === '₹' ? '₹' + v : v;
+  var showUnit = unit && unit !== '₹' &&
+    String(label).toLowerCase().indexOf(String(unit).toLowerCase()) < 0;
+  return '<span class="chip"><b>' + esc(val) + (showUnit ? ' ' + esc(unit) : '') + '</b>&nbsp;' + esc(label) + '</span>';
+}
+
+/** The chips + lines of one update — shared by the feed and the history sheet. */
+function updBodyHtml(u) {
+  var html = '';
+  var nums = '';
+  (u.answers || []).forEach(function (a) {
+    if (a.t === 'count') {
+      nums += numChipHtml(a.v, a.u, a.l);
+    } else if (a.t === 'yesno') {
+      nums += '<span class="chip">' + esc(String(a.l).replace(/\?\s*$/, '')) +
+        ' — <b>' + (a.v === 'yes' ? 'yes' : 'no') + '</b></span>';
+    }
+  });
+  var done = tasksDoneOn(u.person_id, u.date);
+  if (done) nums += '<span class="chip" style="background:var(--ok-soft);color:var(--ok)">✅ ' + done + ' task' + (done === 1 ? '' : 's') + ' finished</span>';
+  if (nums) html += '<div class="nums">' + nums + '</div>';
+  (u.answers || []).forEach(function (a) {
+    if (a.t === 'count' || a.t === 'yesno') return;
+    html += '<div class="qa2"><div class="ql">' + esc(a.l) + '</div>' + esc(a.v) + '</div>';
+  });
+  if (u.note) html += '<div class="note">' + esc(u.note) + '</div>';
+  return html ? '<div class="updb">' + html + '</div>' : '';
+}
+
+/** "Sales · ☎️ Sales" would be saying it twice — one label is enough. */
+function whoDoesWhat(p, prof) {
+  if (!p) return '';
+  if (!prof) return p.dept;
+  if (String(p.dept || '').toLowerCase() === String(prof.name).toLowerCase()) return prof.emoji + ' ' + prof.name;
+  return (p.dept ? p.dept + ' · ' : '') + prof.emoji + ' ' + prof.name;
+}
+
+function updCard(u) {
+  var p = personById(u.person_id);
+  var name = nameOf(u.person_id);
+  var prof = p ? effectiveProfile(p) : null;
+  var mood = MOODS[u.mood] || null;
+  var st = streakFor(u.person_id);
+  var html = '<div class="upd"><div class="hd" data-pid="' + esc(u.person_id) + '">' + avaHtml(name, false) +
+    '<div class="who"><div class="nm">' + esc(u.person_id === Auth.me.id ? 'Me' : name) + '</div>' +
+    '<div class="what">' + esc(whoDoesWhat(p, prof)) +
+    ' · ' + esc(fmtWhen(u.updated || u.created)) + '</div></div>';
+  if (selDay() === todayStr() && st >= 2) html += '<span class="chip streak">🔥 ' + st + ' days</span>';
+  if (mood) html += '<span class="mood" title="' + esc(mood.label) + '">' + mood.e + '</span>';
+  html += '</div>' + updBodyHtml(u) + '</div>';
+  return html;
+}
+
+function myUpdateHtml() {
+  var today = todayStr();
+  var mine = updateFor(Auth.me.id, today);
+  var d = new Date();
+  var dayWords = d.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' });
+
+  if (mine && !updEditing) {
+    var mood = MOODS[mine.mood];
+    return '<div class="card updme"><div style="display:flex; align-items:center; gap:10px">' +
+      '<div style="flex:1"><h3>Your update is in ✓</h3><div class="day">' + esc(dayWords) +
+      (mood ? ' · ' + mood.e + ' ' + esc(mood.label) : '') + '</div></div>' +
+      '<button class="btn ghost sm" id="updChange">Change it</button></div>' +
+      updBodyHtml(mine) + '</div>';
+  }
+
+  var draft = ensureUpdDraft();
+  var qs = effectiveProfile(Auth.me).questions || [];
+  var html = '<div class="card updme"><h3>' + (mine ? 'Change today’s update' : 'Your day, in a minute') + '</h3>' +
+    '<div class="day">' + esc(dayWords) + '</div>';
+  html += '<div class="uq" style="margin-top:10px"><label>How was the day?</label><div class="moods">';
+  ['great', 'ok', 'heavy'].forEach(function (m) {
+    html += '<button data-mood="' + m + '" class="' + (draft.mood === m ? 'on' : '') + '">' +
+      '<span class="e">' + MOODS[m].e + '</span>' + MOODS[m].label + '</button>';
+  });
+  html += '</div></div>';
+  qs.forEach(function (q) {
+    var v = draft.vals[q.id] !== undefined ? String(draft.vals[q.id]) : '';
+    html += '<div class="uq"><label>' + esc(q.label) + '</label>';
+    if (q.type === 'count') {
+      html += '<div class="cnt"><input data-uq="' + esc(q.id) + '" inputmode="decimal" placeholder="0" maxlength="12" value="' + esc(v) + '">' +
+        (q.unit ? '<span class="unit">' + esc(q.unit) + '</span>' : '') + '</div>';
+    } else if (q.type === 'yesno') {
+      html += '<span class="seg">' +
+        '<button data-uq="' + esc(q.id) + '" data-v="yes" class="' + (v === 'yes' ? 'on' : '') + '">Yes</button>' +
+        '<button data-uq="' + esc(q.id) + '" data-v="no" class="' + (v === 'no' ? 'on' : '') + '">No</button></span>';
+    } else {
+      html += '<input data-uq="' + esc(q.id) + '" placeholder="A line is enough" maxlength="300" value="' + esc(v) + '">';
+    }
+    html += '</div>';
+  });
+  html += '<div class="uq"><label>Anything else? <span class="mut" style="font-weight:400">(optional)</span></label>' +
+    '<input data-uq="_note" placeholder="A win, a worry, a shout-out…" maxlength="1000" value="' + esc(draft.note) + '"></div>';
+  html += '<div style="display:flex; gap:10px; margin-top:16px">' +
+    (mine ? '<button class="btn ghost" id="updCancel">Cancel</button>' : '') +
+    '<button class="btn primary block" id="updShare" style="flex:1">' +
+    (mine ? 'Save the change' : 'Share my update') + '</button></div></div>';
+  return html;
+}
+
+function renderUpdates() {
+  if (!S || !inApp) return;
+  // Keep half-typed answers alive across the poll's re-render, caret and all
+  var ae = document.activeElement;
+  var focusedQ = (ae && ae.getAttribute && ae.getAttribute('data-uq')) || null;
+  var caret = focusedQ && ae.selectionStart != null ? ae.selectionStart : 0;
+
+  $('myUpdate').innerHTML = myUpdateHtml();
+
+  var today = todayStr();
+  var chips = '';
+  for (var i = 0; i < 7; i++) {
+    var dd = new Date(); dd.setDate(dd.getDate() - i);
+    var key = dkey(dd);
+    var lbl = i === 0 ? 'Today' : i === 1 ? 'Yesterday'
+      : dd.toLocaleDateString([], { weekday: 'short', day: 'numeric' });
+    chips += '<button data-day="' + key + '" class="' + (selDay() === key ? 'on' : '') + '">' + esc(lbl) + '</button>';
+  }
+  $('updDays').innerHTML = chips;
+
+  var day = selDay();
+  var list = updatesOn(day);
+
+  var pend = '';
+  if (day === today) {
+    var waiting = S.people.filter(function (p) { return p.active && !updateFor(p.id, today); });
+    if (waiting.length) {
+      var isAdmin = Auth.me.role === 'Admin';
+      pend = '<div class="pendbar"><span>Still to come:</span>';
+      waiting.forEach(function (p) {
+        pend += '<span class="pendchip">' + avaHtml(p.name, true) + esc(p.id === Auth.me.id ? 'Me' : p.name.split(/\s+/)[0]) +
+          (isAdmin && p.id !== Auth.me.id ? '<button class="ringbtn" data-nud="' + esc(p.id) + '" title="Ring them about it">🔔</button>' : '') +
+          '</span>';
+      });
+      var others = waiting.filter(function (p) { return p.id !== Auth.me.id; });
+      if (isAdmin && others.length > 1) {
+        pend += '<span class="grow"></span><button class="btn ghost sm" id="nudAll">🔔 Ring them all</button>';
+      }
+      pend += '</div>';
+    }
+  }
+  $('updPending').innerHTML = pend;
+
+  var feed = '';
+  if (!list.length) {
+    feed = '<div class="empty">' + (day === today
+      ? 'No updates yet today. Yours takes a minute — the card above is waiting.'
+      : 'No updates came in on this day.') + '</div>';
+  } else {
+    list.forEach(function (u) { feed += updCard(u); });
+  }
+  $('updFeed').innerHTML = feed;
+
+  bindUpdateEvents();
+
+  if (focusedQ) {
+    try {
+      var inp = document.querySelector('#myUpdate [data-uq="' + CSS.escape(focusedQ) + '"]');
+      if (inp && inp.tagName === 'INPUT') {
+        inp.focus();
+        inp.setSelectionRange(caret, caret);
+      }
+    } catch (e) {}
+  }
+}
+
+function bindUpdateEvents() {
+  var box = $('myUpdate');
+  Array.prototype.forEach.call(box.querySelectorAll('[data-mood]'), function (b) {
+    b.addEventListener('click', function () {
+      ensureUpdDraft().mood = b.getAttribute('data-mood');
+      renderUpdates();
+    });
+  });
+  Array.prototype.forEach.call(box.querySelectorAll('input[data-uq]'), function (inp) {
+    inp.addEventListener('input', function () {
+      var d = ensureUpdDraft();
+      var k = inp.getAttribute('data-uq');
+      if (k === '_note') d.note = inp.value; else d.vals[k] = inp.value;
+    });
+  });
+  Array.prototype.forEach.call(box.querySelectorAll('button[data-uq]'), function (b) {
+    b.addEventListener('click', function () {
+      var d = ensureUpdDraft();
+      var k = b.getAttribute('data-uq'), v = b.getAttribute('data-v');
+      d.vals[k] = d.vals[k] === v ? '' : v;    // tap again to un-answer
+      renderUpdates();
+    });
+  });
+  var change = $('updChange');
+  if (change) change.addEventListener('click', function () { updEditing = true; updDraft = null; renderUpdates(); });
+  var cancel = $('updCancel');
+  if (cancel) cancel.addEventListener('click', function () { updEditing = false; updDraft = null; renderUpdates(); });
+  var share = $('updShare');
+  if (share) share.addEventListener('click', function () {
+    var d = ensureUpdDraft();
+    if (!d.mood) { toast('How was the day? Tap one.', true); return; }
+    once(share, function () {
+      return rpc('saveUpdate', { date: todayStr(), mood: d.mood, vals: d.vals, note: d.note })
+        .then(function (res) {
+          if (!res.ok) { toast(res.error || 'That didn’t go through.', true); return; }
+          updDraft = null;
+          updEditing = false;
+          toast('Shared with the team. 👏');
+          pollNow();
+        }, writeFailed);
+    });
+  });
+
+  Array.prototype.forEach.call($('updDays').querySelectorAll('button'), function (b) {
+    b.addEventListener('click', function () {
+      var day = b.getAttribute('data-day');
+      updSelDay = day === todayStr() ? '' : day;
+      renderUpdates();
+    });
+  });
+
+  Array.prototype.forEach.call($('updPending').querySelectorAll('[data-nud]'), function (b) {
+    b.addEventListener('click', function () {
+      var pid = b.getAttribute('data-nud');
+      ask('Ring ' + nameOf(pid) + '’s screen about today’s update?', 'Ring')
+        .then(function (yes) { if (yes) sendNudge(pid); });
+    });
+  });
+  var all = $('nudAll');
+  if (all) all.addEventListener('click', function () {
+    ask('Ring everyone whose update hasn’t come in? Their screens take over until they answer.', 'Ring them all')
+      .then(function (yes) { if (yes) sendNudge(''); });
+  });
+
+  Array.prototype.forEach.call($('updFeed').querySelectorAll('.hd[data-pid]'), function (h) {
+    h.addEventListener('click', function () { openPersonSheet(h.getAttribute('data-pid')); });
+  });
+}
+
+function sendNudge(pid) {
+  var data = { date: todayStr() };
+  if (pid) data.personId = pid;
+  rpc('nudgeUpdates', data).then(function (res) {
+    if (!res.ok) { toast(res.error || 'Could not ring.', true); return; }
+    toast(res.nudged ? 'Ringing ' + res.nudged + (res.nudged === 1 ? ' phone…' : ' phones…')
+      : 'Nothing to ring — already in, or already ringing.');
+    pollNow();
+  }, writeFailed);
+}
+
+/* ── one person's story: streak, week totals, recent updates ── */
+function weekTotals(pid) {
+  var start = new Date(); start.setDate(start.getDate() - 6);
+  var startKey = dkey(start), endKey = todayStr();
+  var totals = {}, order = [];
+  ((S && S.updates) || []).forEach(function (u) {
+    if (u.person_id !== pid || u.date < startKey || u.date > endKey) return;
+    (u.answers || []).forEach(function (a) {
+      if (a.t !== 'count') return;
+      var k = JSON.stringify([a.l, a.u || '']);
+      if (!(k in totals)) { totals[k] = 0; order.push(k); }
+      totals[k] += parseFloat(a.v) || 0;
+    });
+  });
+  return order.map(function (k) {
+    var bits = JSON.parse(k);
+    return { label: bits[0], unit: bits[1], total: totals[k] };
+  });
+}
+
+function openPersonSheet(pid) {
+  var p = personById(pid);
+  if (!p) return;
+  var prof = effectiveProfile(p);
+  var st = streakFor(pid);
+  var ups = ((S && S.updates) || []).filter(function (u) { return u.person_id === pid; })
+    .sort(function (a, b) { return a.date < b.date ? 1 : -1; }).slice(0, 14);
+  var tot = weekTotals(pid);
+
+  var html = '<div style="display:flex; align-items:center; gap:12px; margin-bottom:6px">' + avaHtml(p.name) +
+    '<div><h3 style="margin:0">' + esc(p.name) + '</h3><div class="small mut">' +
+    esc(whoDoesWhat(p, prof)) + '</div></div></div>';
+  html += '<div style="display:flex; flex-wrap:wrap; gap:7px; margin:10px 0 4px">';
+  if (st >= 2) html += '<span class="chip streak">🔥 ' + st + ' days running</span>';
+  tot.forEach(function (t) {
+    html += numChipHtml(fmtNum(t.total), t.unit, t.label + ' · 7 days');
+  });
+  html += '</div>';
+  if (!ups.length) {
+    html += '<div class="empty" style="margin-top:8px">No updates yet.</div>';
+  }
+  ups.forEach(function (u) {
+    var mood = MOODS[u.mood];
+    html += '<div class="upd"><div class="hd"><div class="who"><div class="nm" style="font-size:14px">' +
+      esc(fmtDayLabel(u.date)) + '</div></div>' +
+      (mood ? '<span class="mood">' + mood.e + '</span>' : '') + '</div>' + updBodyHtml(u) + '</div>';
+  });
+  html += '<button class="btn ghost block" id="vpClose" style="margin-top:8px">Close</button>';
+  $('vpBody').innerHTML = html;
+  $('vpClose').addEventListener('click', function () { $('veilPerson').classList.add('hide'); });
+  $('veilPerson').classList.remove('hide');
+}
+
+/* ── question set editor (admins) ──────────────────────────── */
+function openProfileSheet(pr) {
+  profDraft = pr
+    ? { profileId: pr.id, name: pr.name, emoji: pr.emoji,
+        questions: (pr.questions || []).map(function (q) { return { id: q.id, label: q.label, type: q.type, unit: q.unit || '' }; }) }
+    : { profileId: '', name: '', emoji: '', questions: [{ id: '', label: '', type: 'count', unit: '' }] };
+  $('prHead').textContent = pr ? 'Edit — ' + pr.name : 'New question set';
+  $('prName').value = profDraft.name;
+  $('prEmoji').value = profDraft.emoji;
+  renderProfQs();
+  $('veilProfile').classList.remove('hide');
+  if (!pr) setTimeout(function () { $('prName').focus(); }, 60);
+}
+
+function renderProfQs() {
+  var html = '';
+  profDraft.questions.forEach(function (q, i) {
+    html += '<div class="qedit" data-i="' + i + '">' +
+      '<input class="ql" placeholder="The question, in their words" maxlength="80" value="' + esc(q.label) + '">' +
+      '<select class="qt">' +
+      '<option value="count"' + (q.type === 'count' ? ' selected' : '') + '>Number</option>' +
+      '<option value="text"' + (q.type === 'text' ? ' selected' : '') + '>Words</option>' +
+      '<option value="yesno"' + (q.type === 'yesno' ? ' selected' : '') + '>Yes / No</option>' +
+      '</select>' +
+      (q.type === 'count' ? '<input class="qu" placeholder="unit" maxlength="12" value="' + esc(q.unit || '') + '">' : '') +
+      (profDraft.questions.length > 1 ? '<button class="x" title="Remove this question">✕</button>' : '') +
+      '</div>';
+  });
+  $('prQs').innerHTML = html;
+  Array.prototype.forEach.call($('prQs').querySelectorAll('.qedit'), function (row) {
+    var q = profDraft.questions[Number(row.getAttribute('data-i'))];
+    row.querySelector('.ql').addEventListener('input', function (ev) { q.label = ev.target.value; });
+    row.querySelector('.qt').addEventListener('change', function (ev) { q.type = ev.target.value; renderProfQs(); });
+    var qu = row.querySelector('.qu');
+    if (qu) qu.addEventListener('input', function (ev) { q.unit = ev.target.value; });
+    var x = row.querySelector('.x');
+    if (x) x.addEventListener('click', function () {
+      profDraft.questions.splice(Number(row.getAttribute('data-i')), 1);
+      renderProfQs();
+    });
+  });
+}
+
+$('prAddQ').addEventListener('click', function () {
+  if (!profDraft) return;
+  if (profDraft.questions.length >= 8) { toast('Eight questions is the most — keep it quick.', true); return; }
+  profDraft.questions.push({ id: '', label: '', type: 'count', unit: '' });
+  renderProfQs();
+});
+$('prCancel').addEventListener('click', function () { profDraft = null; $('veilProfile').classList.add('hide'); });
+$('prSave').addEventListener('click', function () {
+  if (!profDraft) return;
+  profDraft.name = $('prName').value.trim();
+  profDraft.emoji = $('prEmoji').value.trim();
+  if (!profDraft.name) { $('prName').focus(); toast('Name the kind of work first.', true); return; }
+  var btn = $('prSave');
+  once(btn, function () {
+    return rpc('saveProfile', profDraft).then(function (res) {
+      if (!res.ok) { toast(res.error || 'That didn’t save.', true); return; }
+      profDraft = null;
+      $('veilProfile').classList.add('hide');
+      toast('Saved. It’s live for everyone on that set.');
+      pollNow();
+    }, writeFailed);
+  });
+});
+
 /* ── team tab ──────────────────────────────────────────────── */
 function renderTeam() {
   var admin = Auth.me.role === 'Admin';
@@ -1472,27 +2052,62 @@ function renderTeam() {
     var depts = {};
     S.people.forEach(function (p) { if (p.dept) depts[p.dept] = 1; });
     $('deptList').innerHTML = Object.keys(depts).map(function (d) { return '<option value="' + esc(d) + '">'; }).join('');
+    var keepProf = $('npProf').value;
+    $('npProf').innerHTML = activeProfiles().map(function (pr) {
+      return '<option value="' + esc(pr.id) + '">' + esc(pr.emoji + ' ' + pr.name) + '</option>';
+    }).join('');
+    var kept = keepProf && profileById(keepProf);
+    if (kept && !kept.archived) $('npProf').value = keepProf;
+    renderProfiles();
+  }
+  $('profSect').classList.toggle('hide', !admin);
+
+  function profOptions(selId) {
+    return activeProfiles().map(function (pr) {
+      return '<option value="' + esc(pr.id) + '"' + (pr.id === selId ? ' selected' : '') + '>' +
+        esc(pr.emoji + ' ' + pr.name) + '</option>';
+    }).join('');
   }
 
   var html = '';
   S.people.filter(function (p) { return p.active; }).forEach(function (p) {
     var open = S.tasks.filter(function (t) { return t.owner_id === p.id && t.status !== 'Done'; }).length;
     var here = p.last_seen && (Date.now() - new Date(p.last_seen).getTime() < 150000);
-    html += '<div class="pcard" data-id="' + esc(p.id) + '">' + avaHtml(p.name, false, here) +
+    var st = streakFor(p.id);
+    html += '<div class="pcard" data-id="' + esc(p.id) + '" style="cursor:pointer" title="See their updates">' +
+      avaHtml(p.name, false, here) +
       '<div class="in"><div class="nm">' + esc(p.name) +
       (p.role === 'Admin' ? ' <span class="rolechip">ADMIN</span>' : '') + '</div>' +
-      '<div class="sub">' + esc(p.dept) + ' · ' + open + ' open task' + (open === 1 ? '' : 's') + '</div>' +
-      (admin && p.id !== Auth.me.id ?
+      '<div class="sub">' + esc(p.dept) + ' · ' + open + ' open task' + (open === 1 ? '' : 's') +
+      (st >= 2 ? ' · 🔥 ' + st : '') + '</div>' +
+      (admin ?
         '<div class="padmin">' +
-        '<button class="btn ghost sm" data-act="pin">Reset PIN</button>' +
-        '<button class="btn ghost sm" data-act="role">' + (p.role === 'Admin' ? 'Make member' : 'Make admin') + '</button>' +
-        '<button class="btn danger sm" data-act="rm">Remove</button>' +
+        '<select class="psel" data-act="prof" title="Their daily update questions">' + profOptions(effectiveProfile(p).id) + '</select>' +
+        (p.id !== Auth.me.id ?
+          '<button class="btn ghost sm" data-act="pin">Reset PIN</button>' +
+          '<button class="btn ghost sm" data-act="role">' + (p.role === 'Admin' ? 'Make member' : 'Make admin') + '</button>' +
+          '<button class="btn danger sm" data-act="rm">Remove</button>' : '') +
         '</div>' : '') +
       '</div><div class="presence' + (here ? ' on' : '') + '">' + esc(fmtAgo(p.last_seen)) + '</div></div>';
   });
   $('teamList').innerHTML = html;
 
-  Array.prototype.forEach.call($('teamList').querySelectorAll('[data-act]'), function (b) {
+  // The card itself opens that person's updates; buttons and pickers stay theirs
+  Array.prototype.forEach.call($('teamList').querySelectorAll('.pcard'), function (card) {
+    card.addEventListener('click', function (ev) {
+      if (ev.target.closest('button') || ev.target.closest('select')) return;
+      openPersonSheet(card.getAttribute('data-id'));
+    });
+  });
+
+  Array.prototype.forEach.call($('teamList').querySelectorAll('select[data-act="prof"]'), function (sel) {
+    var pid = sel.closest('.pcard').getAttribute('data-id');
+    sel.addEventListener('change', function () {
+      rpc('editPerson', { personId: pid, profileId: sel.value }).then(afterWrite, writeFailed);
+    });
+  });
+
+  Array.prototype.forEach.call($('teamList').querySelectorAll('button[data-act]'), function (b) {
     var card = b.closest('.pcard');
     var pid = card.getAttribute('data-id');
     var p = personById(pid);
@@ -1530,11 +2145,49 @@ function renderTeam() {
   });
 }
 
+/** The question sets themselves — the admin's shelf of "kinds of work". */
+function renderProfiles() {
+  var counts = {};
+  S.people.forEach(function (p) {
+    if (p.active) {
+      var id = effectiveProfile(p).id;
+      counts[id] = (counts[id] || 0) + 1;
+    }
+  });
+  var html = '';
+  activeProfiles().forEach(function (pr) {
+    var used = counts[pr.id] || 0;
+    var n = (pr.questions || []).length;
+    html += '<div class="profcard" data-id="' + esc(pr.id) + '"><span class="em">' + esc(pr.emoji) + '</span>' +
+      '<div class="in"><div class="nm">' + esc(pr.name) + '</div><div class="sub">' +
+      n + ' question' + (n === 1 ? '' : 's') + ' · ' +
+      (used ? 'answered by ' + used + (used === 1 ? ' person' : ' people') : 'nobody on it yet') +
+      '</div></div>' +
+      '<button class="btn ghost sm" data-act="edit">Edit</button>' +
+      (pr.id !== 'general' && !used ? '<button class="btn ghost sm" data-act="arch">Archive</button>' : '') +
+      '</div>';
+  });
+  $('profList').innerHTML = html;
+  Array.prototype.forEach.call($('profList').querySelectorAll('[data-act]'), function (b) {
+    var id = b.closest('.profcard').getAttribute('data-id');
+    b.addEventListener('click', function () {
+      var pr = profileById(id);
+      if (!pr) return;
+      if (b.getAttribute('data-act') === 'edit') { openProfileSheet(pr); return; }
+      ask('Put the ' + pr.name + ' set away? Updates already made with it stay readable; you can’t bring the set back, only make a new one.', 'Archive')
+        .then(function (yes) {
+          if (yes) rpc('archiveProfile', { profileId: id }).then(afterWrite, writeFailed);
+        });
+    });
+  });
+}
+$('profNew').addEventListener('click', function () { openProfileSheet(null); });
+
 $('npAdd').addEventListener('click', function () {
   var name = $('npName').value.trim();
   if (!name) { $('npName').focus(); return; }
   $('npAdd').disabled = true;
-  rpc('addPerson', { name: name, dept: $('npDept').value.trim(), role: $('npRole').value })
+  rpc('addPerson', { name: name, dept: $('npDept').value.trim(), role: $('npRole').value, profileId: $('npProf').value })
     .then(function (res) {
       $('npAdd').disabled = false;
       if (!res.ok) { toast(res.error, true); return; }
@@ -1592,12 +2245,13 @@ $('askYes').addEventListener('click', function () { $('veilAsk').classList.add('
 $('askNo').addEventListener('click', function () { $('veilAsk').classList.add('hide'); if (askResolve) askResolve(false); askResolve = null; });
 
 /* veils close on backdrop tap */
-['veilTask', 'veilPin', 'veilAsk'].forEach(function (id) {
+['veilTask', 'veilPin', 'veilAsk', 'veilProfile', 'veilPerson'].forEach(function (id) {
   $(id).addEventListener('click', function (ev) {
     if (ev.target !== $(id)) return;
     if (id === 'veilPin') return;      // the PIN sheet closes only on "Done"
     $(id).classList.add('hide');
     if (id === 'veilAsk' && askResolve) { askResolve(false); askResolve = null; }
+    if (id === 'veilProfile') profDraft = null;
   });
 });
 

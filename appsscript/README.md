@@ -1,7 +1,17 @@
 # 5C Pulse — Google Apps Script edition
 
-The team tool 5 Circles actually runs on: tasks, chat on record, and
-ring-until-answered alerts, backed by a Google Sheet in the owner's Drive.
+The team tool 5 Circles actually runs on: daily updates from every role,
+tasks, chat on record, and ring-until-answered alerts, backed by a Google
+Sheet in the owner's Drive.
+
+It is deliberately generic where the CRM is specific: the CRM knows the
+customers; Pulse knows the team. Each person files a one-minute **daily
+update** whose questions come from their **question set** — six starter sets
+ship (General, Video Editor, Performance Marketer, Sales, Mentor/Trainer,
+Front Desk) and admins can reword any question, invent sets for new kinds of
+work, and archive unused ones. Numeric answers roll up into per-person weekly
+totals; consecutive days build a streak (a missing Sunday is forgiven); the
+bell chases whoever's update hasn't come in.
 
 ## The two files that matter
 
@@ -22,11 +32,22 @@ The non-technical walkthrough (with copy buttons and a live demo) is
 - **Auth.** Name + 4-digit PIN (salted SHA-256 via `Utilities.computeDigest`).
   A login rotates a UUID token (one signed-in device per person). Five wrong
   PINs → 5-minute lockout. PINs are returned exactly once, to the admin.
-- **Storage.** Four sheets — `Meta`, `People`, `Tasks`, `Messages` — created on
+- **Storage.** Six sheets — `Meta`, `People`, `Tasks`, `Messages`, `Profiles`
+  (the question sets), `Updates` (one row per person per day) — created on
   first use in a spreadsheet named "5C Pulse — Team Data". Columns are
   text-formatted (`@`) so Sheets never coerces dates/booleans/formulas;
   `readAll()` also normalizes any `Date` back to strings (google.script.run
   cannot serialize Dates). Nothing is hard-deleted.
+- **Updates snapshot their questions.** An update row stores
+  `[{l,t,u,v}]` — label, type, unit, value — copied from the question set at
+  submit time, so history stays readable after any set is reworded, replaced,
+  or archived. One row per person per day; re-submitting the same day edits
+  that row in place.
+- **Upgrading an existing deployment** is just pasting the two new files over
+  the old ones and re-deploying (Manage deployments → New version). On the
+  next request `ensureSchema()` — guarded by a script property so it costs one
+  property read afterwards — adds the two sheets, stretches `People`'s header
+  to the new `profile_id` column, and seeds the starter sets once.
 - **Polling.** `pull({since})` short-circuits with `{unchanged:true}` using a
   version counter mirrored in `CacheService`, so idle polls don't touch the
   spreadsheet. Client polls ~12 s visible / ~45 s hidden.
@@ -45,11 +66,14 @@ The non-technical walkthrough (with copy buttons and a live demo) is
 - `node build-demo.js` → `demo.html` (client + server + fakes in one page).
 - `node build-guide.js` → `../standalone/5c-pulse.html` (the setup guide with
   the demo embedded and copy buttons carrying the two files).
-- Playwright suites (kept outside the repo during development) drive two tabs
-  as two people: setup → add member → task + ring → alarm answered → status →
-  stuck → comments → chat → PIN reset forces sign-out → lockout. A second
-  suite covers what an adversarial review turned up (below); `FAKE_OPEN_FAILS`
-  injects a Sheets outage.
+- Playwright suites (`tests/`) drive two tabs as two people:
+  `two-devices.js` — setup → add member → task + ring → alarm answered →
+  status → stuck → comments → chat → PIN reset forces sign-out → lockout;
+  `review-fixes.js` — what an adversarial review turned up (below), with
+  `FAKE_OPEN_FAILS` injecting a Sheets outage; `updates.js` — seeded question
+  sets → a Video Editor files her minute → nudge bell → streaks, week totals,
+  history → rewording a set live → inventing a Chef set → archiving; and
+  `guide.js` over the built guide page.
 
 ## What the review changed
 

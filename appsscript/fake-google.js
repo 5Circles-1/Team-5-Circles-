@@ -128,7 +128,13 @@
     }
   };
   window.LockService = {
-    getScriptLock: function () { return { waitLock: function () {}, releaseLock: function () {} }; }
+    getScriptLock: function () {
+      return {
+        waitLock: function () {},
+        tryLock: function () { return true; },   // single-threaded here
+        releaseLock: function () {}
+      };
+    }
   };
   window.ScriptApp = {
     getService: function () {
