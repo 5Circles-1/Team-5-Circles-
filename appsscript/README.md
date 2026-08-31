@@ -43,11 +43,24 @@ The non-technical walkthrough (with copy buttons and a live demo) is
   submit time, so history stays readable after any set is reworded, replaced,
   or archived. One row per person per day; re-submitting the same day edits
   that row in place.
+- **The email bridge.** The bell only rings inside an open tab, so a ring for
+  someone *away from the app* (not seen for 3+ minutes) also goes to their
+  inbox via `MailApp`, from the owner's own Gmail — at most one per person
+  per 3 minutes (`CacheService` throttle), never breaking the ring on failure.
+  Admins keep each person's email on their Team-tab card. The **evening
+  chaser** is a daily clock trigger (`eveningChase`) created programmatically
+  at the admin's chosen time (client sends the epoch + tz offset; the trigger
+  is expressed in the script's own timezone, ±15 min): it emails whoever
+  hasn't filed that day's update, and runs on Google's side with nobody
+  online. Free Gmail sends ~100 mails/day — plenty at this team size.
 - **Upgrading an existing deployment** is just pasting the two new files over
   the old ones and re-deploying (Manage deployments → New version). On the
   next request `ensureSchema()` — guarded by a script property so it costs one
   property read afterwards — adds the two sheets, stretches `People`'s header
-  to the new `profile_id` column, and seeds the starter sets once.
+  to the new `profile_id` and `email` columns, and seeds the starter sets
+  once. A version that adds scopes (MailApp, triggers) needs one re-consent:
+  run `authorizeUpgrade` from the editor and click Allow, then deploy the
+  new version.
 - **Polling.** `pull({since})` short-circuits with `{unchanged:true}` using a
   version counter mirrored in `CacheService`, so idle polls don't touch the
   spreadsheet. Client polls ~12 s visible / ~45 s hidden.
@@ -72,7 +85,9 @@ The non-technical walkthrough (with copy buttons and a live demo) is
   `review-fixes.js` — what an adversarial review turned up (below), with
   `FAKE_OPEN_FAILS` injecting a Sheets outage; `updates.js` — seeded question
   sets → a Video Editor files her minute → nudge bell → streaks, week totals,
-  history → rewording a set live → inventing a Chef set → archiving; and
+  history → rewording a set live → inventing a Chef set → archiving;
+  `email-chaser.js` — away rings land in the fake outbox (throttled), the
+  chaser trigger emails only the pending, bad emails are refused; and
   `guide.js` over the built guide page.
 
 ## What the review changed

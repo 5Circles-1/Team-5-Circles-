@@ -48,6 +48,11 @@ WHAT THE TOOL DOES  (once it's online)
       your Google Sheet.
     - The bell: a message that takes over the screen and keeps
       ringing until the person answers - and you see their answer.
+      If they're away from the app and their email is on their Team
+      card, the ring also lands in their inbox instantly (sent from
+      your own Gmail), so their phone still buzzes. An optional
+      evening reminder emails whoever hasn't sent that day's update,
+      at a time you pick - it runs even when nobody has the app open.
     - Team tab (admins): add people, hand out PINs, reset PINs,
       remove people, and shape each person's daily update questions.
       When someone leaves, their open tasks move to you so nothing

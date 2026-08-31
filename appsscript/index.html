@@ -263,6 +263,9 @@
   .qedit .qu{width:76px}
   .qedit .x{color:var(--bad); font-size:17px; font-weight:800; padding:4px 8px}
   .psel{padding:8px 10px; border:1.5px solid var(--line); border-radius:10px; background:#fff; font-size:13.5px; font-weight:600; max-width:100%}
+  .pmail{padding:8px 10px; border:1.5px solid var(--line); border-radius:10px; background:#fff; font-size:13.5px;
+    width:190px; max-width:100%; outline:none}
+  .pmail:focus{border-color:var(--brand)}
 
   /* modals / sheets */
   .veil{position:fixed; inset:0; background:rgba(15,34,48,.45); z-index:60;
@@ -418,12 +421,14 @@
             <select id="npProf" title="Their daily update questions"></select>
             <input type="text" id="npDept" placeholder="What they do" maxlength="40" list="deptList" style="width:150px">
             <datalist id="deptList"></datalist>
+            <input type="text" id="npMail" placeholder="Email (for alerts)" maxlength="120" inputmode="email" style="width:180px">
             <select id="npRole"><option value="Member">Member</option><option value="Admin">Admin</option></select>
             <button class="btn primary" id="npAdd">Add</button>
           </div>
           <p class="small mut" style="margin-top:8px">They get a PIN — you’ll see it once, send it to them
             with this page’s address. The question set decides what their daily update asks;
-            change it any time from their card.</p>
+            change it any time from their card. With an email, rings reach their inbox
+            when they’re away from the app.</p>
         </div>
       </div>
       <div class="sect"><h2>The team</h2><div id="teamList"></div></div>
@@ -448,6 +453,14 @@
           <b>Company name:</b>
           <input type="text" id="coEdit" maxlength="60" style="padding:8px 12px; border:1.5px solid var(--line); border-radius:10px">
           <button class="btn ghost sm" id="coSave">Save</button>
+        </div>
+        <div class="row">
+          <b>Evening reminder:</b>
+          <input type="time" id="chTime" style="padding:8px 12px; border:1.5px solid var(--line); border-radius:10px">
+          <button class="btn ghost sm" id="chSave">Set</button>
+          <button class="btn ghost sm hide" id="chOff">Turn off</button>
+          <span class="small mut" id="chInfo">emails whoever hasn’t sent that day’s update — works even when
+            nobody has the app open</span>
         </div>
       </div>
     </div>
@@ -2045,7 +2058,22 @@ function renderTeam() {
   var admin = Auth.me.role === 'Admin';
   $('teamAdd').classList.toggle('hide', !admin);
   $('adminFoot').classList.toggle('hide', !admin);
+
+  // A half-typed email must survive the poll's re-render, caret and all
+  var ae = document.activeElement;
+  var focusMail = (ae && ae.getAttribute && ae.getAttribute('data-mailin')) || null;
+  var mailCaret = focusMail && ae.selectionStart != null ? ae.selectionStart : 0;
+  var mailDrafts = {};
+  Array.prototype.forEach.call(document.querySelectorAll('[data-mailin]'), function (i) {
+    mailDrafts[i.getAttribute('data-mailin')] = i.value;
+  });
+
   if (admin) {
+    if (document.activeElement !== $('chTime') && S.chaser) $('chTime').value = S.chaser;
+    $('chOff').classList.toggle('hide', !S.chaser);
+    $('chInfo').textContent = S.chaser
+      ? 'on — every day at ' + S.chaser + ', whoever hasn’t sent that day’s update gets an email'
+      : 'emails whoever hasn’t sent that day’s update — works even when nobody has the app open';
     $('openSheet').href = S.sheetUrl || '#';
     $('openSheet').classList.toggle('hide', !S.sheetUrl);
     if (document.activeElement !== $('coEdit')) $('coEdit').value = S.company;
@@ -2083,6 +2111,9 @@ function renderTeam() {
       (admin ?
         '<div class="padmin">' +
         '<select class="psel" data-act="prof" title="Their daily update questions">' + profOptions(effectiveProfile(p).id) + '</select>' +
+        '<input class="pmail" data-mailin="' + esc(p.id) + '" placeholder="email for alerts" maxlength="120" inputmode="email" value="' +
+          esc(mailDrafts[p.id] !== undefined ? mailDrafts[p.id] : (p.email || '')) + '">' +
+        '<button class="btn ghost sm" data-act="mailsave">Save email</button>' +
         (p.id !== Auth.me.id ?
           '<button class="btn ghost sm" data-act="pin">Reset PIN</button>' +
           '<button class="btn ghost sm" data-act="role">' + (p.role === 'Admin' ? 'Make member' : 'Make admin') + '</button>' +
@@ -2092,11 +2123,20 @@ function renderTeam() {
   });
   $('teamList').innerHTML = html;
 
-  // The card itself opens that person's updates; buttons and pickers stay theirs
+  // The card itself opens that person's updates; buttons, pickers and inputs stay theirs
   Array.prototype.forEach.call($('teamList').querySelectorAll('.pcard'), function (card) {
     card.addEventListener('click', function (ev) {
-      if (ev.target.closest('button') || ev.target.closest('select')) return;
+      if (ev.target.closest('button') || ev.target.closest('select') || ev.target.closest('input')) return;
       openPersonSheet(card.getAttribute('data-id'));
+    });
+  });
+
+  Array.prototype.forEach.call($('teamList').querySelectorAll('[data-mailin]'), function (inp) {
+    inp.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter' && !ev.repeat) {
+        var btn = inp.closest('.pcard').querySelector('[data-act="mailsave"]');
+        if (btn) btn.click();
+      }
     });
   });
 
@@ -2113,6 +2153,16 @@ function renderTeam() {
     var p = personById(pid);
     b.addEventListener('click', function () {
       var act = b.getAttribute('data-act');
+      if (act === 'mailsave') {
+        var inp = card.querySelector('[data-mailin]');
+        once(b, function () {
+          return rpc('editPerson', { personId: pid, email: inp.value }).then(function (res) {
+            if (!res.ok) { toast(res.error || 'That didn’t save.', true); return; }
+            toast(inp.value.trim() ? 'Saved — rings reach their inbox when they’re away from the app.' : 'Email removed.');
+            pollNow();
+          }, writeFailed);
+        });
+      }
       if (act === 'pin') {
         ask('Give ' + p.name + ' a brand-new PIN? Their old one stops working and they’re signed out.', 'Reset PIN')
           .then(function (yes) {
@@ -2143,6 +2193,13 @@ function renderTeam() {
       }
     });
   });
+
+  if (focusMail) {
+    try {
+      var mi = document.querySelector('[data-mailin="' + CSS.escape(focusMail) + '"]');
+      if (mi) { mi.focus(); mi.setSelectionRange(mailCaret, mailCaret); }
+    } catch (e) {}
+  }
 }
 
 /** The question sets themselves — the admin's shelf of "kinds of work". */
@@ -2187,11 +2244,12 @@ $('npAdd').addEventListener('click', function () {
   var name = $('npName').value.trim();
   if (!name) { $('npName').focus(); return; }
   $('npAdd').disabled = true;
-  rpc('addPerson', { name: name, dept: $('npDept').value.trim(), role: $('npRole').value, profileId: $('npProf').value })
+  rpc('addPerson', { name: name, dept: $('npDept').value.trim(), role: $('npRole').value, profileId: $('npProf').value, email: $('npMail').value })
     .then(function (res) {
       $('npAdd').disabled = false;
       if (!res.ok) { toast(res.error, true); return; }
       $('npName').value = '';
+      $('npMail').value = '';
       showPinReveal(res.person.name, res.pin, false, pollNow);
     }, function (e) { $('npAdd').disabled = false; writeFailed(e); });
 });
@@ -2199,6 +2257,29 @@ $('npName').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') 
 
 $('coSave').addEventListener('click', function () {
   rpc('setCompany', { company: $('coEdit').value.trim() }).then(afterWrite, writeFailed);
+});
+$('chSave').addEventListener('click', function () {
+  var t = $('chTime').value;
+  if (!/^\d{2}:\d{2}$/.test(t)) { toast('Pick a time first.', true); $('chTime').focus(); return; }
+  var bits = t.split(':');
+  var d = new Date();
+  d.setHours(Number(bits[0]), Number(bits[1]), 0, 0);
+  if (d.getTime() <= Date.now()) d.setDate(d.getDate() + 1);
+  once($('chSave'), function () {
+    return rpc('setChaser', { epoch: d.getTime(), offsetMin: new Date().getTimezoneOffset(), label: t })
+      .then(function (res) {
+        if (!res.ok) { toast(res.error || 'That didn’t set.', true); return; }
+        toast('Set. Every day around ' + t + ', missing updates get an email.');
+        pollNow();
+      }, writeFailed);
+  });
+});
+$('chOff').addEventListener('click', function () {
+  rpc('clearChaser', {}).then(function (res) {
+    if (!res.ok) { toast(res.error || 'That didn’t work.', true); return; }
+    toast('Evening reminder off.');
+    pollNow();
+  }, writeFailed);
 });
 $('copyUrl').addEventListener('click', function () {
   copyText(appUrl());

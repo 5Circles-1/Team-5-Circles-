@@ -101,6 +101,12 @@
   window.Utilities = {
     DigestAlgorithm: { SHA_256: 'SHA_256' },
     computeDigest: function (alg, str) { return sha256Bytes(String(str)); },
+    formatDate: function (date, tz, fmt) {
+      // The fake zone is UTC; only the patterns Code.gs asks for exist.
+      if (fmt === 'H') return String(date.getUTCHours());
+      if (fmt === 'm') return String(date.getUTCMinutes());
+      return date.toISOString();
+    },
     getUuid: function () {
       if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -122,8 +128,22 @@
   window.CacheService = {
     getScriptCache: function () {
       return {
-        get: function (k) { var d = load(); return d && d.cache[k] != null ? String(d.cache[k]) : null; },
-        put: function (k, v) { var d = load() || blank(); d.cache[k] = String(v); save(d); }
+        get: function (k) {
+          var d = load();
+          if (!d || d.cache[k] == null) return null;
+          var v = d.cache[k];
+          if (v && typeof v === 'object' && v.__exp !== undefined) {
+            if (v.__exp && Date.now() > v.__exp) return null;
+            return String(v.v);
+          }
+          return String(v);   // entries written by an older fake
+        },
+        put: function (k, v, ttlSec) {
+          var d = load() || blank();
+          d.cache[k] = { v: String(v), __exp: ttlSec ? Date.now() + ttlSec * 1000 : 0 };
+          save(d);
+        },
+        remove: function (k) { var d = load(); if (d) { delete d.cache[k]; save(d); } }
       };
     }
   };
@@ -139,6 +159,50 @@
   window.ScriptApp = {
     getService: function () {
       return { getUrl: function () { return location.href.split('#')[0]; } };
+    },
+    getProjectTriggers: function () {
+      var d = load();
+      return ((d && d.triggers) || []).map(function (t) {
+        return { getHandlerFunction: function () { return t.handler; }, _id: t.id };
+      });
+    },
+    deleteTrigger: function (trig) {
+      var d = load();
+      if (!d) return;
+      d.triggers = (d.triggers || []).filter(function (t) { return t.id !== trig._id; });
+      save(d);
+    },
+    newTrigger: function (handler) {
+      var spec = { id: 'trig-' + Math.random().toString(36).slice(2), handler: handler };
+      var builder = {
+        timeBased: function () { return builder; },
+        everyDays: function (n) { spec.everyDays = n; return builder; },
+        atHour: function (h) { spec.hour = h; return builder; },
+        nearMinute: function (m) { spec.minute = m; return builder; },
+        create: function () {
+          var d = load() || blank();
+          (d.triggers = d.triggers || []).push(spec);
+          save(d);
+          return { getHandlerFunction: function () { return spec.handler; }, _id: spec.id };
+        }
+      };
+      return builder;
+    }
+  };
+
+  window.Session = {
+    getScriptTimeZone: function () { return 'UTC'; }
+  };
+
+  /* Sent mail lands in db.outbox so the demo stays offline and tests can read it. */
+  window.MailApp = {
+    getRemainingDailyQuota: function () { return 100; },
+    sendEmail: function (opt) {
+      var d = load() || blank();
+      (d.outbox = d.outbox || []).push({
+        to: opt.to, subject: opt.subject, body: opt.body, at: new Date().toISOString()
+      });
+      save(d);
     }
   };
 

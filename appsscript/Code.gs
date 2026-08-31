@@ -35,7 +35,7 @@ var SHEETS = {
   UPDATES:  'Updates'
 };
 
-var PEOPLE_COLS   = ['id','name','dept','role','pin_hash','salt','token','active','created','last_seen','failed_tries','locked_until','profile_id'];
+var PEOPLE_COLS   = ['id','name','dept','role','pin_hash','salt','token','active','created','last_seen','failed_tries','locked_until','profile_id','email'];
 var TASKS_COLS    = ['id','title','note','owner_id','by_id','due','status','stuck','created','updated','done_at'];
 var MESSAGES_COLS = ['id','from_id','to_id','text','kind','task_id','created','acks'];
 var PROFILES_COLS = ['id','name','emoji','questions','archived','created'];
@@ -45,7 +45,10 @@ var MSG_PULL_LIMIT = 400;   // the sheet keeps everything; a pull sends the rece
 var UPD_PULL_LIMIT = 600;   // ~2 months of daily updates for a 10-person team
 var PIN_TRIES = 5;
 var PIN_LOCK_MS = 5 * 60 * 1000;
-var SCHEMA_VERSION = '2';
+var SCHEMA_VERSION = '3';
+var AWAY_MS = 3 * 60 * 1000;        // not seen for this long = "away from the app"
+var MAIL_THROTTLE_S = 180;          // at most one ring email per person per 3 min
+var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /* Starter question sets — one per kind of work 5 Circles runs on today, and a
    General one for everyone else. They are ROWS, not rules: admins can reword
@@ -131,6 +134,8 @@ function api(token, action, data) {
       case 'resetPin':    return jok(withLock(function () { return resetPin(me, data); }));
       case 'removePerson':return jok(withLock(function () { return removePerson(me, data); }));
       case 'setCompany':  return jok(withLock(function () { return setCompany(me, data); }));
+      case 'setChaser':   return jok(withLock(function () { return setChaser(me, data); }));
+      case 'clearChaser': return jok(withLock(function () { return clearChaser(me); }));
       case 'logout':      return jok(withLock(function () { return logout(me); }));
       default:            return { ok: false, error: 'Unknown action: ' + action };
     }
@@ -407,7 +412,8 @@ function setupTeam(data) {
       last_seen: new Date().toISOString(),
       failed_tries: 0,
       locked_until: '',
-      profile_id: 'general'
+      profile_id: 'general',
+      email: ''
     };
     appendRowFor(SHEETS.PEOPLE, PEOPLE_COLS, admin);
     bumpVersion();
@@ -502,19 +508,20 @@ function pull(me, data) {
   var updates = readAll(SHEETS.UPDATES, UPDATES_COLS);
   if (updates.length > UPD_PULL_LIMIT) updates = updates.slice(updates.length - UPD_PULL_LIMIT);
 
-  var appUrl = '';
-  try { appUrl = ScriptApp.getService().getUrl() || ''; } catch (e) {}
+  var isAdmin = me.role === 'Admin';
 
   return {
     v: v,
     company: metaGet('company') || '5 Circles',
     me: publicPerson(me),
-    appUrl: appUrl,
-    sheetUrl: me.role === 'Admin' ? ss().getUrl() : '',
+    appUrl: webAppUrl(),
+    sheetUrl: isAdmin ? ss().getUrl() : '',
+    chaser: metaGet('chaser_label') || '',
     people: people.map(function (p) {
       var pub = publicPerson(p);
       var cached = seen[p.id] || '';
       pub.last_seen = cached > (p.last_seen || '') ? cached : (p.last_seen || '');
+      if (isAdmin || p.id === me.id) pub.email = p.email || '';
       return pub;
     }),
     tasks: tasks.map(function (t) {
@@ -685,7 +692,153 @@ function postMessage(fromId, toId, text, kind, taskId) {
     acks: '[]'
   };
   appendRowFor(SHEETS.MESSAGES, MESSAGES_COLS, msg);
+  // A ring for someone away from the app also knocks on their inbox — Gmail's
+  // own notification reaches a phone that the closed tab cannot.
+  if (msg.kind === 'ring') {
+    try { emailAwayRing(fromId, msg.to_id, msg.text); } catch (e) {}
+  }
   return msg;
+}
+
+/* ── the email bridge ─────────────────────────────────────────────────────
+   The bell only rings inside an open tab; email is the honest way past a
+   closed one. Mail goes out from the owner's own Gmail (the account this
+   script runs as), only to people who are away right now, at most one per
+   person per few minutes. An email failure must never break the ring. */
+
+function webAppUrl() {
+  var url = '';
+  try { url = ScriptApp.getService().getUrl() || ''; } catch (e) {}
+  if (!url) return metaGet('app_url') || '';
+  if (!metaGet('app_url')) { try { metaSet('app_url', url); } catch (e) {} }
+  return url;
+}
+
+function isAway(p, seen) {
+  var cached = (seen && seen[p.id]) || '';
+  var last = cached > (p.last_seen || '') ? cached : (p.last_seen || '');
+  if (!last) return true;
+  var t = new Date(last).getTime();
+  return isNaN(t) || (Date.now() - t) > AWAY_MS;
+}
+
+function emailAwayRing(fromId, toId, text) {
+  var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
+  var fromName = 'Your team';
+  for (var i = 0; i < people.length; i++) if (people[i].id === fromId) fromName = people[i].name;
+  var targets = people.filter(function (p) {
+    if (String(p.active) === 'false' || p.id === fromId) return false;
+    return toId === 'ALL' ? true : p.id === toId;
+  });
+  var seen = presenceMap();
+  var url = webAppUrl();
+  var company = metaGet('company') || '5 Circles';
+  var cache = null;
+  try { cache = CacheService.getScriptCache(); } catch (e) {}
+  for (var t = 0; t < targets.length; t++) {
+    var p = targets[t];
+    if (!p.email || !EMAIL_RE.test(p.email)) continue;
+    if (!isAway(p, seen)) continue;            // they're in the app — the screen rings
+    if (cache && cache.get('mail:' + p.id)) continue;
+    try {
+      MailApp.sendEmail({
+        to: p.email,
+        subject: '🔔 ' + fromName + ' needs you — ' + company,
+        body: '“' + text + '”\n\n' +
+          'Open the app and the bell will be waiting until you answer:\n' +
+          (url || '(ask your admin for the app link)') + '\n\n' +
+          '— ' + company + '’s 5C Pulse, because you were away from the app.'
+      });
+      if (cache) { try { cache.put('mail:' + p.id, '1', MAIL_THROTTLE_S); } catch (e) {} }
+    } catch (e) {}
+  }
+}
+
+/* The evening chaser: a clock trigger on Google's side that emails whoever
+   hasn't filed today's update — it runs even when nobody has the app open. */
+
+function chaserTriggers() {
+  var out = [];
+  var ts = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < ts.length; i++) {
+    if (ts[i].getHandlerFunction() === 'eveningChase') out.push(ts[i]);
+  }
+  return out;
+}
+
+function setChaser(me, data) {
+  me = admin(me);
+  var epoch = Number(data.epoch);
+  if (!epoch || isNaN(epoch)) throw new Error('Pick a time first.');
+  var offset = Number(data.offsetMin);
+  if (isNaN(offset)) offset = 0;
+
+  var old = chaserTriggers();
+  for (var i = 0; i < old.length; i++) ScriptApp.deleteTrigger(old[i]);
+
+  // The admin's clock decides "7:30 pm"; Google's clock may live in another
+  // timezone, so the moment travels as an epoch and is read back in the
+  // script's own zone. Clock triggers land within ~15 minutes of the mark.
+  var d = new Date(epoch);
+  var hour = Number(Utilities.formatDate(d, Session.getScriptTimeZone(), 'H'));
+  var minute = Number(Utilities.formatDate(d, Session.getScriptTimeZone(), 'm'));
+  var near = Math.round(minute / 15) * 15;
+  if (near >= 60) { near = 0; hour = (hour + 1) % 24; }
+  ScriptApp.newTrigger('eveningChase').timeBased().everyDays(1).atHour(hour).nearMinute(near).create();
+
+  metaSet('chaser_label', String(data.label || '').slice(0, 12));
+  metaSet('chaser_offset', String(offset));
+  bumpVersion();
+  return {};
+}
+
+function clearChaser(me) {
+  me = admin(me);
+  var old = chaserTriggers();
+  for (var i = 0; i < old.length; i++) ScriptApp.deleteTrigger(old[i]);
+  metaSet('chaser_label', '');
+  bumpVersion();
+  return {};
+}
+
+function eveningChase() {
+  // Runs as the owner on Google's schedule — there is no signed-in "me" here.
+  var offset = Number(metaGet('chaser_offset') || 0);
+  var teamNow = new Date(Date.now() - offset * 60000);
+  var date = teamNow.getUTCFullYear() + '-' +
+    ('0' + (teamNow.getUTCMonth() + 1)).slice(-2) + '-' +
+    ('0' + teamNow.getUTCDate()).slice(-2);
+
+  var filed = {};
+  var updates = readAll(SHEETS.UPDATES, UPDATES_COLS);
+  for (var i = 0; i < updates.length; i++) {
+    if (updates[i].date === date) filed[updates[i].person_id] = true;
+  }
+  var url = webAppUrl();
+  var company = metaGet('company') || '5 Circles';
+  var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
+  for (var p = 0; p < people.length; p++) {
+    var person = people[p];
+    if (String(person.active) === 'false' || filed[person.id]) continue;
+    if (!person.email || !EMAIL_RE.test(person.email)) continue;
+    try {
+      MailApp.sendEmail({
+        to: person.email,
+        subject: '⏳ Your daily update is waiting — ' + company,
+        body: 'One minute, your own questions, done for the day.\n\n' +
+          'Open the Updates tab:\n' + (url || '(ask your admin for the app link)') + '\n\n' +
+          '— ' + company + '’s 5C Pulse'
+      });
+    } catch (e) {}
+  }
+}
+
+/** Run me ONCE from the editor after pasting a new version, if Google asks
+ *  for new permissions — this touches mail and triggers so the consent
+ *  screen appears and you can press Allow. It changes nothing. */
+function authorizeUpgrade() {
+  Logger.log('Mail left today: ' + MailApp.getRemainingDailyQuota());
+  Logger.log('Reminder triggers: ' + chaserTriggers().length);
 }
 
 function sendMessage(me, data) {
@@ -962,6 +1115,14 @@ function activeAdminCount() {
   return n;
 }
 
+/** Empty is fine (no emails for them); anything else must look like an email. */
+function cleanEmail(raw) {
+  var em = String(raw || '').trim().toLowerCase();
+  if (!em) return '';
+  if (em.length > 120 || !EMAIL_RE.test(em)) throw new Error('That email doesn’t look right.');
+  return em;
+}
+
 function addPerson(me, data) {
   me = admin(me);
   var name = String(data.name || '').trim();
@@ -992,7 +1153,8 @@ function addPerson(me, data) {
     last_seen: '',
     failed_tries: 0,
     locked_until: '',
-    profile_id: profile ? profile.id : 'general'
+    profile_id: profile ? profile.id : 'general',
+    email: cleanEmail(data.email)
   };
   appendRowFor(SHEETS.PEOPLE, PEOPLE_COLS, person);
   bumpVersion();
@@ -1010,6 +1172,7 @@ function editPerson(me, data) {
     p.name = name;
   }
   if (data.dept !== undefined) p.dept = String(data.dept).trim() || p.dept;
+  if (data.email !== undefined) p.email = cleanEmail(data.email);
   if (data.profileId !== undefined) {
     var prof = profileRowById(String(data.profileId));
     if (!prof || String(prof.archived) === 'true') throw new Error('Pick a question set from the list.');
