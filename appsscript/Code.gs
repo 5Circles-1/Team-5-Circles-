@@ -56,36 +56,36 @@ var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
    archive what they don't use. 'general' is the fallback and cannot go. */
 var Q = function (id, label, type, unit) { return { id: id, label: label, type: type, unit: unit || '' }; };
 var PRESET_PROFILES = [
-  { id: 'general', name: 'General', emoji: '📝', questions: [
+  { id: 'general', name: 'General', emoji: '', questions: [
     Q('g1', 'What did you get done today?', 'text'),
     Q('g2', 'What’s the plan for tomorrow?', 'text'),
     Q('g3', 'Anything in your way?', 'text')
   ]},
-  { id: 'video', name: 'Video Editor', emoji: '🎬', questions: [
+  { id: 'video', name: 'Video Editor', emoji: '', questions: [
     Q('v1', 'Videos delivered today', 'count', 'videos'),
     Q('v2', 'Still on the edit table', 'count', 'videos'),
     Q('v3', 'Waiting on footage or approval from someone?', 'yesno'),
     Q('v4', 'Best thing you cut today', 'text')
   ]},
-  { id: 'marketing', name: 'Performance Marketer', emoji: '📣', questions: [
+  { id: 'marketing', name: 'Performance Marketer', emoji: '', questions: [
     Q('m1', 'Leads that came in', 'count', 'leads'),
     Q('m2', 'Spent on ads today', 'count', '₹'),
     Q('m3', 'Best-performing ad right now', 'text'),
     Q('m4', 'Anything to pause or scale?', 'text')
   ]},
-  { id: 'sales', name: 'Sales', emoji: '☎️', questions: [
+  { id: 'sales', name: 'Sales', emoji: '', questions: [
     Q('s1', 'Calls made', 'count', 'calls'),
     Q('s2', 'Follow-ups done', 'count'),
     Q('s3', 'Closures today', 'count'),
     Q('s4', 'Hot leads for tomorrow', 'text')
   ]},
-  { id: 'mentor', name: 'Mentor / Trainer', emoji: '🎓', questions: [
+  { id: 'mentor', name: 'Mentor / Trainer', emoji: '', questions: [
     Q('t1', 'Sessions taken', 'count'),
     Q('t2', 'Students showed up', 'count'),
     Q('t3', 'Doubts still open', 'count'),
     Q('t4', 'A student who needs attention', 'text')
   ]},
-  { id: 'frontdesk', name: 'Front Desk', emoji: '🛎️', questions: [
+  { id: 'frontdesk', name: 'Front Desk', emoji: '', questions: [
     Q('f1', 'Walk-ins today', 'count'),
     Q('f2', 'Enquiries taken', 'count'),
     Q('f3', 'Fees collected', 'count', '₹'),
@@ -612,10 +612,30 @@ function assertTaskParty(me, task) {
   }
 }
 
+/** Where it stands — To do / Doing / Done, and stuck — is a claim about your
+ *  own work, so only the person doing it may make it. The one who asked for
+ *  the task (and an admin) can read it, comment on it and change the ask; they
+ *  cannot answer in the doer's name, or the record stops meaning anything.
+ *  An admin who genuinely has to close someone's task moves it to themselves
+ *  first, which the task's own history then shows. */
+function assertTaskDoer(me, task) {
+  if (task.owner_id !== me.id) {
+    throw new Error('Only ' + personName(task.owner_id) + ' can say where this task stands — you can comment on it instead.');
+  }
+}
+
+/** A name for a message — the person may since have left the team, so this
+ *  looks past `active` rather than going blank on them. */
+function personName(id) {
+  var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
+  for (var i = 0; i < people.length; i++) if (people[i].id === id) return people[i].name;
+  return 'the person doing it';
+}
+
 function setStatus(me, data) {
   var task = taskById(data.taskId);
   if (!task) throw new Error('Task not found.');
-  assertTaskParty(me, task);
+  assertTaskDoer(me, task);
   var status = String(data.status || '');
   if (['To do', 'Doing', 'Done'].indexOf(status) < 0) throw new Error('Unknown status.');
 
@@ -635,7 +655,7 @@ function setStatus(me, data) {
 function toggleStuck(me, data) {
   var task = taskById(data.taskId);
   if (!task) throw new Error('Task not found.');
-  assertTaskParty(me, task);
+  assertTaskDoer(me, task);
   var nowStuck = String(task.stuck) !== 'true';
   task.stuck = nowStuck ? 'true' : 'false';
   task.updated = new Date().toISOString();
@@ -743,7 +763,7 @@ function emailAwayRing(fromId, toId, text) {
     try {
       MailApp.sendEmail({
         to: p.email,
-        subject: '🔔 ' + fromName + ' needs you — ' + company,
+        subject: fromName + ' needs you — ' + company,
         body: '“' + text + '”\n\n' +
           'Open the app and the bell will be waiting until you answer:\n' +
           (url || '(ask your admin for the app link)') + '\n\n' +
@@ -824,7 +844,7 @@ function eveningChase() {
     try {
       MailApp.sendEmail({
         to: person.email,
-        subject: '⏳ Your daily update is waiting — ' + company,
+        subject: 'Your daily update is waiting — ' + company,
         body: 'One minute, your own questions, done for the day.\n\n' +
           'Open the Updates tab:\n' + (url || '(ask your admin for the app link)') + '\n\n' +
           '— ' + company + '’s 5C Pulse'
@@ -909,6 +929,10 @@ function questionsFor(person) {
 
 function validDateStr(s) { return /^\d{4}-\d{2}-\d{2}$/.test(String(s || '')); }
 
+/** How many lines one written answer may carry — matches MAX_LINES in the
+ *  client, and keeps the update readable at a glance in the feed. */
+var MAX_ANSWER_LINES = 8;
+
 function saveUpdate(me, data) {
   var date = String(data.date || '');
   if (!validDateStr(date)) throw new Error('That date doesn’t look right.');
@@ -936,7 +960,16 @@ function saveUpdate(me, data) {
     } else if (q.type === 'yesno') {
       if (v !== 'yes' && v !== 'no') continue;
     } else {
-      v = v.slice(0, 300);
+      // One line per thing done. Blank lines fall away, eight is the ceiling
+      // (the form has to stay a minute long), each line stays a line.
+      var lines = v.replace(/\r\n?/g, '\n').split('\n');
+      var kept = [];
+      for (var L = 0; L < lines.length && kept.length < MAX_ANSWER_LINES; L++) {
+        var line = lines[L].trim().slice(0, 300);
+        if (line) kept.push(line);
+      }
+      if (!kept.length) continue;
+      v = kept.join('\n');
     }
     answers.push({ l: q.label, t: q.type, u: q.unit || '', v: v });
   }
@@ -1041,7 +1074,9 @@ function saveProfile(me, data) {
   me = admin(me);
   var name = String(data.name || '').trim().slice(0, 40);
   if (!name) throw new Error('Name the kind of work first.');
-  var emoji = String(data.emoji || '').trim().slice(0, 8) || '📝';
+  // Kept only so the Profiles sheet's columns still line up on books made by
+  // an older Code.gs; a question set is named, not pictured.
+  var emoji = '';
   var questions = cleanQuestions(data.questions);
 
   var rows = profileRows();

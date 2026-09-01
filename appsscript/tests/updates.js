@@ -55,7 +55,7 @@ const ok = (label, cond) => {
   /* add Meera as a Video Editor */
   await A.locator('#tabs button[data-tab="team"]').click();
   await A.locator('#npName').fill('Meera');
-  await A.locator('#npProf').selectOption({ label: '🎬 Video Editor' });
+  await A.locator('#npProf').selectOption({ label: 'Video Editor' });
   await A.locator('#npAdd').click();
   await A.locator('#veilPin:not(.hide)').waitFor({ timeout: 8000 });
   const meeraPin = (await A.locator('#pvPin').textContent()).trim();
@@ -82,7 +82,7 @@ const ok = (label, cond) => {
   await A.locator('#askYes').click();
   await B.locator('#alarm:not(.hide)').waitFor({ timeout: 10000 });
   ok('B: nudge takes over her screen', /daily update is waiting/.test(await B.locator('#alText').textContent()));
-  await B.locator('#alarm .ans button[data-ans="On it 👍"]').click();
+  await B.locator('#alarm .ans button[data-ans="On it"]').click();
   await B.waitForTimeout(400);
   ok('B: answering clears the nudge', await B.locator('#alarm').isHidden());
 
@@ -96,7 +96,19 @@ const ok = (label, cond) => {
   await B.locator('#myUpdate .uq', { hasText: 'Videos delivered today' }).locator('input').fill('3');
   await B.locator('#myUpdate .uq', { hasText: 'Still on the edit table' }).locator('input').fill('2');
   await B.locator('#myUpdate .uq', { hasText: 'Waiting on footage' }).locator('button[data-v="yes"]').click();
-  await B.locator('#myUpdate .uq', { hasText: 'Best thing you cut' }).locator('input').fill('AMA teaser for the club');
+  /* a written answer is lines, not a paragraph — she did three things */
+  const cut = B.locator('#myUpdate .uq', { hasText: 'Best thing you cut' });
+  ok('B: a written question starts with one line and an "add" button',
+    (await cut.locator('.lrow').count()) === 1 && (await cut.locator('[data-add]').count()) === 1);
+  await cut.locator('input[data-ln="0"]').fill('AMA teaser for the club');
+  await cut.locator('[data-add]').click();
+  await cut.locator('input[data-ln="1"]').fill('Reel cut for the Kanpur meetup');
+  await cut.locator('[data-add]').click();
+  await cut.locator('input[data-ln="2"]').fill('Thumbnail pack for the webinar');
+  ok('B: three lines, each its own box', (await cut.locator('.lrow').count()) === 3);
+  await cut.locator('[data-add]').click();
+  await cut.locator('.lrow').nth(3).locator('.x').click();
+  ok('B: a line she does not want comes straight back off', (await cut.locator('.lrow').count()) === 3);
   await B.locator('#myUpdate input[data-uq="_note"]').fill('Laptop fan is dying, might need a look');
   await B.locator('#updShare').click();
   await B.locator('#updChange').waitFor({ timeout: 8000 });
@@ -109,11 +121,15 @@ const ok = (label, cond) => {
   await A.locator('#updFeed .upd', { hasText: 'Meera' }).waitFor({ timeout: 10000 });
   const meeraCard = A.locator('#updFeed .upd', { hasText: 'Meera' });
   ok('A: Meera’s update lands in the feed', true);
-  ok('A: her mood rides along', /🔥/.test(await meeraCard.textContent()));
+  ok('A: her mood rides along', /Great day/.test(await meeraCard.textContent()));
   const chipText = await meeraCard.locator('.nums').textContent();
   ok('A: counts come as chips', /3/.test(chipText) && /Videos delivered/.test(chipText));
   ok('A: a unit already in the question isn’t said twice', !/videos Videos/.test(chipText));
   ok('A: words come as lines', await meeraCard.locator('.qa2', { hasText: 'AMA teaser' }).isVisible());
+  const cutBack = meeraCard.locator('.qa2', { hasText: 'AMA teaser' });
+  ok('A: all three lines arrive, one bullet each', (await cutBack.locator('li').count()) === 3);
+  ok('A: and they read in the order she wrote them',
+    /Reel cut for the Kanpur meetup/.test(await cutBack.locator('li').nth(1).textContent()));
   ok('A: the note travels too', await meeraCard.locator('.note', { hasText: 'Laptop fan' }).isVisible());
   ok('A: pending strip no longer lists Meera', (await A.locator('.pendchip', { hasText: 'Meera' }).count()) === 0);
 
@@ -151,7 +167,7 @@ const ok = (label, cond) => {
     localStorage.setItem('5cp2_db', JSON.stringify(db));
   });
   await A.locator('#updFeed .upd', { hasText: 'Meera' }).locator('.chip.streak').waitFor({ timeout: 10000 });
-  ok('A: two days running earns the flame', /2 days/.test(await A.locator('#updFeed .upd', { hasText: 'Meera' }).locator('.chip.streak').textContent()));
+  ok('A: two days running earns the streak chip', /2 days running/.test(await A.locator('#updFeed .upd', { hasText: 'Meera' }).locator('.chip.streak').textContent()));
 
   await A.locator('#updFeed .upd .hd', { hasText: 'Meera' }).click();
   await A.locator('#veilPerson:not(.hide)').waitFor({ timeout: 4000 });
@@ -172,13 +188,14 @@ const ok = (label, cond) => {
   await B.locator('#updChange').click();
   await B.locator('#myUpdate .uq', { hasText: 'Reels delivered today' }).waitFor({ timeout: 10000 });
   ok('B: reworded question reaches her form', true);
+  ok('B: changing it hands her lines back as lines',
+    (await B.locator('#myUpdate .uq', { hasText: 'Best thing you cut' }).locator('.lrow').count()) === 3);
   await B.locator('#updCancel').click();
 
   /* a brand-new kind of work, invented on the spot */
   await A.locator('#profNew').click();
   await A.locator('#veilProfile:not(.hide)').waitFor({ timeout: 4000 });
   await A.locator('#prName').fill('Chef');
-  await A.locator('#prEmoji').fill('🍳');
   await A.locator('#prQs .qedit').first().locator('.ql').fill('Meals cooked');
   await A.locator('#prQs .qedit').first().locator('.qu').fill('meals');
   await A.locator('#prAddQ').click();
@@ -188,7 +205,7 @@ const ok = (label, cond) => {
   await A.locator('.profcard', { hasText: 'Chef' }).waitFor({ timeout: 8000 });
   ok('A: the Chef set exists — any team fits', true);
 
-  await A.locator('.pcard', { hasText: 'Meera' }).locator('select[data-act="prof"]').selectOption({ label: '🍳 Chef' });
+  await A.locator('.pcard', { hasText: 'Meera' }).locator('select[data-act="prof"]').selectOption({ label: 'Chef' });
   await B.locator('#updChange').waitFor({ timeout: 10000 });
   await B.locator('#updChange').click();
   await B.locator('#myUpdate .uq', { hasText: 'Meals cooked' }).waitFor({ timeout: 10000 });

@@ -94,7 +94,7 @@ const ok = (label, cond) => {
   ok('B: alarm carries the task ("' + alText.slice(0, 40) + '…")', /Call the Mehta/.test(alText));
   ok('B: alarm names the sender', /Aisha/.test(await B.locator('#alFrom').textContent()));
   await B.screenshot({ path: '/tmp/5cpg/shots2/alarm.png' });
-  await B.locator('#alarm .ans button[data-ans="On it 👍"]').click();
+  await B.locator('#alarm .ans button[data-ans="On it"]').click();
   await B.waitForTimeout(400);
   ok('B: answering clears the alarm', await B.locator('#alarm').isHidden());
 
@@ -105,12 +105,25 @@ const ok = (label, cond) => {
   /* A sees the answer in the task's comment thread */
   await A.locator('.task .linkbtn[data-act="cmt"]').first().click();
   await A.locator('.ackline').first().waitFor({ timeout: 8000 });
-  ok('A: sees "Sanya: On it 👍" on the task', /Sanya: On it/.test(await A.locator('.ackline').first().textContent()));
+  ok('A: sees "Sanya: On it" on the task', /Sanya: On it/.test(await A.locator('.ackline').first().textContent()));
 
-  /* status flows across devices */
+  /* status flows across devices — but only the doer may move it */
+  const aCard = A.locator('.task', { hasText: 'Call the Mehta family' }).first();
+  ok('A: the giver gets no status buttons on her task',
+    (await aCard.locator('[data-st]').count()) === 0 &&
+    (await aCard.locator('[data-act="stuck"]').count()) === 0);
+  ok('A: he still sees whose word it is and where it stands, read-only',
+    /Sanya: ?To do/.test(await aCard.locator('.statuschip').textContent()));
+  ok('A: and can still comment on it and change the ask',
+    (await aCard.locator('[data-act="cmt"]').count()) === 1 &&
+    (await aCard.locator('[data-act="edit"]').count()) === 1);
+  const bCard = B.locator('.task', { hasText: 'Call the Mehta family' }).first();
+  ok('B: the person doing it gets the buttons', (await bCard.locator('[data-st]').count()) === 3);
+
   await B.locator('.task .seg button[data-st="Doing"]').first().click();
   await A.locator('.task.s-doing').first().waitFor({ timeout: 10000 });
   ok('A: sees the task move to Doing', true);
+  ok('A: the read-only chip keeps up', /Doing/.test(await aCard.locator('.statuschip').textContent()));
 
   /* stuck rings the giver */
   await B.locator('.task .linkbtn[data-act="stuck"]').first().click();
@@ -150,7 +163,7 @@ const ok = (label, cond) => {
   await A.locator('#askYes').click();
   await B.locator('#alarm:not(.hide)').waitFor({ timeout: 10000 });
   ok('B: chat ring takes over Sanya’s screen', /front desk/.test(await B.locator('#alText').textContent()));
-  await B.locator('#alarm .ans button[data-ans="On it 👍"]').click();
+  await B.locator('#alarm .ans button[data-ans="On it"]').click();
   await B.waitForTimeout(400);
 
   /* B reload keeps the session (per-tab token) */

@@ -38,6 +38,21 @@ The non-technical walkthrough (with copy buttons and a live demo) is
   text-formatted (`@`) so Sheets never coerces dates/booleans/formulas;
   `readAll()` also normalizes any `Date` back to strings (google.script.run
   cannot serialize Dates). Nothing is hard-deleted.
+- **Progress is the doer's word.** `To do / Doing / Done` and the stuck flag
+  are refused by `assertTaskDoer` for anyone but the task's owner — the giver
+  and admins included. Everything else about a task (wording, details, date,
+  who it sits with, comments) stays open to the giver and admins via
+  `assertTaskParty`. An admin who must close someone else's task moves it to
+  themselves first, which the row's own history then shows.
+- **Written answers are lines, not paragraphs.** A `text` question is a list of
+  up to eight lines in the form (`MAX_LINES`) and on the way in
+  (`MAX_ANSWER_LINES`); they travel as one `\n`-joined value, so an answer is
+  still one field in the sheet, and the feed renders each line as its own
+  bullet.
+- **No emoji anywhere.** The one picture in the app is a drawn bell (inline
+  SVG); moods, streaks, stuck flags and statuses are words. Question sets keep
+  their `emoji` column so a live book's columns still line up, but nothing
+  writes or reads it.
 - **Updates snapshot their questions.** An update row stores
   `[{l,t,u,v}]` — label, type, unit, value — copied from the question set at
   submit time, so history stays readable after any set is reworded, replaced,
@@ -111,7 +126,7 @@ by a test:
 - **Stale admin rights.** Admin actions trusted the role read before the lock;
   they now re-read the caller inside it, and the team can never be left with
   zero admins.
-- Comments on a task now follow the same owner/giver/admin rule as the rest of
+- Comments on a task follow the same owner/giver/admin rule as the rest of
   the task; the login screen no longer reveals who the admins are; tasks whose
   owner has left stay editable; double-taps can't post twice; chat read marks
   are per person; presence and "due today" keep up with the clock.

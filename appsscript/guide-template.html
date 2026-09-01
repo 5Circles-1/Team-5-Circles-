@@ -224,8 +224,16 @@
       question sets are yours to reword in the Team tab, and a brand-new kind of work gets its own set in a
       minute — so the tool fits whatever team you run next.</p></div>
 
+  <div class="qa"><b>Who can mark a task done?</b>
+    <p>Only the person doing it. <strong>To do / Doing / Done</strong> and <strong>I’m stuck</strong> are
+      that person’s own word on their own work, so nobody else can put words in their mouth — not the
+      person who gave the task, not an admin. What the giver sees instead is where it stands, read-only,
+      and everything else stays theirs: they can comment on it, reword it, change the date, or move it to
+      somebody else. If a task really has to be closed by someone else — the person has left, say —
+      move it to yourself first, and the task’s own record shows that is what happened.</p></div>
+
   <div class="qa"><b>Someone keeps “forgetting” their update.</b>
-    <p>The Updates tab shows who’s still to come. Tap the 🔔 next to their name (or <strong>Ring them
+    <p>The Updates tab shows who’s still to come. Tap the bell next to their name (or <strong>Ring them
       all</strong>) and their screen takes over and keeps ringing until they answer — the same bell as
       everything else, on record like everything else. And in the Team tab you can set an
       <strong>evening reminder</strong>: every day at your chosen time, whoever hasn’t sent that day’s
@@ -276,7 +284,7 @@
       var text = FILES[key];
       var done = function () {
         btn.classList.add('done');
-        btn.innerHTML = 'Copied — now paste it in Google ✓';
+        btn.innerHTML = 'Copied — now paste it in Google';
         setTimeout(function () { btn.classList.remove('done'); btn.innerHTML = original; }, 3500);
       };
       var fallback = function () {

@@ -82,10 +82,29 @@ const ok = (label, cond) => { console.log((cond ? '  PASS  ' : '  FAIL  ') + lab
   const insider = await call(A, binaLogin.token, 'send', { toId: 'ALL', text: 'on it', taskId: task.taskId });
   ok('the person doing it still can', insider.ok);
 
+  /* ── 4b. only the person DOING a task says where it stands ── */
+  const mine = await call(A, aToken, 'createTask', { ownerId: bina.id, title: 'Book the hall' });
+  const giverMoves = await call(A, aToken, 'setStatus', { taskId: mine.taskId, status: 'Done' });
+  ok('the admin who gave the task cannot mark it Done for them: "' + (giverMoves.error || '') + '"',
+    giverMoves.ok === false && /can say where this task stands/.test(giverMoves.error || ''));
+  const giverFlags = await call(A, aToken, 'toggleStuck', { taskId: mine.taskId });
+  ok('nor flag it stuck in their name', giverFlags.ok === false);
+  const stillTodo = (await db(A)).sheets.Tasks.slice(1).find(r => r[0] === mine.taskId);
+  ok('and the task is untouched by the attempt', stillTodo[6] === 'To do' && stillTodo[7] === 'false');
+  const giverEdits = await call(A, aToken, 'editTask', { taskId: mine.taskId, due: '2026-12-31' });
+  ok('but the giver can still change the ask itself', giverEdits.ok);
+  const giverTalks = await call(A, aToken, 'send', { toId: bina.id, text: 'any luck?', taskId: mine.taskId });
+  ok('and can still comment on it', giverTalks.ok);
+  const doerMoves = await call(A, binaLogin.token, 'setStatus', { taskId: mine.taskId, status: 'Doing' });
+  ok('the person doing it moves it themselves', doerMoves.ok);
+  const outsiderMoves = await call(A, chetanLogin.token, 'setStatus', { taskId: mine.taskId, status: 'Done' });
+  ok('and a bystander cannot touch it at all', outsiderMoves.ok === false);
+
   /* ── 5. work of someone who left stays editable and commentable ── */
   const gone = await add('Dev', 'Member');
+  const goneLogin = await call(A, '', 'login', { personId: gone.id, pin: gone.pin });
   const t2 = await call(A, aToken, 'createTask', { ownerId: gone.id, title: 'Old banner order' });
-  await call(A, aToken, 'setStatus', { taskId: t2.taskId, status: 'Done' });
+  await call(A, goneLogin.token, 'setStatus', { taskId: t2.taskId, status: 'Done' });
   await call(A, aToken, 'removePerson', { personId: gone.id });
   const rename = await call(A, aToken, 'editTask', { taskId: t2.taskId, title: 'Old banner order (2024)' });
   ok('a finished task whose owner left can still be corrected', rename.ok);
@@ -123,7 +142,7 @@ const ok = (label, cond) => { console.log((cond ? '  PASS  ' : '  FAIL  ') + lab
   // the client's copy of every message, which used to strand the answer
   await call(A, aToken, 'send', { toId: 'ALL', text: 'morning all' });
   await E.waitForTimeout(2500);
-  await E.locator('#alarm .ans button[data-ans="On it 👍"]').click();
+  await E.locator('#alarm .ans button[data-ans="On it"]').click();
   await E.waitForTimeout(3000);
   ok('the answer sticks after one press even when messages refreshed underneath',
     await E.locator('#alarm').isHidden());

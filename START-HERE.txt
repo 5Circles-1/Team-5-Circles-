@@ -42,6 +42,9 @@ WHAT THE TOOL DOES  (once it's online)
       the bell chases whoever's update is missing.
     - Tasks: give anyone a job in one line, with a date. They see it
       the moment they open the tool. To do -> Doing -> Done.
+      Only the person doing it can move it - the one who gave it
+      sees where it stands and can comment, reword or redate it,
+      but never answers in their name.
     - "I'm stuck" flag: rings the person who gave the task, so
       nobody stays stuck quietly.
     - Chat on record: team-wide or one-to-one. Every word is kept in

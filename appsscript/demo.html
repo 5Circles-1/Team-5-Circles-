@@ -194,8 +194,10 @@
   @media(min-width:720px){ .composer{bottom:12px} }
   .composer input{flex:1; border:0; outline:none; padding:8px 14px; background:transparent; min-width:0}
   .composer .btn{padding:9px 18px}
-  .ringbtn{width:44px; height:44px; border-radius:50%; background:var(--bad-soft); color:var(--bad);
-    font-size:19px; flex:none; display:flex; align-items:center; justify-content:center}
+  .ringbtn{min-width:44px; height:44px; padding:0 14px; border-radius:999px; background:var(--bad-soft);
+    color:var(--bad); font-size:14px; font-weight:700; flex:none;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px}
+  .ico{width:18px; height:18px; flex:none; display:inline-block; vertical-align:-3px}
 
   /* team */
   .pcard{display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--line);
@@ -218,9 +220,8 @@
   .updme h3{font-size:17px}
   .updme .day{font-size:13px; color:var(--mut); font-weight:600}
   .moods{display:flex; gap:8px; margin:12px 0 2px}
-  .moods button{flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:10px 4px;
-    border:1.5px solid var(--line); border-radius:14px; background:var(--bg); font-weight:700; font-size:12.5px; color:var(--mut)}
-  .moods button .e{font-size:25px}
+  .moods button{flex:1; padding:12px 6px; border:1.5px solid var(--line); border-radius:12px;
+    background:var(--bg); font-weight:700; font-size:14px; color:var(--mut)}
   .moods button.on{border-color:var(--brand); background:var(--brand-soft); color:var(--brand-dark)}
   .uq{margin-top:13px}
   .uq > label{display:block; font-size:14px; font-weight:600; margin-bottom:5px}
@@ -229,6 +230,15 @@
   .uq .cnt{display:flex; align-items:center; gap:8px}
   .uq .cnt input{width:118px; text-align:center; font-weight:700}
   .uq .cnt .unit{color:var(--mut); font-weight:600; font-size:14px}
+  .uq .lines{display:flex; flex-direction:column; gap:7px}
+  .uq .lrow{display:flex; align-items:center; gap:7px}
+  .uq .lrow .num{width:17px; flex:none; text-align:right; font-size:13px; font-weight:700; color:var(--mut)}
+  .uq .lrow input{flex:1; min-width:0}
+  .uq .lrow .x{flex:none; width:32px; height:32px; border-radius:9px; color:var(--mut);
+    font-size:17px; font-weight:800; line-height:1}
+  .uq .lrow .x:hover{background:var(--bad-soft); color:var(--bad)}
+  .uq .addline{margin-top:7px; font-size:13.5px; font-weight:700; color:var(--brand-dark);
+    padding:6px 11px; border-radius:999px; background:var(--brand-soft)}
   .upd{background:var(--card); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow);
     padding:13px 14px; margin-bottom:10px}
   .upd .hd{display:flex; align-items:center; gap:10px}
@@ -236,10 +246,19 @@
   .upd .hd .who{flex:1; min-width:0}
   .upd .hd .nm{font-weight:700}
   .upd .hd .what{font-size:12.5px; color:var(--mut)}
-  .upd .hd .mood{font-size:23px}
+  .chip.mood-great{background:var(--ok-soft); color:var(--ok)}
+  .chip.mood-ok{background:var(--bg); color:var(--mut)}
+  .chip.mood-heavy{background:var(--warn-soft); color:var(--warn)}
+  .chip.statuschip{background:var(--bg); color:var(--mut)}
+  .chip.statuschip.s-doing{background:var(--brand-soft); color:var(--brand-dark)}
+  .chip.statuschip.s-done{background:var(--ok-soft); color:var(--ok)}
   .updb .nums{display:flex; flex-wrap:wrap; gap:7px; margin-top:10px}
   .updb .qa2{margin-top:9px; font-size:14.5px; white-space:pre-wrap}
   .updb .qa2 .ql{color:var(--mut); font-size:12.5px; font-weight:700}
+  .updb .qa2 ul{list-style:none; margin:2px 0 0; padding:0}
+  .updb .qa2 li{position:relative; padding-left:15px; margin-top:3px}
+  .updb .qa2 li:before{content:''; position:absolute; left:2px; top:8px; width:5px; height:5px;
+    border-radius:50%; background:var(--brand)}
   .updb .note{margin-top:9px; font-size:14.5px; background:var(--bg); border-radius:10px; padding:8px 11px; white-space:pre-wrap}
   .chip.streak{background:var(--warn-soft); color:var(--warn)}
   .pendbar{display:flex; align-items:center; flex-wrap:wrap; gap:8px; background:var(--card); border:1.5px dashed var(--line);
@@ -282,7 +301,8 @@
   #alarm{position:fixed; inset:0; z-index:100; display:flex; flex-direction:column; align-items:center;
     justify-content:center; text-align:center; padding:28px;
     background:linear-gradient(160deg, #06344E, var(--brand-dark) 60%, var(--brand)); color:#fff}
-  #alarm .bell{font-size:74px; animation:swing .7s infinite}
+  #alarm .bell{animation:swing .7s infinite; line-height:0}
+  #alarm .bell .ico{width:76px; height:76px; stroke-width:1.5}
   @keyframes swing{0%,100%{transform:rotate(-14deg)}50%{transform:rotate(14deg)}}
   #alarm .from{font-size:15px; font-weight:700; opacity:.85; letter-spacing:.06em; text-transform:uppercase; margin-top:14px}
   #alarm .txt{font-size:24px; font-weight:800; margin:8px 0 26px; max-width:560px; line-height:1.3; white-space:pre-wrap}
@@ -404,7 +424,7 @@
       <div id="chatLog"></div>
       <div class="composer">
         <input id="chatText" placeholder="Message everyone…" maxlength="2000" autocomplete="off">
-        <button class="ringbtn" id="chatRing" title="Ring their screen — they must answer">🔔</button>
+        <button class="ringbtn" id="chatRing" title="Ring their screen — they must answer"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
         <button class="btn primary" id="chatSend">Send</button>
       </div>
       <p class="small mut" style="margin-top:10px; text-align:center">
@@ -482,7 +502,7 @@
       <input type="date" id="tkDue"></div>
     <label id="tkRingRow" style="display:flex; align-items:center; gap:10px; margin:4px 0 16px; font-weight:600">
       <input type="checkbox" id="tkRing" style="width:20px; height:20px; accent-color:var(--bad)">
-      🔔 Also ring their screen right now
+      Also ring their screen right now
     </label>
     <div style="display:flex; gap:10px">
       <button class="btn ghost" id="tkCancel">Cancel</button>
@@ -510,12 +530,8 @@
 <div id="veilProfile" class="veil hide">
   <div class="sheet">
     <h3 id="prHead">Question set</h3>
-    <div style="display:flex; gap:8px">
-      <div class="field" style="width:78px"><label>Emoji</label>
-        <input type="text" id="prEmoji" maxlength="8" style="text-align:center; font-size:19px"></div>
-      <div class="field" style="flex:1"><label>Kind of work</label>
-        <input type="text" id="prName" maxlength="40" placeholder="e.g. Video Editor, Chef, Driver…"></div>
-    </div>
+    <div class="field"><label>Kind of work</label>
+      <input type="text" id="prName" maxlength="40" placeholder="e.g. Video Editor, Chef, Driver…"></div>
     <div class="field"><label>What their daily update asks</label>
       <div id="prQs"></div>
       <button class="btn ghost sm" id="prAddQ">+ Add a question</button>
@@ -547,11 +563,11 @@
 
 <!-- alarm -->
 <div id="alarm" class="hide">
-  <div class="bell">🔔</div>
+  <div class="bell"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
   <div class="from" id="alFrom"></div>
   <div class="txt" id="alText"></div>
   <div class="ans">
-    <button data-ans="On it 👍">On it 👍</button>
+    <button data-ans="On it">On it</button>
     <button class="soft" data-ans="Give me 10 minutes">Give me 10 minutes</button>
     <button class="soft" data-ans="Can’t right now — call me">Can’t right now — call me</button>
   </div>
@@ -926,36 +942,36 @@ var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
    archive what they don't use. 'general' is the fallback and cannot go. */
 var Q = function (id, label, type, unit) { return { id: id, label: label, type: type, unit: unit || '' }; };
 var PRESET_PROFILES = [
-  { id: 'general', name: 'General', emoji: '📝', questions: [
+  { id: 'general', name: 'General', emoji: '', questions: [
     Q('g1', 'What did you get done today?', 'text'),
     Q('g2', 'What’s the plan for tomorrow?', 'text'),
     Q('g3', 'Anything in your way?', 'text')
   ]},
-  { id: 'video', name: 'Video Editor', emoji: '🎬', questions: [
+  { id: 'video', name: 'Video Editor', emoji: '', questions: [
     Q('v1', 'Videos delivered today', 'count', 'videos'),
     Q('v2', 'Still on the edit table', 'count', 'videos'),
     Q('v3', 'Waiting on footage or approval from someone?', 'yesno'),
     Q('v4', 'Best thing you cut today', 'text')
   ]},
-  { id: 'marketing', name: 'Performance Marketer', emoji: '📣', questions: [
+  { id: 'marketing', name: 'Performance Marketer', emoji: '', questions: [
     Q('m1', 'Leads that came in', 'count', 'leads'),
     Q('m2', 'Spent on ads today', 'count', '₹'),
     Q('m3', 'Best-performing ad right now', 'text'),
     Q('m4', 'Anything to pause or scale?', 'text')
   ]},
-  { id: 'sales', name: 'Sales', emoji: '☎️', questions: [
+  { id: 'sales', name: 'Sales', emoji: '', questions: [
     Q('s1', 'Calls made', 'count', 'calls'),
     Q('s2', 'Follow-ups done', 'count'),
     Q('s3', 'Closures today', 'count'),
     Q('s4', 'Hot leads for tomorrow', 'text')
   ]},
-  { id: 'mentor', name: 'Mentor / Trainer', emoji: '🎓', questions: [
+  { id: 'mentor', name: 'Mentor / Trainer', emoji: '', questions: [
     Q('t1', 'Sessions taken', 'count'),
     Q('t2', 'Students showed up', 'count'),
     Q('t3', 'Doubts still open', 'count'),
     Q('t4', 'A student who needs attention', 'text')
   ]},
-  { id: 'frontdesk', name: 'Front Desk', emoji: '🛎️', questions: [
+  { id: 'frontdesk', name: 'Front Desk', emoji: '', questions: [
     Q('f1', 'Walk-ins today', 'count'),
     Q('f2', 'Enquiries taken', 'count'),
     Q('f3', 'Fees collected', 'count', '₹'),
@@ -1482,10 +1498,30 @@ function assertTaskParty(me, task) {
   }
 }
 
+/** Where it stands — To do / Doing / Done, and stuck — is a claim about your
+ *  own work, so only the person doing it may make it. The one who asked for
+ *  the task (and an admin) can read it, comment on it and change the ask; they
+ *  cannot answer in the doer's name, or the record stops meaning anything.
+ *  An admin who genuinely has to close someone's task moves it to themselves
+ *  first, which the task's own history then shows. */
+function assertTaskDoer(me, task) {
+  if (task.owner_id !== me.id) {
+    throw new Error('Only ' + personName(task.owner_id) + ' can say where this task stands — you can comment on it instead.');
+  }
+}
+
+/** A name for a message — the person may since have left the team, so this
+ *  looks past `active` rather than going blank on them. */
+function personName(id) {
+  var people = readAll(SHEETS.PEOPLE, PEOPLE_COLS);
+  for (var i = 0; i < people.length; i++) if (people[i].id === id) return people[i].name;
+  return 'the person doing it';
+}
+
 function setStatus(me, data) {
   var task = taskById(data.taskId);
   if (!task) throw new Error('Task not found.');
-  assertTaskParty(me, task);
+  assertTaskDoer(me, task);
   var status = String(data.status || '');
   if (['To do', 'Doing', 'Done'].indexOf(status) < 0) throw new Error('Unknown status.');
 
@@ -1505,7 +1541,7 @@ function setStatus(me, data) {
 function toggleStuck(me, data) {
   var task = taskById(data.taskId);
   if (!task) throw new Error('Task not found.');
-  assertTaskParty(me, task);
+  assertTaskDoer(me, task);
   var nowStuck = String(task.stuck) !== 'true';
   task.stuck = nowStuck ? 'true' : 'false';
   task.updated = new Date().toISOString();
@@ -1613,7 +1649,7 @@ function emailAwayRing(fromId, toId, text) {
     try {
       MailApp.sendEmail({
         to: p.email,
-        subject: '🔔 ' + fromName + ' needs you — ' + company,
+        subject: fromName + ' needs you — ' + company,
         body: '“' + text + '”\n\n' +
           'Open the app and the bell will be waiting until you answer:\n' +
           (url || '(ask your admin for the app link)') + '\n\n' +
@@ -1694,7 +1730,7 @@ function eveningChase() {
     try {
       MailApp.sendEmail({
         to: person.email,
-        subject: '⏳ Your daily update is waiting — ' + company,
+        subject: 'Your daily update is waiting — ' + company,
         body: 'One minute, your own questions, done for the day.\n\n' +
           'Open the Updates tab:\n' + (url || '(ask your admin for the app link)') + '\n\n' +
           '— ' + company + '’s 5C Pulse'
@@ -1779,6 +1815,10 @@ function questionsFor(person) {
 
 function validDateStr(s) { return /^\d{4}-\d{2}-\d{2}$/.test(String(s || '')); }
 
+/** How many lines one written answer may carry — matches MAX_LINES in the
+ *  client, and keeps the update readable at a glance in the feed. */
+var MAX_ANSWER_LINES = 8;
+
 function saveUpdate(me, data) {
   var date = String(data.date || '');
   if (!validDateStr(date)) throw new Error('That date doesn’t look right.');
@@ -1806,7 +1846,16 @@ function saveUpdate(me, data) {
     } else if (q.type === 'yesno') {
       if (v !== 'yes' && v !== 'no') continue;
     } else {
-      v = v.slice(0, 300);
+      // One line per thing done. Blank lines fall away, eight is the ceiling
+      // (the form has to stay a minute long), each line stays a line.
+      var lines = v.replace(/\r\n?/g, '\n').split('\n');
+      var kept = [];
+      for (var L = 0; L < lines.length && kept.length < MAX_ANSWER_LINES; L++) {
+        var line = lines[L].trim().slice(0, 300);
+        if (line) kept.push(line);
+      }
+      if (!kept.length) continue;
+      v = kept.join('\n');
     }
     answers.push({ l: q.label, t: q.type, u: q.unit || '', v: v });
   }
@@ -1911,7 +1960,9 @@ function saveProfile(me, data) {
   me = admin(me);
   var name = String(data.name || '').trim().slice(0, 40);
   if (!name) throw new Error('Name the kind of work first.');
-  var emoji = String(data.emoji || '').trim().slice(0, 8) || '📝';
+  // Kept only so the Profiles sheet's columns still line up on books made by
+  // an older Code.gs; a question set is named, not pictured.
+  var emoji = '';
   var questions = cleanQuestions(data.questions);
 
   var rows = profileRows();
@@ -2123,6 +2174,12 @@ function setCompany(me, data) {
 
 /* ═══ tiny helpers ═══════════════════════════════════════════════════════ */
 var $ = function (id) { return document.getElementById(id); };
+/* The one picture the app uses: a bell, drawn rather than typed, so a ring
+   reads the same on every device and nothing here looks like a chat sticker. */
+var BELL_SVG = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+  + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>'
+  + '<path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>';
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -2393,7 +2450,7 @@ var Alarm = {
       : 'Tap anywhere once to turn the sound on';
     $('alarm').classList.remove('hide');
     Ring.start();
-    osNotify('🔔 ' + nameOf(m.from_id) + ' needs you', m.text);
+    osNotify(nameOf(m.from_id) + ' needs you', m.text);
   },
   answer: function (ans) {
     var m = this.current;
@@ -2847,9 +2904,18 @@ function taskSection(title, list, emptyMsg) {
   return html + '</div>';
 }
 
+/** Who may do what to a task:
+ *  — the person DOING it reports the progress: To do / Doing / Done, and stuck.
+ *    Nobody reports on someone else's behalf, admins included: a status is a
+ *    claim about your own work, and the record has to mean that.
+ *  — the person who ASKED for it (and any admin) can read it, comment on it,
+ *    and change the ask itself — the wording, the details, the date, who it
+ *    sits with. What they may not do is answer for the doer.
+ *  The server enforces both; this only decides what is worth drawing. */
 function taskCard(t) {
   var owner = nameOf(t.owner_id), giver = nameOf(t.by_id);
-  var isParty = Auth.me.role === 'Admin' || t.owner_id === Auth.me.id || t.by_id === Auth.me.id;
+  var isDoer = t.owner_id === Auth.me.id;
+  var isParty = Auth.me.role === 'Admin' || isDoer || t.by_id === Auth.me.id;
   var cls = 's-' + (t.status === 'Doing' ? 'doing' : t.status === 'Done' ? 'done' : 'todo') + (t.stuck ? ' stuck' : '');
   var comments = S.messages.filter(function (m) { return m.task_id === t.id; });
   var html = '<div class="task ' + cls + '" data-id="' + esc(t.id) + '"><div class="bar"></div><div class="body">';
@@ -2858,24 +2924,32 @@ function taskCard(t) {
   html += '<div class="meta">' + avaHtml(owner, true) + ' <b>' + esc(t.owner_id === Auth.me.id ? 'Me' : owner) + '</b>';
   if (t.by_id !== t.owner_id) html += ' <span class="mut">· from ' + esc(t.by_id === Auth.me.id ? 'me' : giver) + '</span>';
   html += ' ' + fmtDueChip(t.due, t.status);
-  if (t.stuck) html += ' <span class="chip stuckchip">🚩 stuck</span>';
+  if (t.stuck) html += ' <span class="chip stuckchip">Stuck</span>';
   if (t.status === 'Done' && t.done_at) html += ' <span class="chip" style="background:var(--ok-soft);color:var(--ok)">done ' + esc(fmtWhen(t.done_at)) + '</span>';
   html += '</div>';
   if (isParty) {
-    html += '<div class="ctrls"><span class="seg">';
-    ['To do', 'Doing', 'Done'].forEach(function (st) {
-      html += '<button data-st="' + st + '" class="' + (t.status === st ? 'on' + (st === 'Done' ? ' don' : '') : '') + '">' + st + '</button>';
-    });
-    html += '</span>';
-    if (t.status !== 'Done') {
-      html += '<button class="linkbtn alert' + (t.stuck ? ' on' : '') + '" data-act="stuck">' +
-        (t.stuck ? '🚩 Stuck — tap when unstuck' : '🚩 I’m stuck') + '</button>';
+    html += '<div class="ctrls">';
+    if (isDoer) {
+      html += '<span class="seg">';
+      ['To do', 'Doing', 'Done'].forEach(function (st) {
+        html += '<button data-st="' + st + '" class="' + (t.status === st ? 'on' + (st === 'Done' ? ' don' : '') : '') + '">' + st + '</button>';
+      });
+      html += '</span>';
+      if (t.status !== 'Done') {
+        html += '<button class="linkbtn alert' + (t.stuck ? ' on' : '') + '" data-act="stuck">' +
+          (t.stuck ? 'Stuck — tap when unstuck' : 'I’m stuck') + '</button>';
+      }
+    } else {
+      // Watching, not answering: their word on where it stands, read-only.
+      html += '<span class="chip statuschip s-' + (t.status === 'Doing' ? 'doing' : t.status === 'Done' ? 'done' : 'todo') +
+        '" title="Only ' + esc(owner) + ' can move this — you can comment on it">' +
+        esc(owner.split(/\s+/)[0]) + ': <b>' + esc(t.status) + '</b></span>';
     }
-    html += '<button class="linkbtn" data-act="cmt">💬 ' + (comments.length || 'Comment') + '</button>';
+    html += '<button class="linkbtn" data-act="cmt">' + (comments.length ? 'Comments (' + comments.length + ')' : 'Comment') + '</button>';
     html += '<button class="linkbtn" data-act="edit">Edit</button>';
     html += '</div>';
   } else if (comments.length) {
-    html += '<div class="ctrls"><button class="linkbtn" data-act="cmt">💬 ' + comments.length + '</button></div>';
+    html += '<div class="ctrls"><button class="linkbtn" data-act="cmt">Comments (' + comments.length + ')</button></div>';
   }
   if (openComments[t.id]) {
     html += '<div class="comments">';
@@ -2896,7 +2970,7 @@ function taskCard(t) {
 function ackSummary(m) {
   if (!(m.acks || []).length) return '';
   var bits = m.acks.map(function (a) { return esc(nameOf(a.who)) + ': ' + esc(a.answer); });
-  return '<div class="ackline">✔ ' + bits.join(' · ') + '</div>';
+  return '<div class="ackline">Answered — ' + bits.join(' · ') + '</div>';
 }
 
 /** Runs an action once, keeping the button quiet until the server answers —
@@ -3101,7 +3175,7 @@ function renderChat() {
     var mine = m.from_id === Auth.me.id;
     html += '<div class="msg' + (mine ? ' mine' : '') + (m.kind === 'ring' ? ' ring' : '') + '">';
     if (!mine && chatChannel === 'ALL') html += '<div class="who" style="color:' + avaColor(nameOf(m.from_id)) + '">' + esc(nameOf(m.from_id)) + '</div>';
-    html += '<div class="bub">' + (m.kind === 'ring' ? '<b>🔔 </b>' : '') + esc(m.text) + '</div>';
+    html += '<div class="bub">' + (m.kind === 'ring' ? '<b>Ring — </b>' : '') + esc(m.text) + '</div>';
     html += ackSummary(m);
     html += '<div class="when">' + esc(fmtWhen(m.created)) + '</div></div>';
   });
@@ -3161,10 +3235,14 @@ $('chatRing').addEventListener('click', function () {
    one scroll — with the bell to chase whoever's word is missing.   */
 
 var MOODS = {
-  great: { e: '🔥', label: 'Great day' },
-  ok:    { e: '🙂', label: 'Okay day' },
-  heavy: { e: '😓', label: 'Heavy day' }
+  great: { label: 'Great day' },
+  ok:    { label: 'Okay day' },
+  heavy: { label: 'Heavy day' }
 };
+function moodChip(key) {
+  var m = MOODS[key];
+  return m ? '<span class="chip mood-' + key + '">' + esc(m.label) + '</span>' : '';
+}
 
 function profileById(id) {
   var list = (S && S.profiles) || [];
@@ -3178,7 +3256,7 @@ function activeProfiles() {
 function effectiveProfile(p) {
   var pr = profileById((p && p.profile_id) || 'general');
   if (!pr || pr.archived) pr = profileById('general');
-  return pr || { id: 'general', name: 'General', emoji: '📝', questions: [] };
+  return pr || { id: 'general', name: 'General', questions: [] };
 }
 function updateFor(pid, date) {
   var us = (S && S.updates) || [];
@@ -3222,6 +3300,29 @@ function fmtDayLabel(ds) {
   return isNaN(d) ? ds : d.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
+/** Written answers are kept as a LIST of lines — one line per thing done —
+ *  so nobody has to squash the day into a paragraph. Numbers and yes/no
+ *  answers stay single values. */
+var MAX_LINES = 8;
+function answerLines(v) {
+  var lines = String(v == null ? '' : v).split('\n');
+  var out = [];
+  for (var i = 0; i < lines.length; i++) {
+    var t = lines[i].trim();
+    if (t) out.push(t);
+  }
+  return out;
+}
+function draftLines(d, qid) {
+  if (!Object.prototype.hasOwnProperty.call(d.vals, qid) || !isArray(d.vals[qid])) {
+    d.vals[qid] = answerLines(d.vals[qid]);
+  }
+  if (!d.vals[qid].length) d.vals[qid] = [''];
+  return d.vals[qid];
+}
+function isArray(v) { return Object.prototype.toString.call(v) === '[object Array]'; }
+function isWritten(q) { return q && q.type !== 'count' && q.type !== 'yesno'; }
+
 function ensureUpdDraft() {
   if (updDraft) return updDraft;
   updDraft = { mood: '', vals: {}, note: '' };
@@ -3232,7 +3333,10 @@ function ensureUpdDraft() {
     var qs = effectiveProfile(Auth.me).questions || [];
     (mine.answers || []).forEach(function (a) {
       for (var i = 0; i < qs.length; i++) {
-        if (qs[i].label === a.l && !(qs[i].id in updDraft.vals)) { updDraft.vals[qs[i].id] = a.v; break; }
+        if (qs[i].label === a.l && !(qs[i].id in updDraft.vals)) {
+          updDraft.vals[qs[i].id] = isWritten(qs[i]) ? answerLines(a.v) : a.v;
+          break;
+        }
       }
     });
   }
@@ -3261,22 +3365,26 @@ function updBodyHtml(u) {
     }
   });
   var done = tasksDoneOn(u.person_id, u.date);
-  if (done) nums += '<span class="chip" style="background:var(--ok-soft);color:var(--ok)">✅ ' + done + ' task' + (done === 1 ? '' : 's') + ' finished</span>';
+  if (done) nums += '<span class="chip" style="background:var(--ok-soft);color:var(--ok)">' + done + ' task' + (done === 1 ? '' : 's') + ' finished</span>';
   if (nums) html += '<div class="nums">' + nums + '</div>';
   (u.answers || []).forEach(function (a) {
     if (a.t === 'count' || a.t === 'yesno') return;
-    html += '<div class="qa2"><div class="ql">' + esc(a.l) + '</div>' + esc(a.v) + '</div>';
+    var lines = answerLines(a.v);
+    var body = lines.length > 1
+      ? '<ul>' + lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>'
+      : esc(lines[0] || '');
+    html += '<div class="qa2"><div class="ql">' + esc(a.l) + '</div>' + body + '</div>';
   });
   if (u.note) html += '<div class="note">' + esc(u.note) + '</div>';
   return html ? '<div class="updb">' + html + '</div>' : '';
 }
 
-/** "Sales · ☎️ Sales" would be saying it twice — one label is enough. */
+/** "Sales · Sales" would be saying it twice — one label is enough. */
 function whoDoesWhat(p, prof) {
   if (!p) return '';
   if (!prof) return p.dept;
-  if (String(p.dept || '').toLowerCase() === String(prof.name).toLowerCase()) return prof.emoji + ' ' + prof.name;
-  return (p.dept ? p.dept + ' · ' : '') + prof.emoji + ' ' + prof.name;
+  if (String(p.dept || '').toLowerCase() === String(prof.name).toLowerCase()) return prof.name;
+  return (p.dept ? p.dept + ' · ' : '') + prof.name;
 }
 
 function updCard(u) {
@@ -3289,8 +3397,8 @@ function updCard(u) {
     '<div class="who"><div class="nm">' + esc(u.person_id === Auth.me.id ? 'Me' : name) + '</div>' +
     '<div class="what">' + esc(whoDoesWhat(p, prof)) +
     ' · ' + esc(fmtWhen(u.updated || u.created)) + '</div></div>';
-  if (selDay() === todayStr() && st >= 2) html += '<span class="chip streak">🔥 ' + st + ' days</span>';
-  if (mood) html += '<span class="mood" title="' + esc(mood.label) + '">' + mood.e + '</span>';
+  if (selDay() === todayStr() && st >= 2) html += '<span class="chip streak">' + st + ' days running</span>';
+  html += moodChip(u.mood);
   html += '</div>' + updBodyHtml(u) + '</div>';
   return html;
 }
@@ -3304,8 +3412,8 @@ function myUpdateHtml() {
   if (mine && !updEditing) {
     var mood = MOODS[mine.mood];
     return '<div class="card updme"><div style="display:flex; align-items:center; gap:10px">' +
-      '<div style="flex:1"><h3>Your update is in ✓</h3><div class="day">' + esc(dayWords) +
-      (mood ? ' · ' + mood.e + ' ' + esc(mood.label) : '') + '</div></div>' +
+      '<div style="flex:1"><h3>Your update is in</h3><div class="day">' + esc(dayWords) +
+      (mood ? ' · ' + esc(mood.label) : '') + '</div></div>' +
       '<button class="btn ghost sm" id="updChange">Change it</button></div>' +
       updBodyHtml(mine) + '</div>';
   }
@@ -3317,7 +3425,7 @@ function myUpdateHtml() {
   html += '<div class="uq" style="margin-top:10px"><label>How was the day?</label><div class="moods">';
   ['great', 'ok', 'heavy'].forEach(function (m) {
     html += '<button data-mood="' + m + '" class="' + (draft.mood === m ? 'on' : '') + '">' +
-      '<span class="e">' + MOODS[m].e + '</span>' + MOODS[m].label + '</button>';
+      MOODS[m].label + '</button>';
   });
   html += '</div></div>';
   qs.forEach(function (q) {
@@ -3331,7 +3439,19 @@ function myUpdateHtml() {
         '<button data-uq="' + esc(q.id) + '" data-v="yes" class="' + (v === 'yes' ? 'on' : '') + '">Yes</button>' +
         '<button data-uq="' + esc(q.id) + '" data-v="no" class="' + (v === 'no' ? 'on' : '') + '">No</button></span>';
     } else {
-      html += '<input data-uq="' + esc(q.id) + '" placeholder="A line is enough" maxlength="300" value="' + esc(v) + '">';
+      var lines = draftLines(draft, q.id);
+      html += '<div class="lines">';
+      lines.forEach(function (ln, i) {
+        html += '<div class="lrow"><span class="num">' + (i + 1) + '.</span>' +
+          '<input data-uq="' + esc(q.id) + '" data-ln="' + i + '" maxlength="300" value="' + esc(ln) + '" ' +
+          'placeholder="' + (i === 0 ? 'A line is enough' : 'And what else?') + '">' +
+          (lines.length > 1 ? '<button class="x" data-rm="' + esc(q.id) + '" data-ln="' + i +
+            '" title="Remove this line">\u00d7</button>' : '') + '</div>';
+      });
+      html += '</div>';
+      if (lines.length < MAX_LINES) {
+        html += '<button class="addline" data-add="' + esc(q.id) + '">+ Add another line</button>';
+      }
     }
     html += '</div>';
   });
@@ -3349,6 +3469,7 @@ function renderUpdates() {
   // Keep half-typed answers alive across the poll's re-render, caret and all
   var ae = document.activeElement;
   var focusedQ = (ae && ae.getAttribute && ae.getAttribute('data-uq')) || null;
+  var focusedLn = focusedQ ? ae.getAttribute('data-ln') : null;
   var caret = focusedQ && ae.selectionStart != null ? ae.selectionStart : 0;
 
   $('myUpdate').innerHTML = myUpdateHtml();
@@ -3375,12 +3496,12 @@ function renderUpdates() {
       pend = '<div class="pendbar"><span>Still to come:</span>';
       waiting.forEach(function (p) {
         pend += '<span class="pendchip">' + avaHtml(p.name, true) + esc(p.id === Auth.me.id ? 'Me' : p.name.split(/\s+/)[0]) +
-          (isAdmin && p.id !== Auth.me.id ? '<button class="ringbtn" data-nud="' + esc(p.id) + '" title="Ring them about it">🔔</button>' : '') +
+          (isAdmin && p.id !== Auth.me.id ? '<button class="ringbtn" data-nud="' + esc(p.id) + '" title="Ring them about it">' + BELL_SVG + '</button>' : '') +
           '</span>';
       });
       var others = waiting.filter(function (p) { return p.id !== Auth.me.id; });
       if (isAdmin && others.length > 1) {
-        pend += '<span class="grow"></span><button class="btn ghost sm" id="nudAll">🔔 Ring them all</button>';
+        pend += '<span class="grow"></span><button class="btn ghost sm" id="nudAll">Ring them all</button>';
       }
       pend += '</div>';
     }
@@ -3401,13 +3522,29 @@ function renderUpdates() {
 
   if (focusedQ) {
     try {
-      var inp = document.querySelector('#myUpdate [data-uq="' + CSS.escape(focusedQ) + '"]');
+      var sel = '#myUpdate [data-uq="' + CSS.escape(focusedQ) + '"]' +
+        (focusedLn === null ? '' : '[data-ln="' + Number(focusedLn) + '"]');
+      var inp = document.querySelector(sel);
       if (inp && inp.tagName === 'INPUT') {
         inp.focus();
         inp.setSelectionRange(caret, caret);
       }
     } catch (e) {}
   }
+}
+
+/** Adds an empty line at `at` and drops the caret straight into it — an
+ *  already-empty line there is reused, so a double tap can't stack blanks. */
+function addLine(qid, at) {
+  var lines = draftLines(ensureUpdDraft(), qid);
+  if (lines.length >= MAX_LINES) { toast('Eight lines is the most — keep it quick.', true); return; }
+  if (lines[at] !== undefined && !String(lines[at]).trim()) { /* reuse it */ }
+  else lines.splice(at, 0, '');
+  renderUpdates();
+  try {
+    var inp = document.querySelector('#myUpdate [data-uq="' + CSS.escape(qid) + '"][data-ln="' + at + '"]');
+    if (inp) inp.focus();
+  } catch (e) {}
 }
 
 function bindUpdateEvents() {
@@ -3422,7 +3559,33 @@ function bindUpdateEvents() {
     inp.addEventListener('input', function () {
       var d = ensureUpdDraft();
       var k = inp.getAttribute('data-uq');
-      if (k === '_note') d.note = inp.value; else d.vals[k] = inp.value;
+      var ln = inp.getAttribute('data-ln');
+      if (k === '_note') d.note = inp.value;
+      else if (ln === null) d.vals[k] = inp.value;
+      else draftLines(d, k)[Number(ln)] = inp.value;
+    });
+    // Enter opens the next line instead of doing nothing
+    inp.addEventListener('keydown', function (ev) {
+      if (ev.key !== 'Enter' || ev.repeat) return;
+      var k = inp.getAttribute('data-uq');
+      var ln = inp.getAttribute('data-ln');
+      if (k === '_note' || ln === null) return;
+      ev.preventDefault();
+      if (!inp.value.trim()) return;
+      addLine(k, Number(ln) + 1);
+    });
+  });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-add]'), function (b) {
+    b.addEventListener('click', function () {
+      var k = b.getAttribute('data-add');
+      addLine(k, draftLines(ensureUpdDraft(), k).length);
+    });
+  });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-rm]'), function (b) {
+    b.addEventListener('click', function () {
+      var lines = draftLines(ensureUpdDraft(), b.getAttribute('data-rm'));
+      lines.splice(Number(b.getAttribute('data-ln')), 1);
+      renderUpdates();
     });
   });
   Array.prototype.forEach.call(box.querySelectorAll('button[data-uq]'), function (b) {
@@ -3441,13 +3604,18 @@ function bindUpdateEvents() {
   if (share) share.addEventListener('click', function () {
     var d = ensureUpdDraft();
     if (!d.mood) { toast('How was the day? Tap one.', true); return; }
+    var vals = {};
+    for (var k in d.vals) {
+      if (!Object.prototype.hasOwnProperty.call(d.vals, k)) continue;
+      vals[k] = isArray(d.vals[k]) ? answerLines(d.vals[k].join('\n')).join('\n') : d.vals[k];
+    }
     once(share, function () {
-      return rpc('saveUpdate', { date: todayStr(), mood: d.mood, vals: d.vals, note: d.note })
+      return rpc('saveUpdate', { date: todayStr(), mood: d.mood, vals: vals, note: d.note })
         .then(function (res) {
           if (!res.ok) { toast(res.error || 'That didn’t go through.', true); return; }
           updDraft = null;
           updEditing = false;
-          toast('Shared with the team. 👏');
+          toast('Shared with the team.');
           pollNow();
         }, writeFailed);
     });
@@ -3523,7 +3691,7 @@ function openPersonSheet(pid) {
     '<div><h3 style="margin:0">' + esc(p.name) + '</h3><div class="small mut">' +
     esc(whoDoesWhat(p, prof)) + '</div></div></div>';
   html += '<div style="display:flex; flex-wrap:wrap; gap:7px; margin:10px 0 4px">';
-  if (st >= 2) html += '<span class="chip streak">🔥 ' + st + ' days running</span>';
+  if (st >= 2) html += '<span class="chip streak">' + st + ' days running</span>';
   tot.forEach(function (t) {
     html += numChipHtml(fmtNum(t.total), t.unit, t.label + ' · 7 days');
   });
@@ -3534,8 +3702,7 @@ function openPersonSheet(pid) {
   ups.forEach(function (u) {
     var mood = MOODS[u.mood];
     html += '<div class="upd"><div class="hd"><div class="who"><div class="nm" style="font-size:14px">' +
-      esc(fmtDayLabel(u.date)) + '</div></div>' +
-      (mood ? '<span class="mood">' + mood.e + '</span>' : '') + '</div>' + updBodyHtml(u) + '</div>';
+      esc(fmtDayLabel(u.date)) + '</div></div>' + moodChip(u.mood) + '</div>' + updBodyHtml(u) + '</div>';
   });
   html += '<button class="btn ghost block" id="vpClose" style="margin-top:8px">Close</button>';
   $('vpBody').innerHTML = html;
@@ -3546,12 +3713,11 @@ function openPersonSheet(pid) {
 /* ── question set editor (admins) ──────────────────────────── */
 function openProfileSheet(pr) {
   profDraft = pr
-    ? { profileId: pr.id, name: pr.name, emoji: pr.emoji,
+    ? { profileId: pr.id, name: pr.name,
         questions: (pr.questions || []).map(function (q) { return { id: q.id, label: q.label, type: q.type, unit: q.unit || '' }; }) }
-    : { profileId: '', name: '', emoji: '', questions: [{ id: '', label: '', type: 'count', unit: '' }] };
+    : { profileId: '', name: '', questions: [{ id: '', label: '', type: 'count', unit: '' }] };
   $('prHead').textContent = pr ? 'Edit — ' + pr.name : 'New question set';
   $('prName').value = profDraft.name;
-  $('prEmoji').value = profDraft.emoji;
   renderProfQs();
   $('veilProfile').classList.remove('hide');
   if (!pr) setTimeout(function () { $('prName').focus(); }, 60);
@@ -3568,7 +3734,7 @@ function renderProfQs() {
       '<option value="yesno"' + (q.type === 'yesno' ? ' selected' : '') + '>Yes / No</option>' +
       '</select>' +
       (q.type === 'count' ? '<input class="qu" placeholder="unit" maxlength="12" value="' + esc(q.unit || '') + '">' : '') +
-      (profDraft.questions.length > 1 ? '<button class="x" title="Remove this question">✕</button>' : '') +
+      (profDraft.questions.length > 1 ? '<button class="x" title="Remove this question">×</button>' : '') +
       '</div>';
   });
   $('prQs').innerHTML = html;
@@ -3596,7 +3762,6 @@ $('prCancel').addEventListener('click', function () { profDraft = null; $('veilP
 $('prSave').addEventListener('click', function () {
   if (!profDraft) return;
   profDraft.name = $('prName').value.trim();
-  profDraft.emoji = $('prEmoji').value.trim();
   if (!profDraft.name) { $('prName').focus(); toast('Name the kind of work first.', true); return; }
   var btn = $('prSave');
   once(btn, function () {
@@ -3639,7 +3804,7 @@ function renderTeam() {
     $('deptList').innerHTML = Object.keys(depts).map(function (d) { return '<option value="' + esc(d) + '">'; }).join('');
     var keepProf = $('npProf').value;
     $('npProf').innerHTML = activeProfiles().map(function (pr) {
-      return '<option value="' + esc(pr.id) + '">' + esc(pr.emoji + ' ' + pr.name) + '</option>';
+      return '<option value="' + esc(pr.id) + '">' + esc(pr.name) + '</option>';
     }).join('');
     var kept = keepProf && profileById(keepProf);
     if (kept && !kept.archived) $('npProf').value = keepProf;
@@ -3650,7 +3815,7 @@ function renderTeam() {
   function profOptions(selId) {
     return activeProfiles().map(function (pr) {
       return '<option value="' + esc(pr.id) + '"' + (pr.id === selId ? ' selected' : '') + '>' +
-        esc(pr.emoji + ' ' + pr.name) + '</option>';
+        esc(pr.name) + '</option>';
     }).join('');
   }
 
@@ -3664,7 +3829,7 @@ function renderTeam() {
       '<div class="in"><div class="nm">' + esc(p.name) +
       (p.role === 'Admin' ? ' <span class="rolechip">ADMIN</span>' : '') + '</div>' +
       '<div class="sub">' + esc(p.dept) + ' · ' + open + ' open task' + (open === 1 ? '' : 's') +
-      (st >= 2 ? ' · 🔥 ' + st : '') + '</div>' +
+      (st >= 2 ? ' · ' + st + '-day streak' : '') + '</div>' +
       (admin ?
         '<div class="padmin">' +
         '<select class="psel" data-act="prof" title="Their daily update questions">' + profOptions(effectiveProfile(p).id) + '</select>' +
@@ -3772,7 +3937,7 @@ function renderProfiles() {
   activeProfiles().forEach(function (pr) {
     var used = counts[pr.id] || 0;
     var n = (pr.questions || []).length;
-    html += '<div class="profcard" data-id="' + esc(pr.id) + '"><span class="em">' + esc(pr.emoji) + '</span>' +
+    html += '<div class="profcard" data-id="' + esc(pr.id) + '">' +
       '<div class="in"><div class="nm">' + esc(pr.name) + '</div><div class="sub">' +
       n + ' question' + (n === 1 ? '' : 's') + ' · ' +
       (used ? 'answered by ' + used + (used === 1 ? ' person' : ' people') : 'nobody on it yet') +
