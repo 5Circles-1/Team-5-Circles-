@@ -34,13 +34,30 @@ WHAT THE TOOL DOES  (once it's online)
       the moment they open the tool. To do -> Doing -> Done.
     - "I'm stuck" flag: rings the person who gave the task, so
       nobody stays stuck quietly.
-    - Chat on record: team-wide or one-to-one. Every word is kept in
-      your Google Sheet.
+    - Updates tab: post what got done, attach files or screenshots,
+      and tick "Needs review" when you want someone to check it -
+      they mark it "Reviewed" and everyone sees who did.
+    - Chat on record: team-wide or one-to-one, now instant, with
+      file attachments. Every word is kept in your Google Sheet.
     - The bell: a message that takes over the screen and keeps
       ringing until the person answers - and you see their answer.
-    - Team tab (admins): add people, hand out PINs, reset PINs,
-      remove people. When someone leaves, their open tasks move to
-      you so nothing is lost.
+      It now checks the tool every few seconds, so it rings within
+      moments. If the person hasn't opened the tool lately, the
+      ring also lands in their EMAIL automatically.
+    - Send email: from anyone's profile - for teammates who aren't
+      in the tool, or for sharing beyond office hours.
+    - Profiles: everyone uploads their own photo and keeps their
+      mobile number and email on their card. Tap any card to see a
+      person's designation (e.g. Receptionist), phone (tap to call
+      or WhatsApp) and email.
+    - Daily duties: give a person a standing job - like the
+      receptionist's "Get GMB profile reviews" - and a task for it
+      appears on their list automatically every morning.
+    - Light and dark mode: two buttons in the header, pick either.
+    - Team tab (ADMINS ONLY - members can look, not touch): add
+      people, set designations and duties, hand out PINs, reset
+      PINs, remove people. When someone leaves, their open tasks
+      move to you so nothing is lost.
 
 Logins are a face + a 4-digit PIN. You hand out the PINs; the tool
 shows each one to you exactly once. Five wrong guesses locks a
@@ -85,3 +102,16 @@ QUICK ANSWERS
 
 "I changed my mind about a name / the company name."
     Team tab (admins) - company name is at the bottom.
+
+"How do I set up the receptionist's daily GMB job?"
+    Team tab -> tap her card -> Designation: "Receptionist",
+    Daily duty: "Get GMB profile reviews" -> Save. From then on a
+    task for it appears on her list every morning, by itself.
+
+"I already set the tool up before these new features."
+    Paste the two new files over the old ones in the Apps Script
+    editor, then Deploy -> Manage deployments -> pencil icon ->
+    New version -> Deploy. Google will ask you to allow access
+    once more (it now also uses Drive for attachments and Gmail
+    for the email feature). Your people, tasks and messages are
+    all kept.

@@ -107,6 +107,71 @@
         var r = Math.random() * 16 | 0;
         return (c === 'x' ? r : (r & 3 | 8)).toString(16);
       });
+    },
+    formatDate: function (date, tz, fmt) {
+      // Code.gs only asks for 'yyyy-MM-dd' in the company timezone.
+      try {
+        return new Intl.DateTimeFormat('en-CA', {
+          timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit'
+        }).format(date);
+      } catch (e) {
+        var d = new Date(date.getTime() + 330 * 60000);   // IST fallback
+        return d.getUTCFullYear() + '-' + ('0' + (d.getUTCMonth() + 1)).slice(-2) + '-' + ('0' + d.getUTCDate()).slice(-2);
+      }
+    },
+    base64Decode: function (b64) {
+      var bin = atob(String(b64));
+      var bytes = [];
+      for (var i = 0; i < bin.length; i++) bytes.push(bin.charCodeAt(i));
+      return bytes;
+    },
+    newBlob: function (bytes, mime, name) {
+      return {
+        getBytes: function () { return bytes; },
+        getContentType: function () { return mime; },
+        getName: function () { return name; }
+      };
+    }
+  };
+
+  /* ── DriveApp: attachments live in the fake DB as data: URLs ── */
+  function bytesToDataUrl(bytes, mime) {
+    var bin = '';
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode((bytes[i] + 256) % 256);
+    return 'data:' + (mime || 'application/octet-stream') + ';base64,' + btoa(bin);
+  }
+  function folderApi(id) {
+    return {
+      getId: function () { return id; },
+      createFile: function (blob) {
+        var d = load() || blank();
+        d.files = d.files || {};
+        var fid = window.Utilities.getUuid();
+        d.files[fid] = { name: blob.getName(), mime: blob.getContentType(), url: bytesToDataUrl(blob.getBytes(), blob.getContentType()) };
+        save(d);
+        return {
+          getId: function () { return fid; },
+          getUrl: function () { var db = load(); return (db && db.files && db.files[fid]) ? db.files[fid].url : ''; },
+          setSharing: function () { return this; }
+        };
+      }
+    };
+  }
+  window.DriveApp = {
+    Access: { ANYONE_WITH_LINK: 'ANYONE_WITH_LINK' },
+    Permission: { VIEW: 'VIEW' },
+    createFolder: function (name) { return folderApi('fake-folder'); },
+    getFolderById: function (id) { return folderApi(id); }
+  };
+
+  /* ── MailApp: emails are recorded, never sent ── */
+  window.MailApp = {
+    sendEmail: function (a, b, c, d) {
+      var mail = (typeof a === 'object') ? a : { to: a, subject: b, body: c, options: d || {} };
+      var db = load() || blank();
+      db.emails = db.emails || [];
+      db.emails.push({ to: mail.to, subject: mail.subject, body: mail.body, at: new Date().toISOString() });
+      save(db);
     }
   };
 

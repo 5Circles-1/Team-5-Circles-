@@ -141,7 +141,8 @@ const ok = (label, cond) => { console.log((cond ? '  PASS  ' : '  FAIL  ') + lab
   ok('double-tapping Send posts one message, not two (' + dupes + ')', dupes === 1);
 
   /* ── 9. read marks belong to the person, not the laptop ── */
-  await E.locator('#meChip').click();
+  await E.locator('#meChip').click();          // opens "My profile" now
+  await E.locator('#meSignOut').click();
   await E.locator('#askYes').click();
   await E.locator('#scrLogin:not(.hide)').waitFor({ timeout: 10000 });
   const binaPin2 = (await call(A, aToken, 'resetPin', { personId: bina.id })).pin;
