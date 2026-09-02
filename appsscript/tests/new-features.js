@@ -185,6 +185,18 @@ const PNG_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8B
   const badMail = await call(A, aToken, 'setProfile', { email: 'not-an-email' });
   ok('a bad email address is refused', badMail.ok === false);
 
+  /* an owner who never ran authorizeMe gets the fix, not Google's raw error */
+  await A.evaluate(() => { window.FAKE_DRIVE_DENIED = true; });
+  const driveDenied = await call(A, aToken, 'send',
+    { kind: 'update', text: 'x', file: { name: 'a.png', mime: 'image/png', dataB64: PNG_B64 } });
+  ok('a missing Drive approval explains the authorizeMe fix',
+    driveDenied.ok === false && /authorizeMe/.test(driveDenied.error || ''));
+  await A.evaluate(() => { window.FAKE_DRIVE_DENIED = false; window.FAKE_MAIL_DENIED = true; });
+  const mailDenied = await call(A, aToken, 'sendEmail', { personId: dev.id, subject: 'x', message: 'y' });
+  ok('a missing Mail approval explains the authorizeMe fix',
+    mailDenied.ok === false && /authorizeMe/.test(mailDenied.error || ''));
+  await A.evaluate(() => { window.FAKE_MAIL_DENIED = false; });
+
   /* ══ 10. mobile numbers on every profile ══ */
   const setMob = await call(A, aToken, 'setProfile', { mobile: '+91 98765 43210' });
   ok('a person can save their own mobile number', setMob.ok && setMob.me.mobile === '+91 98765 43210');

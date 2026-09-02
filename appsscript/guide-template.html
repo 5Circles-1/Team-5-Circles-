@@ -230,7 +230,12 @@
   <div class="qa"><b>I want to change the tool later.</b>
     <p>Paste the newer file over the old one in the editor, then
       <strong>Deploy → Manage deployments → ✏️ → Version: New version → Deploy</strong>.
-      The address stays exactly the same — nobody has to re-bookmark anything.</p></div>
+      The address stays exactly the same — nobody has to re-bookmark anything.
+      If the newer version needs extra permissions (this one adds Drive for attachments and Gmail
+      for email), also run <strong>authorizeMe</strong> once from the editor: pick it in the toolbar’s
+      function dropdown, press <strong>Run</strong>, then <strong>Review permissions → Advanced →
+      Go to 5C Pulse (unsafe) → Allow</strong>. Without that, attaching a file shows
+      “You do not have permission to call DriveApp.createFolder”.</p></div>
 
   <div class="qa"><b>What does it cost?</b>
     <p>Nothing. It runs inside the free allowance of your own Google account, sized far beyond what a

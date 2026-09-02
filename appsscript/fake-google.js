@@ -157,22 +157,33 @@
       }
     };
   }
+  // FAKE_DRIVE_DENIED / FAKE_MAIL_DENIED mimic the owner never having
+  // granted the newer scopes — the exact error a live deployment shows
+  // until authorizeMe is run once from the editor.
   window.DriveApp = {
     Access: { ANYONE_WITH_LINK: 'ANYONE_WITH_LINK' },
     Permission: { VIEW: 'VIEW' },
-    createFolder: function (name) { return folderApi('fake-folder'); },
-    getFolderById: function (id) { return folderApi(id); }
+    createFolder: function (name) {
+      if (window.FAKE_DRIVE_DENIED) throw new Error('You do not have permission to call DriveApp.createFolder. Required permissions: https://www.googleapis.com/auth/drive');
+      return folderApi('fake-folder');
+    },
+    getFolderById: function (id) {
+      if (window.FAKE_DRIVE_DENIED) throw new Error('You do not have permission to call DriveApp.getFolderById. Required permissions: https://www.googleapis.com/auth/drive');
+      return folderApi(id);
+    }
   };
 
   /* ── MailApp: emails are recorded, never sent ── */
   window.MailApp = {
     sendEmail: function (a, b, c, d) {
+      if (window.FAKE_MAIL_DENIED) throw new Error('You do not have permission to call MailApp.sendEmail. Required permissions: https://www.googleapis.com/auth/script.send_mail');
       var mail = (typeof a === 'object') ? a : { to: a, subject: b, body: c, options: d || {} };
       var db = load() || blank();
       db.emails = db.emails || [];
       db.emails.push({ to: mail.to, subject: mail.subject, body: mail.body, at: new Date().toISOString() });
       save(db);
-    }
+    },
+    getRemainingDailyQuota: function () { return 100; }
   };
 
   /* ── PropertiesService / CacheService / LockService / ScriptApp ── */

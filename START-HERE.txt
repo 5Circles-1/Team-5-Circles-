@@ -109,9 +109,16 @@ QUICK ANSWERS
     task for it appears on her list every morning, by itself.
 
 "I already set the tool up before these new features."
-    Paste the two new files over the old ones in the Apps Script
-    editor, then Deploy -> Manage deployments -> pencil icon ->
-    New version -> Deploy. Google will ask you to allow access
-    once more (it now also uses Drive for attachments and Gmail
-    for the email feature). Your people, tasks and messages are
-    all kept.
+    1. Paste the two new files over the old ones in the Apps
+       Script editor.
+    2. Deploy -> Manage deployments -> pencil icon ->
+       New version -> Deploy.
+    3. IMPORTANT: back in the editor, open the function dropdown
+       in the toolbar (it may say "doGet"), pick "authorizeMe",
+       press Run, and click through Review permissions ->
+       Advanced -> Go to 5C Pulse (unsafe) -> Allow.
+       This grants the new Drive (attachments) and Gmail (email)
+       permissions - the tool cannot ask for them by itself, and
+       skipping this step shows "You do not have permission to
+       call DriveApp.createFolder" when someone attaches a file.
+    Your people, tasks and messages are all kept.

@@ -43,6 +43,17 @@ var AWAY_MS = 5 * 60 * 1000;          // not seen for this long = "away" → ema
 
 /* ── entry points ─────────────────────────────────────────────────────────── */
 
+/** RUN ME ONCE from the editor after pasting a new version: pick
+ *  "authorizeMe" in the toolbar's function dropdown, press ▶ Run, and click
+ *  Allow. That grants the Drive (attachments) and Mail (email) permissions —
+ *  the web app itself is never allowed to show that screen, so without this
+ *  run those features fail with "You do not have permission…". */
+function authorizeMe() {
+  attachmentsFolder();                       // proves Drive, creates the files folder
+  MailApp.getRemainingDailyQuota();          // proves Mail
+  return 'All set — attachments and email are authorized.';
+}
+
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('index')
     .setTitle('5C Pulse')
@@ -683,6 +694,17 @@ function attachmentsFolder() {
   return folder;
 }
 
+function missingApproval(err, what) {
+  // Google's raw scope error means the owner never saw the Allow screen for
+  // the newer permissions. Turn it into the actual fix.
+  if (/permission|authoriz/i.test(String(err && err.message ? err.message : err))) {
+    return new Error('One approval is missing: the OWNER opens the Apps Script editor, ' +
+      'picks "authorizeMe" in the function dropdown, presses Run, and clicks Allow. ' +
+      'Then ' + what + ' work — no redeploy needed.');
+  }
+  return err;
+}
+
 function saveAttachment(file) {
   if (!file || !file.dataB64) return null;
   var b64 = String(file.dataB64);
@@ -690,8 +712,13 @@ function saveAttachment(file) {
   var name = String(file.name || 'file').trim().slice(0, 120) || 'file';
   var mime = String(file.mime || 'application/octet-stream').slice(0, 80);
   var blob = Utilities.newBlob(Utilities.base64Decode(b64), mime, name);
-  var f = attachmentsFolder().createFile(blob);
-  try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+  var f;
+  try {
+    f = attachmentsFolder().createFile(blob);
+  } catch (e) {
+    throw missingApproval(e, 'attachments');
+  }
+  try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e2) {}
   return { id: f.getId(), name: name, mime: mime, url: f.getUrl() };
 }
 
@@ -768,8 +795,12 @@ function sendEmailToPerson(me, data) {
   try { url = ScriptApp.getService().getUrl() || ''; } catch (e) {}
   var opts = { name: me.name + ' · ' + (metaGet('company') || '5 Circles') };
   if (String(me.email || '').trim()) opts.replyTo = me.email;
-  MailApp.sendEmail(to, subject,
-    body + '\n\n—\nSent by ' + me.name + ' via 5C Pulse' + (url ? '\n' + url : ''), opts);
+  try {
+    MailApp.sendEmail(to, subject,
+      body + '\n\n—\nSent by ' + me.name + ' via 5C Pulse' + (url ? '\n' + url : ''), opts);
+  } catch (e) {
+    throw missingApproval(e, 'emails');
+  }
   postMessage(me.id, p.id, '📧 Emailed ' + p.name + ': ' + subject, 'notice', '');
   bumpVersion();
   return { sent: true };

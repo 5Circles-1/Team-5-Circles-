@@ -16,10 +16,16 @@ The non-technical walkthrough (with copy buttons and a live demo) is
 `../OPEN-ME.html` / `../standalone/5c-pulse.html`.
 
 **Upgrading an existing deployment**: paste the new files over the old ones,
-then *Deploy → Manage deployments → edit → New version*. The first run asks
-the owner to authorize again (the app now also touches Drive, for attachments,
-and Mail, for the email features) and widens the sheet's columns by itself —
-existing people, tasks and messages are untouched.
+then *Deploy → Manage deployments → edit → New version*, and — this is the
+step that's easy to miss — **run `authorizeMe` once from the editor** (pick it
+in the toolbar's function dropdown, press ▶ Run, click Allow). The app now
+also touches Drive (attachments) and Mail (email), and a web app can never
+show that consent screen itself: until the owner runs a function from the
+editor, those two features fail with Google's "You do not have permission to
+call DriveApp.createFolder" error (the tool now translates it into these
+instructions). The sheet widens its own columns on first use — existing
+people, tasks and messages are untouched, and no re-deploy is needed after
+authorizing.
 
 ## What the tool does now
 
